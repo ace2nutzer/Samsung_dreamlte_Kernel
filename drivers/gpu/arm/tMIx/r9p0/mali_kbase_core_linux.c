@@ -4301,9 +4301,11 @@ MAKE_QUIRK_ACCESSORS(jm);
 
 #endif /* KBASE_GPU_RESET_EN */
 
+#ifdef CONFIG_MALI_EXYNOS_TRACE
 #ifndef MALI_SEC_INTEGRATION
 extern const struct file_operations kbasep_trace_debugfs_fops;
 #endif /* MALI_SEC_INTEGRATION */
+#endif
 
 /**
  * debugfs_protected_debug_mode_read - "protected_debug_mode" debugfs read
@@ -4369,10 +4371,11 @@ static int kbase_device_debugfs_init(struct kbase_device *kbdev)
 	kbdev->debugfs_ctx_directory = debugfs_create_dir("ctx",
 			kbdev->mali_debugfs_directory);
 #else
+#ifdef CONFIG_MALI_EXYNOS_TRACE
 	kbdev->trace_dentry = debugfs_create_file("mali_trace", S_IRUGO,
 			kbdev->mali_debugfs_directory, kbdev,
 			&kbasep_trace_debugfs_fops);
-
+#endif
 	kbdev->debugfs_ctx_directory = debugfs_create_dir("mem",
 			kbdev->mali_debugfs_directory);
 #endif /* MALI_SEC_INTEGRATION */

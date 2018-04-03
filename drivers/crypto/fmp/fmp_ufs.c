@@ -41,6 +41,7 @@ extern void exynos_ufs_ctrl_auto_hci_clk(struct exynos_ufs *ufs, bool en);
 					((unsigned char *)(x) + 4 * (c))[2], ((unsigned char *)(x) + 4 * (c))[3])
 
 #define FMP_KEY_SIZE	32
+#define MD5_DIGEST_SIZE	16
 
 #if defined(CONFIG_FIPS_FMP)
 static int fmp_xts_check_key(uint8_t *enckey, uint8_t *twkey, uint32_t len)
@@ -187,7 +188,9 @@ static int configure_fmp_file_iv(struct ufshcd_sg_entry *prd_table,
 	case FMP_CBC_ALGO_MODE:
 		index = page->index;
 		index = index - page->mapping->sensitive_data_index;
+#ifdef CONFIG_FMP_EXT4CRYPT_FS
 		ret = file_enc_derive_iv(page->mapping, index, extent_iv);
+#endif
 		if (ret) {
 			printk(KERN_ERR "Error attemping to derive IV. ret = %c\n", ret);
 			return -EINVAL;
@@ -354,7 +357,7 @@ int fmp_ufs_map_sg(struct ufshcd_sg_entry *prd_table, struct scatterlist *sg,
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(fmp_map_sg);
+EXPORT_SYMBOL_GPL(fmp_ufs_map_sg);
 
 #if defined(CONFIG_FIPS_FMP)
 #if defined(CONFIG_UFS_FMP_ECRYPT_FS) || defined(CONFIG_UFS_FMP_EXT4CRYPT_FS)

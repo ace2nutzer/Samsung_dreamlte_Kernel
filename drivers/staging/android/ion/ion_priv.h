@@ -117,11 +117,10 @@ struct ion_buffer {
 	char task_comm[TASK_COMM_LEN];
 	pid_t pid;
 
-#ifdef CONFIG_ION_EXYNOS_STAT_LOG
 	struct list_head master_list;
 	char thread_comm[TASK_COMM_LEN];
 	pid_t tid;
-#endif
+
 };
 
 #ifdef CONFIG_ION_EXYNOS_STAT_LOG
