@@ -25,6 +25,12 @@ config INPUT
 
 if INPUT
 
+config INPUT_BOOSTER
+	bool "Input Booster"
+	depends on INPUT
+	---help---
+	  Cluster 0 832Mhz, Cluster 1 858 Mhz.
+
 config INPUT_LEDS
 	tristate "Export input device LEDs in sysfs"
 	depends on LEDS_CLASS
