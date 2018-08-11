@@ -424,8 +424,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -mtune=exynos-m1 \
 		   -ftree-vectorize \
 		   -DNDEBUG \
-		   -pipe \
-		   -fdiagnostics-color=auto
+		   -pipe
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
