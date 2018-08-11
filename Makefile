@@ -420,7 +420,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -std=gnu89 \
 		   -D_FORTIFY_SOURCE=1 \
 		   -march=armv8-a+crypto+crc \
-		   -mcpu=exynos-m1 \
+		   -mcpu=exynos-m1+crypto+crc \
 		   -mtune=exynos-m1 \
 		   -ftree-vectorize \
 		   -DNDEBUG \
