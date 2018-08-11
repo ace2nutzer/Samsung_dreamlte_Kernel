@@ -87,7 +87,7 @@ KBUILD_CFLAGS	+= -DCC_USING_HOTPATCH
 endif
 endif
 
-KBUILD_CFLAGS	+= -mbackchain -msoft-float $(cflags-y)
+KBUILD_CFLAGS	+= -mbackchain $(cflags-y)
 KBUILD_CFLAGS	+= -pipe -fno-strength-reduce -Wno-sign-compare
 KBUILD_AFLAGS	+= $(aflags-y)
 

@@ -70,7 +70,7 @@ endif
 # pretend the kernel is going to run on an FR400 with no media-fp unit
 # - reserve CC3 for use with atomic ops
 # - all the extra registers are dealt with only at context switch time
-KBUILD_CFLAGS	+= -mno-fdpic -mgpr-32 -msoft-float -mno-media
+KBUILD_CFLAGS	+= -mno-fdpic -mgpr-32 -mno-media
 KBUILD_CFLAGS	+= -ffixed-fcc3 -ffixed-cc3 -ffixed-gr15 -ffixed-icc2
 KBUILD_AFLAGS	+= -mno-fdpic
 
