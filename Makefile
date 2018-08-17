@@ -413,8 +413,8 @@ LINUXINCLUDE    := \
 KBUILD_CPPFLAGS := -D__KERNEL__
 
 KBUILD_CFLAGS   := -Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common -Wno-stringop-truncation \
-		   -Wno-format-security -Wno-stringop-overflow -Wno-packed-not-aligned \
+		   -fno-strict-aliasing -fno-common \
+		   -Wno-format-security -Wno-stringop-overflow \
 		   -std=gnu89 $(call cc-option,-fno-PIE) \
 		   -D_FORTIFY_SOURCE=1 \
 		   -march=armv8-a+crypto+crc \
