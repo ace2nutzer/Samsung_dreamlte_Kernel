@@ -401,6 +401,7 @@ static inline void cpufreq_resume(void) {}
 
 /* Policy Notifiers  */
 #define CPUFREQ_ADJUST			(0)
+#define CPUFREQ_INCOMPATIBLE	(1)
 #define CPUFREQ_NOTIFY			(1)
 #define CPUFREQ_START			(2)
 #define CPUFREQ_CREATE_POLICY		(3)
@@ -514,6 +515,8 @@ unsigned int cpufreq_driver_resolve_freq(struct cpufreq_policy *policy,
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
 
+int cpufreq_update_freq(int cpu, unsigned int min, unsigned int max);
+
 /* Governor attribute set */
 struct gov_attr_set {
 	struct kobject kobj;
@@ -536,6 +539,8 @@ struct governor_attr {
 	ssize_t (*store)(struct gov_attr_set *attr_set, const char *buf,
 			size_t count);
 };
+
+int cpufreq_update_freq(int cpu, unsigned int min, unsigned int max);
 
 /* CPUFREQ DEFAULT GOVERNOR */
 /*
