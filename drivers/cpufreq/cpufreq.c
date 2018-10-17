@@ -678,6 +678,8 @@ show_one(cpuinfo_max_freq, cpuinfo.max_freq);
 show_one(cpuinfo_transition_latency, cpuinfo.transition_latency);
 show_one(scaling_min_freq, min);
 show_one(scaling_max_freq, max);
+show_one(user_scaling_min_freq, min);
+show_one(user_scaling_max_freq, max);
 
 static ssize_t show_scaling_cur_freq(struct cpufreq_policy *policy, char *buf)
 {
@@ -743,6 +745,8 @@ static ssize_t store_##file_name					\
 
 store_one(scaling_min_freq, min);
 store_one(scaling_max_freq, max);
+store_one(user_scaling_min_freq, min);
+store_one(user_scaling_max_freq, max);
 
 /**
  * show_cpuinfo_cur_freq - current CPU frequency as detected by hardware
@@ -917,6 +921,8 @@ cpufreq_freq_attr_ro(related_cpus);
 cpufreq_freq_attr_ro(affected_cpus);
 cpufreq_freq_attr_rw(scaling_min_freq);
 cpufreq_freq_attr_rw(scaling_max_freq);
+cpufreq_freq_attr_rw(user_scaling_min_freq);
+cpufreq_freq_attr_rw(user_scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
 
@@ -926,6 +932,8 @@ static struct attribute *default_attrs[] = {
 	&cpuinfo_transition_latency.attr,
 	&scaling_min_freq.attr,
 	&scaling_max_freq.attr,
+	&user_scaling_min_freq.attr,
+	&user_scaling_max_freq.attr,
 	&affected_cpus.attr,
 	&related_cpus.attr,
 	&scaling_governor.attr,
