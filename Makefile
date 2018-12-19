@@ -672,6 +672,13 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
 
+# disable some warnings in gcc 8+
+KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-memaccess)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, packed-not-aligned)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-truncation)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-div)
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
 else
