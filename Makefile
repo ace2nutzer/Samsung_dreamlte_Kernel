@@ -671,6 +671,7 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, frame-address)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, overflow)
 
 # disable some warnings in gcc 8+
 KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
