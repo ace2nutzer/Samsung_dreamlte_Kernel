@@ -303,16 +303,12 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   := -Wall -Werror -Wmissing-prototypes -Wstrict-prototypes -O2 \
-		-fomit-frame-pointer -std=gnu89 -m64 -Wno-format-overflow \
-		-fno-strict-aliasing -fno-strict-overflow \
-		-DNDEBUG -pipe -march=core2 -mtune=core2 -mhard-float \
-		-mfpmath=sse -ftree-vectorize
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
+HOSTCXXFLAGS := -O2
 
-HOSTCXXFLAGS := -Wall -Werror -O2 -fomit-frame-pointer \
-		-fno-strict-aliasing -fno-strict-overflow -Wno-format-overflow \
-		-DNDEBUG -pipe -m64 -march=core2 -mtune=core2 -mhard-float \
-		-mfpmath=sse -ftree-vectorize
+# Host specifc Flags
+HOSTCFLAGS   += -m64 -march=core2 -mtune=core2 -Wno-format-overflow -pipe
+HOSTCXXFLAGS += -m64 -march=core2 -mtune=core2 -Wno-format-overflow -pipe
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
@@ -412,17 +408,21 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs \
+KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
-		   -Wno-format-security -Wno-stringop-overflow \
+		   -Werror-implicit-function-declaration \
+		   -Wno-format-security \
 		   -std=gnu89 $(call cc-option,-fno-PIE) \
 		   -D_FORTIFY_SOURCE=1 \
-		   -march=armv8-a+crypto+crc \
-		   -mcpu=exynos-m1+crypto+crc \
-		   -mtune=exynos-m1 \
-		   -ftree-vectorize \
 		   -DNDEBUG \
 		   -pipe
+
+# Target specific Flags
+KBUILD_CFLAGS   += \
+		   -march=armv8-a+crc+nofp \
+		   -mcpu=exynos-m1+crc+nofp \
+		   -mtune=exynos-m1
+
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -671,14 +671,15 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, frame-address)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, overflow)
 
-# disable some warnings in gcc 8+
+# disable some warnings in gcc >= 8.0
+KBUILD_CFLAGS	+= $(call cc-disable-warning, overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-memaccess)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, packed-not-aligned)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-div)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-overflow)
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
@@ -790,12 +791,11 @@ else
 # Use make W=1 to enable them (see scripts/Makefile.build)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
-endif
-
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-variable)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-label)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-function)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-value)
+endif
 
 ifdef CONFIG_FRAME_POINTER
 KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
@@ -866,7 +866,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, pointer-sign)
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
 
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
-KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
+KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check)
 
 # disallow errors like 'EXPORT_GPL(foo);' with missing header
 KBUILD_CFLAGS   += $(call cc-option,-Werror=implicit-int)
