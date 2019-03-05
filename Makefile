@@ -423,6 +423,13 @@ KBUILD_CFLAGS   += \
 		   -mcpu=exynos-m1+crc+nofp \
 		   -mtune=exynos-m1
 
+# VFP / SIMD Flags
+SIMD_CFLAGS := \
+		   -DUSE_V8_CRYPTO_EXTENSIONS \
+		   -march=armv8-a+crc+crypto \
+		   -mcpu=exynos-m1+crc+crypto \
+		   -ftree-vectorize
+
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -446,7 +453,7 @@ export KBUILD_CFLAGS CFLAGS_KERNEL CFLAGS_MODULE CFLAGS_GCOV CFLAGS_KCOV CFLAGS_
 export KBUILD_AFLAGS AFLAGS_KERNEL AFLAGS_MODULE
 export KBUILD_AFLAGS_MODULE KBUILD_CFLAGS_MODULE KBUILD_LDFLAGS_MODULE
 export KBUILD_AFLAGS_KERNEL KBUILD_CFLAGS_KERNEL
-export KBUILD_ARFLAGS
+export KBUILD_ARFLAGS SIMD_CFLAGS
 
 # When compiling out-of-tree modules, put MODVERDIR in the module
 # tree rather than in the kernel tree. The kernel tree might
