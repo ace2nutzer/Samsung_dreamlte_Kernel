@@ -625,10 +625,12 @@ int cmu_dpu_dump(void)
 /* suspend_max_freq */
 extern unsigned int cpu0_suspend_max_freq;
 extern unsigned int cpu4_suspend_max_freq;
-static unsigned int cpu0_user_min = 0;
-static unsigned int cpu4_user_min = 0;
-static unsigned int cpu0_user_max = 0;
-static unsigned int cpu4_user_max = 0;
+
+static unsigned int cpu0_set_suspend_max_freq = 0;
+static unsigned int cpu4_set_suspend_max_freq = 0;
+
+static unsigned int cpu0_tmp_max_freq = 0;
+static unsigned int cpu4_tmp_max_freq = 0;
 
 /* ---------- FB_BLANK INTERFACE ----------- */
 static int decon_enable(struct decon_device *decon)
@@ -637,15 +639,9 @@ static int decon_enable(struct decon_device *decon)
 	struct decon_param p;
 	struct decon_mode_info psr;
 
-	if (cpu0_suspend_max_freq) {
-	/* restore user min max freq */
-	cpufreq_update_freq(0, cpu0_user_min, cpu0_user_max);
-	}
-
-	if (cpu4_suspend_max_freq) {
-	/* restore user min max freq */
-	cpufreq_update_freq(4, cpu4_user_min, cpu4_user_max);
-	}
+	/* restore previous max cpu freq */
+	cpufreq_update_freq(0, 455000, cpu0_tmp_max_freq);
+	cpufreq_update_freq(4, 741000, cpu4_tmp_max_freq);
 
 	decon_info("+ %s : %d\n", __func__, decon->id);
 
@@ -767,6 +763,8 @@ err:
 static int decon_disable(struct decon_device *decon)
 {
 	struct decon_mode_info psr;
+	struct cpufreq_policy *policy0 = cpufreq_cpu_get(0);
+	struct cpufreq_policy *policy4 = cpufreq_cpu_get(4);
 	int ret = 0;
 
 	decon_info("+ %s : %d\n", __func__, decon->id);
@@ -874,25 +872,27 @@ static int decon_disable(struct decon_device *decon)
 
 	decon->state = DECON_STATE_OFF;
 
-	if (cpu0_suspend_max_freq) {
-	struct cpufreq_policy *policy = cpufreq_cpu_get(0);
+	/* save current max cpu freq */
+	cpu0_tmp_max_freq = policy0->max;
 
-	/* save current user min max freq */
-	cpu0_user_min = policy->min;
-	cpu0_user_max = policy->max;
-
-	cpufreq_update_freq(0, 455000, cpu0_suspend_max_freq);
+	if (!cpu0_suspend_max_freq) {
+		cpu0_set_suspend_max_freq = cpu0_tmp_max_freq;
+	} else {
+		cpu0_set_suspend_max_freq = cpu0_suspend_max_freq;
 	}
 
-	if (cpu4_suspend_max_freq) {
-	struct cpufreq_policy *policy = cpufreq_cpu_get(4);
+	cpufreq_update_freq(0, 455000, cpu0_set_suspend_max_freq);
 
-	/* save current user min max freq */
-	cpu4_user_min = policy->min;
-	cpu4_user_max = policy->max;
+	/* save current max cpu freq */
+	cpu4_tmp_max_freq = policy4->max;
 
-	cpufreq_update_freq(4, 741000, cpu4_suspend_max_freq);
+	if (!cpu4_suspend_max_freq) {
+		cpu4_set_suspend_max_freq = cpu4_tmp_max_freq;
+	} else {
+		cpu4_set_suspend_max_freq = cpu4_suspend_max_freq;
 	}
+
+	cpufreq_update_freq(4, 741000, cpu4_set_suspend_max_freq);
 
 err:
 	mutex_unlock(&decon->lock);
