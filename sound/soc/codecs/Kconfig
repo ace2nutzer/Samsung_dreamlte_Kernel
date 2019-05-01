@@ -547,7 +547,6 @@ config SND_SOC_MAXIM_DSM
 config SND_SOC_MAXIM_DSM_CAL
 	tristate "Support MAXIM DSM Calibration"
 	default y if SND_SOC_MAX98506=y
-	default m if SND_SOC_MAX98506=m
 	help
 	MAX9850x Calibration Driver
 
