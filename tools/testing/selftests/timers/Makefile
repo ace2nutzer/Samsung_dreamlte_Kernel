@@ -1,6 +1,6 @@
 CC = $(CROSS_COMPILE)gcc
 BUILD_FLAGS = -DKTEST
-CFLAGS += -Wl,-no-as-needed -Wall $(BUILD_FLAGS)
+CFLAGS += -O2 -Wl,-no-as-needed -Wall $(BUILD_FLAGS)
 LDFLAGS += -lrt -lpthread
 
 # these are all "safe" tests that don't modify

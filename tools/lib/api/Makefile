@@ -16,7 +16,7 @@ MAKEFLAGS += --no-print-directory
 LIBFILE = $(OUTPUT)libapi.a
 
 CFLAGS := $(EXTRA_WARNINGS) $(EXTRA_CFLAGS)
-CFLAGS += -ggdb3 -Wall -Wextra -std=gnu99 -Werror -U_FORTIFY_SOURCE -fPIC
+CFLAGS += -ggdb3 -Wall -Wextra -std=gnu99 -Werror -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -fPIC
 CFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 
 RM = rm -f

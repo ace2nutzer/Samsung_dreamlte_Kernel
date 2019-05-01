@@ -200,7 +200,7 @@ micromips-ase				:= $(call cc-option-yn,$(mips-cflags) -mmicromips)
 cflags-$(micromips-ase)			+= -mmicromips
 endif
 ifeq ($(CONFIG_CPU_HAS_MSA),y)
-toolchain-msa				:= $(call cc-option-yn,$(mips-cflags) -mhard-float -mfp64 -Wa$(comma)-mmsa)
+toolchain-msa				:= $(call cc-option-yn,$(mips-cflags) -mfp64 -Wa$(comma)-mmsa)
 cflags-$(toolchain-msa)			+= -DTOOLCHAIN_SUPPORTS_MSA
 endif
 
