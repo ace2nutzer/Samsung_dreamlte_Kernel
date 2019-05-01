@@ -1869,9 +1869,9 @@ static int vpu_graph_queue(struct vpu_queue *queue, struct vb_container_list *in
 
 	BUG_ON(!queue);
 	BUG_ON(!incl);
-	BUG_ON(!incl->index >= VPU_MAX_FRAME);
+	BUG_ON((!incl->index) >= VPU_MAX_FRAME);
 	BUG_ON(!otcl);
-	BUG_ON(!otcl->index >= VPU_MAX_FRAME);
+	BUG_ON((!otcl->index) >= VPU_MAX_FRAME);
 
 	vctx = container_of(queue, struct vpu_vertex_ctx, queue);
 	graph = container_of(vctx, struct vpu_graph, vctx);
@@ -2048,7 +2048,7 @@ static int vpu_graph_deque(struct vpu_queue *queue, struct vb_container_list *cl
 
 	BUG_ON(!queue);
 	BUG_ON(!clist);
-	BUG_ON(!clist->index >= VPU_MAX_FRAME);
+	BUG_ON((!clist->index) >= VPU_MAX_FRAME);
 
 	vctx = container_of(queue, struct vpu_vertex_ctx, queue);
 	graph = container_of(vctx, struct vpu_graph, vctx);

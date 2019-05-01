@@ -37,7 +37,7 @@
 #include "vpu-control.h"
 
 const struct vision_file_ops vpu_vertex_fops;
-const const struct vertex_ioctl_ops vpu_vertex_ioctl_ops;
+const struct vertex_ioctl_ops vpu_vertex_ioctl_ops;
 
 static int __vref_open(struct vpu_vertex *vertex)
 {

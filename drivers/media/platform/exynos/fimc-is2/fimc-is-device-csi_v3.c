@@ -1416,7 +1416,7 @@ static int csi_stream_on(struct v4l2_subdev *subdev,
 		csi->sw_checker = EXPECT_FRAME_START;
 		csi->overflow_cnt = 0;
 		csi_s_config_dma(csi, csi->vci[csi->active_vci].config);
-		memset(csi->pre_dma_enable, -1, ARRAY_SIZE(csi->pre_dma_enable));
+		memset(csi->pre_dma_enable, -1, sizeof(csi->pre_dma_enable));
 
 		/* for multi frame buffer setting for internal vc */
 		csis_s_vc_dma_multibuf(csi);

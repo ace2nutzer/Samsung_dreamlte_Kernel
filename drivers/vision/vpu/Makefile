@@ -1,3 +1,5 @@
+CFLAGS_vpu-graph.o += -Wno-error
+
 obj-y					+= vpu-debug.o
 obj-y					+= vpu-binary.o
 obj-y					+= vpu-time.o
