@@ -512,6 +512,8 @@ SDCARDFS_DIR=$(shell $(CONFIG_SHELL) $(srctree)/scripts/find_matching_version.sh
 else
 export ANDROID_VERSION=990000
 KBUILD_CFLAGS += -DANDROID_VERSION=990000
+export ANDROID_MAJOR_VERSION=p
+KBUILD_CFLAGS += -DANDROID_MAJOR_VERSION=p
 endif
 PHONY += replace_dirs
 replace_dirs:
