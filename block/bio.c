@@ -595,10 +595,12 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
 	bio->bi_iter = bio_src->bi_iter;
 	bio->bi_io_vec = bio_src->bi_io_vec;
 	bio->bi_dio_inode = bio_src->bi_dio_inode;
+#ifdef CONFIG_FMP_EXT4CRYPT_FS
 	bio->private_enc_mode = bio_src->private_enc_mode;
 	bio->private_algo_mode = bio_src->private_algo_mode;
 	bio->key = bio_src->key;
 	bio->key_length = bio_src->key_length;
+#endif
 	bio_clone_blkcg_association(bio, bio_src);
 }
 EXPORT_SYMBOL(__bio_clone_fast);

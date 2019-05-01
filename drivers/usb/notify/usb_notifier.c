@@ -602,7 +602,9 @@ static int exynos_set_host(bool enable)
 	return 0;
 }
 
+#ifdef CONFIG_USB_CONFIGFS_NCM
 extern void set_ncm_ready(bool ready);
+#endif
 static int exynos_set_peripheral(bool enable)
 {
 	if (enable) {
@@ -611,7 +613,9 @@ static int exynos_set_peripheral(bool enable)
 	} else {
 		pr_info("%s usb detached\n", __func__);
 		check_usb_vbus_state(0);
+#ifdef CONFIG_USB_CONFIGFS_NCM
 		set_ncm_ready(false);
+#endif
 	}
 	return 0;
 }

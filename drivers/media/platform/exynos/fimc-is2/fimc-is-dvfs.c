@@ -16,8 +16,6 @@
 #include "fimc-is-hw-dvfs.h"
 #include <linux/videodev2_exynos_camera.h>
 
-#ifdef CONFIG_PM_DEVFREQ
-
 #ifdef CONFIG_SOC_EXYNOS8895
 extern struct pm_qos_request exynos_isp_qos_int_cam;
 #endif
@@ -57,6 +55,8 @@ int fimc_is_get_target_resol(struct fimc_is_device_ischain *device)
 #endif
 	return resol;
 }
+
+#ifdef CONFIG_PM_DEVFREQ
 
 int fimc_is_dvfs_init(struct fimc_is_resourcemgr *resourcemgr)
 {

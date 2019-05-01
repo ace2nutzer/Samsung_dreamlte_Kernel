@@ -23,8 +23,10 @@ void acc_disconnect(void);
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
 
 #include "function/u_ether.h"
+#ifdef CONFIG_USB_CONFIGFS_NCM
 extern int terminal_ctrl_request(struct usb_composite_dev *cdev,
 				const struct usb_ctrlrequest *ctrl);
+#endif
 #endif
 static struct class *android_class;
 static struct device *android_device;
@@ -1632,7 +1634,7 @@ static int android_setup(struct usb_gadget *gadget,
 			}
 		}	
 
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+#if defined(CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE) && defined(CONFIG_USB_CONFIGFS_NCM)
 	if (value < 0)
 		value = terminal_ctrl_request(cdev, c);
 #endif
@@ -1700,7 +1702,7 @@ static void android_disconnect(struct usb_gadget *gadget)
 		printk(KERN_DEBUG"usb: %s mute_switch con(%d) sw(%d)\n",
 			 __func__, gi->connected, gi->sw_connected);
 	} else {
-	
+
 	//	set_ncm_ready(false);
 		if (cdev->force_disconnect) {
 			gi->sw_connected = 1;

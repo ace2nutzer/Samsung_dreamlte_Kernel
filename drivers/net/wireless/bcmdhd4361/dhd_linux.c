@@ -4550,9 +4550,11 @@ dhd_start_xmit(struct sk_buff *skb, struct net_device *net)
 		/* In order to avoid pkt loss. Return NETDEV_TX_BUSY until run-time resumed. */
 		/* stop the network queue temporarily until resume done */
 		DHD_GENERAL_LOCK(&dhd->pub, flags);
+#ifdef PCIE_FULL_DONGLE
 		if (!dhdpcie_is_resume_done(&dhd->pub)) {
 			dhd_bus_stop_queue(dhd->pub.bus);
 		}
+#endif /* PCIE_FULL_DONGLE */
 		DHD_BUS_BUSY_CLEAR_IN_TX(&dhd->pub);
 		dhd_os_busbusy_wake(&dhd->pub);
 		DHD_GENERAL_UNLOCK(&dhd->pub, flags);

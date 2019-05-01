@@ -1316,7 +1316,9 @@ void fimc_is_dual_dvfs_update(struct fimc_is_device_ischain *device,
 	/* Only if tick_count is 0 dvfs update. */
 	if (dual_info->tick_count == 0) {
 		pre_scenario_id = static_ctrl->cur_scenario_id;
+#ifdef CONFIG_PM_DEVFREQ
 		scenario_id = fimc_is_dvfs_sel_static(device);
+#endif
 		if (scenario_id >= 0 && scenario_id != pre_scenario_id) {
 			struct fimc_is_dvfs_scenario_ctrl *static_ctrl = resourcemgr->dvfs_ctrl.static_ctrl;
 
@@ -1324,7 +1326,9 @@ void fimc_is_dual_dvfs_update(struct fimc_is_device_ischain *device,
 				resourcemgr->dvfs_ctrl.dvfs_table_idx,
 				static_ctrl->cur_scenario_id,
 				static_ctrl->scenarios[static_ctrl->cur_scenario_idx].scenario_nm);
+#ifdef CONFIG_PM_DEVFREQ
 			fimc_is_set_dvfs((struct fimc_is_core *)device->interface->core, device, scenario_id);
+#endif
 		} else {
 			mgrinfo("tbl[%d] dual DVFS update skip %d -> %d\n", device, group, frame,
 				resourcemgr->dvfs_ctrl.dvfs_table_idx,

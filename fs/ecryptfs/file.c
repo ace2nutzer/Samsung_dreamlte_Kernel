@@ -32,6 +32,7 @@
 #include <linux/compat.h>
 #include <linux/fs_stack.h>
 #include <crypto/fmp.h>
+#include <keys/trusted-type.h>
 
 #include "ecryptfs_kernel.h"
 

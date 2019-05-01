@@ -2947,8 +2947,10 @@ p_skip_sync:
 	}
 
 	core = (struct fimc_is_core *)device->interface->core;
+
 	resol = fimc_is_get_target_resol(device);
 	stream_cnt = fimc_is_get_start_sensor_cnt(core);
+
 
 	/* HACK: try to flush all remained gframes in Dual UHD */
 	if ((stream_cnt > 1) && (resol >= SIZE_UHD))

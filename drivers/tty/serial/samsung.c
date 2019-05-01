@@ -1694,10 +1694,11 @@ static ssize_t s3c24xx_serial_bt_log(struct file *file, char __user *userbuf, si
 
 		copied_bytes = 0;
 
-	if (port && port->state->pm_state == UART_PM_STATE_ON)
-		s3c24xx_print_reg_status(ourport);
+		if (port && port->state->pm_state == UART_PM_STATE_ON) {
+			s3c24xx_print_reg_status(ourport);
+			return 0;
+		}
 
-	return 0;
 	}
 
 	if (copied_bytes + bytes < LOG_BUFFER_SIZE) {
@@ -2046,6 +2047,7 @@ static int s3c24xx_serial_remove(struct platform_device *dev)
 		device_remove_file(&dev->dev, &dev_attr_clock_source);
 #endif
 
+#ifdef CONFIG_PM_DEVFREQ
 		if (ourport->uart_logging == 1) {
 			if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
 				remove_proc_entry("lpm", bt_log_dir);
@@ -2055,6 +2057,7 @@ static int s3c24xx_serial_remove(struct platform_device *dev)
 
 			kfree(ourport->uart_local_buf.buffer);
 		}
+#endif
 
 		uart_remove_one_port(&s3c24xx_uart_drv, port);
 	}

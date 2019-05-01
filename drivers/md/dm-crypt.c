@@ -1173,10 +1173,12 @@ static int kcryptd_io_rw(struct dm_crypt_io *io, gfp_t gfp)
 	crypt_inc_pending(io);
 
 	clone_init(io, clone);
+#ifdef CONFIG_FMP_EXT4CRYPT_FS
 	clone->private_enc_mode = FMP_DISK_ENC_MODE;
 	clone->private_algo_mode = FMP_XTS_ALGO_MODE;
 	clone->key = cc->key;
 	clone->key_length = cc->key_size;
+#endif
 	clone->bi_iter.bi_sector = cc->start + io->sector;
 
 	generic_make_request(clone);

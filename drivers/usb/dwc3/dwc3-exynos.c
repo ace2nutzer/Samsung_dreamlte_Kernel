@@ -476,11 +476,9 @@ static int dwc3_usb_hardlockup_handler (struct notifier_block *nb,
 	return 0;
 }
 
-#ifdef CONFIG_EXYNOS_CORESIGHT
 static struct notifier_block nb_hardlockup_block = {
 		    .notifier_call = dwc3_usb_hardlockup_handler,
 };
-#endif
 
 static int dwc3_exynos_probe(struct platform_device *pdev)
 {

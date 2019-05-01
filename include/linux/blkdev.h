@@ -1138,7 +1138,7 @@ static inline struct request *blk_map_queue_find_tag(struct blk_queue_tag *bqt,
 
 extern int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *);
 extern int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags,
+		sector_t nr_sects, gfp_t gfp_mask, int flags,
 		struct bio **biop);
 extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
