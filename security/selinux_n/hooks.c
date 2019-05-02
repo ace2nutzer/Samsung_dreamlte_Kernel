@@ -2946,7 +2946,7 @@ static int selinux_sb_kern_mount(struct super_block *sb, int flags, void *data)
 {
 	const struct cred *cred = current_cred();
 	struct common_audit_data ad;
-	int rc;
+	int rc = 0;
 
 #ifdef CONFIG_RKP_KDP	
 	if ((rc = security_integrity_current()))

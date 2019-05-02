@@ -121,8 +121,8 @@ int gpu_job_fence_status_dump(struct sync_fence *timeout_fence)
 					} else if (kctx->jctx.atoms[i].status == KBASE_JD_ATOM_STATE_IN_JS) {
 						cnt[2]++;
 						dev_warn(dev, "\t\t- [%p] Atom %d STATE_IN_JS\n", &kctx->jctx.atoms[i], i);
-						dev_warn(dev, "\t\t\t-- Atom %d	slot_nr 0x%x coreref_state 0x%x core_req 0x%x event_code 0x%x gpu_rb_state 0x%x\n",
-								i, kctx->jctx.atoms[i].slot_nr, kctx->jctx.atoms[i].coreref_state, kctx->jctx.atoms[i].core_req, kctx->jctx.atoms[i].event_code, kctx->jctx.atoms[i].gpu_rb_state);
+						/* dev_warn(dev, "\t\t\t-- Atom %d	slot_nr 0x%x coreref_state 0x%x core_req 0x%x event_code 0x%x gpu_rb_state 0x%x\n",
+								i, kctx->jctx.atoms[i].slot_nr, kctx->jctx.atoms[i].coreref_state, kctx->jctx.atoms[i].core_req, kctx->jctx.atoms[i].event_code, kctx->jctx.atoms[i].gpu_rb_state); */
 					} else if (kctx->jctx.atoms[i].status == KBASE_JD_ATOM_STATE_HW_COMPLETED) {
 						cnt[3]++;
 					} else if (kctx->jctx.atoms[i].status == KBASE_JD_ATOM_STATE_COMPLETED) {
