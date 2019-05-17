@@ -464,19 +464,21 @@
 	};
 
 	cpufreq {
-		domain@0 {
+		cpufreq_domain0: domain@0 {
 			device_type = "cpufreq-domain";
 			sibling-cpus = "0-3";
 			cal-id = <ACPM_DVFS_CPUCL1>;
 			dm-type = <DM_CPU_CL0>;
 
 			min-freq = <455000>;
+			max-freq = <2002000>;
 
 			/* PM QoS Class ID*/
 			pm_qos-min-class = <3>;
 			pm_qos-max-class = <4>;
+			pm_qos-booting = <1690000>;
 
-			user-default-qos = <715000>;
+			user-default-qos = <832000>;
 
 			/* auto calibration value */
 			auto-cal-freq = <1053000>;
@@ -487,18 +489,19 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 2002000 1014000
-						  1898000 1014000
-						  1794000 1014000
-						  1690000 1014000
-						  1456000  845000
-						  1248000  845000
-						  1053000  845000
-						   949000  845000
-						   832000  676000
-						   715000  676000
-						   598000  421000
-						   455000       0
+					table = <
+						  2002000  2093000
+						  1898000  2093000
+						  1794000  2093000
+						  1690000  2093000
+						  1456000  2002000
+						  1248000  1794000
+						  1053000  1540000
+						   949000  1352000
+						   832000  1014000
+						   715000  845000
+						   598000  676000
+						   455000  546000
 						   >;
 				};
 				mif-skew {
@@ -509,7 +512,7 @@
 				};
 			};
 		};
-		domain@1 {
+		cpufreq_domain1: domain@1 {
 			device_type = "cpufreq-domain";
 			sibling-cpus = "4-7";
 			cal-id = <ACPM_DVFS_CPUCL0>;
@@ -522,9 +525,12 @@
 			pm_qos-min-class = <5>;
 			pm_qos-max-class = <6>;
 			pm_qos-jigbooting = <1469000>;
+			pm_qos-booting = <2314000>;
+
+			user-default-qos = <858000>;
 
 			/* auto calibration value */
-			auto-cal-freq = <1703000>;
+			auto-cal-freq = <1066000>;
 			auto-cal-duration = <400>;	/* ms */
 
 			dm-constraints {
@@ -532,24 +538,26 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 2808000 1794000
-						  2704000 1794000
-						  2652000 1794000
-						  2574000 1794000
-						  2496000 1794000
-						  2314000 1794000
-						  2158000 1540000
-						  2002000 1540000
-						  1937000 1352000
-						  1807000 1352000
-						  1703000 1014000
-						  1469000  845000
-						  1261000  676000
-						  1170000  546000
-						  1066000  546000
-						   962000  421000
-						   858000  421000
-						   741000  421000 >;
+					table = <
+						  2808000  2093000
+						  2704000  2093000
+						  2652000  2093000
+						  2574000  2093000
+						  2496000  2093000
+						  2314000  2093000
+						  2158000  2093000
+						  2002000  2093000
+						  1937000  2093000
+						  1807000  2002000
+						  1703000  1794000
+						  1469000  1540000
+						  1261000  1352000
+						  1170000  1014000
+						  1066000  845000
+						   962000  676000
+						   858000  546000
+						   741000  421000
+						    >;
 				};
 				mif-skew {
 					guidance;
@@ -762,23 +770,23 @@
 		g3d_genpd_name = "pd-g3d"; /*KC: pg-g3d, LT,MK: pd-embedded_g3d*/
 		#cooling-cells = <2>; /* min followed by max */
 		governor = "interactive";
-		interactive_info = <455000 95 0>;
+		interactive_info = <455000 65 0>;
 		gpu_dvfs_table_size = <9 7>; /*<row col>*/
-		gpu_dvfs_table = <  839000    98  100   1  1794000  1690000     0
-		                    764000    98  100   1  1794000  1690000     0
-		                    683000    98  100   1  1794000  1690000     0
-		                    572000    78   99   1  1794000  1690000     0
-		                    546000    78   99   1  1794000  1690000     2002000
-		                    455000    78   85   1  1540000  1456000     2002000
-		                    385000    78   85   1  1352000  1248000     0
-		                    338000    78   85   1  1014000   949000     0
-		                    260000    78   85   1   421000        0     0 >;
+		gpu_dvfs_table = <  839000    44   65   1  2093000  0     0
+		                    764000    43   65   1  2093000  0     0
+		                    683000    39   65   1  2093000  0     0
+		                    572000    47   65   1  2093000  0     0
+		                    546000    39   65   1  2093000  0     0
+		                    455000    40   65   1  2002000  0     0
+		                    385000    42   65   1  1794000  0     0
+		                    338000    35   65   1  1540000  0     0
+		                    260000 35 65 1 1352000 0 0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
 		gpu_pmu_status_local_pwr_mask = <0xF>; /*0xF << 0*/
-		gpu_max_clock = <546000>;
-		gpu_max_clock_limit = <546000>;
+		gpu_max_clock = <839000>;
+		gpu_max_clock_limit = <839000>;
 		gpu_min_clock = <260000>;
 		gpu_dvfs_start_clock = <260000>;
 		gpu_dvfs_bl_config_clock = <260000>;
@@ -786,8 +794,8 @@
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
 		gpu_tmu_control = <1>;
-		gpu_temp_throttling_level_num = <6>;
-		gpu_temp_throttling = <546000 455000 385000 338000 260000 260000>;
+		gpu_temp_throttling_level_num = <9>;
+		gpu_temp_throttling = <839000 764000 683000 572000 546000 455000 385000 338000 260000>;
 		gpu_power_coeff = <625>;
 		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
 		gpu_default_wakeup_lock = <1>;
@@ -799,18 +807,18 @@
 		gpu_runtime_pm_delay_time = <50>;
 		gpu_dvfs_polling_time = <30>;
 		gpu_pmqos_int_disable = <1>;
-		gpu_pmqos_mif_max_clock = <1794000>;
-		gpu_pmqos_mif_max_clock_base = <546000>;
-		gpu_cl_dvfs_start_base = <455000>;
-		gpu_debug_level = <3>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
-		gpu_trace_level = <8>; /*TRACE_ALL*/
-		gpu_mo_min_clock = <455000>;
+		gpu_pmqos_mif_max_clock = <2093000>;
+		gpu_pmqos_mif_max_clock_base = <0>;
+		gpu_cl_dvfs_start_base = <260000>;
+		gpu_debug_level = <4>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
+		gpu_trace_level = <1>; /*TRACE_ALL*/
+		gpu_mo_min_clock = <260000>;
 		gpu_boost_gpu_min_lock = <0>;
-		gpu_boost_egl_min_lock = <1872000>;
-		gpu_vk_boost_max_lock = <338000>;
-		gpu_vk_boost_mif_min_lock = <1794000>;
+		gpu_boost_egl_min_lock = <0>;
+		gpu_vk_boost_max_lock = <0>;
+		gpu_vk_boost_mif_min_lock = <2093000>;
 		gpu_bts_support = <1>;
-		gpu_asv_cali_lock_val = <546000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
+		gpu_asv_cali_lock_val = <0>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
 		gpu_set_pmu_duration_val = <0xfffff363>; /* only for KC for now*/
 	};
@@ -2467,7 +2475,7 @@
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq reboot_freq */
 
 		/* Booting value */
-		boot_info = <40 1794000>;
+		boot_info = <40 2093000>;
 		/* boot_qos_timeout, boot_freq */
 
 		use_get_dev = "false";
@@ -3416,9 +3424,9 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
 		};
 
 		abox_rdma_1: abox_rdma@0x13E51100 {
@@ -3427,9 +3435,9 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
 		};
 
 		abox_rdma_2: abox_rdma@0x13E51200 {
@@ -3438,9 +3446,9 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
 		};
 
 		abox_rdma_3: abox_rdma@0x13E51300 {
@@ -3799,7 +3807,7 @@
 				thrd_mb = <1884284>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3821,7 +3829,7 @@
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3832,7 +3840,7 @@
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -4570,13 +4578,19 @@
 		sensing_mode = "max";
 		/* gpu cooling related table */
 		/* flags, driver_data(index), frequency */
-		gpu_idx_num = <6>;
-		gpu_cooling_table = < 0 0 546000
-				      0 1 455000
-				      0 2 385000
-				      0 3 338000
-				      0 4 260000
-				      0 5 TABLE_END>;
+		gpu_idx_num = <10>;
+		gpu_cooling_table = <
+				      0 0 839000
+				      0 1 764000
+				      0 2 683000
+				      0 3 572000
+				      0 4 546000
+				      0 5 455000
+				      0 6 385000
+				      0 7 338000
+				      0 8 260000
+				      0 9 TABLE_END
+					>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 
@@ -4631,11 +4645,11 @@
 			cooling-maps {
 				map0 {
 				     trip = <&mngs_alert0>;
-				     cooling-device = <&cpu4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				     cooling-device = <&cpufreq_domain1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map1 {
 				     trip = <&mngs_alert1>;
-				     cooling-device = <&cpu4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				     cooling-device = <&cpufreq_domain1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 			       };
 			};
 		};
@@ -4693,42 +4707,42 @@
 				map0 {
 				     trip = <&apo_alert0>;
 				     /* Corresponds to 1586MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 				map1 {
 				     trip = <&apo_alert1>;
 				     /* Corresponds to 1482MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 			       };
 				map2 {
 				     trip = <&apo_alert2>;
 				     /* Corresponds to 1378MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 				map3 {
 				     trip = <&apo_alert3>;
 				     /* Corresponds to 1170MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 				map4 {
 				     trip = <&apo_alert4>;
 				     /* Corresponds to 1066MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 				map5 {
 				     trip = <&apo_alert5>;
 				     /* Corresponds to 442MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 			       };
 				map6 {
 				     trip = <&apo_alert6>;
 				     /* Corresponds to 442MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 				map7 {
 				     trip = <&apo_hot>;
 				     /* Corresponds to 442MHz at freq_table */
-				     cooling-device = <&cpu0 0 0>;
+				     cooling-device = <&cpufreq_domain0 0 0>;
 				};
 			};
 		};
@@ -4860,16 +4874,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <1066000>;
+			input_booster,cpu_freqs = <1469000>;
 			input_booster,hmp_boost = <1>;
-			input_booster,kfc_freqs = <0>;
+			input_booster,kfc_freqs = <1456000>;
 			input_booster,mif_freqs = <0>;
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <500>;
-			input_booster,tail_times = <500>;
-			input_booster,phase_times = <0>;
+			input_booster,head_times = <1000>;
+			input_booster,tail_times = <1000>;
+			input_booster,phase_times = <1000>;
 		};
 		booster_key@2 {
 			input_booster,label = "TOUCHKEY";
@@ -4879,16 +4893,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <1066000>;
+			input_booster,cpu_freqs = <1469000>;
 			input_booster,hmp_boost = <1>;
-			input_booster,kfc_freqs = <0>;
+			input_booster,kfc_freqs = <1456000>;
 			input_booster,mif_freqs = <0>;
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <0>;
-			input_booster,tail_times = <200>;
-			input_booster,phase_times = <0>;
+			input_booster,head_times = <1000>;
+			input_booster,tail_times = <1000>;
+			input_booster,phase_times = <1000>;
 		};
 		booster_key@3 {
 			input_booster,label = "TOUCH";
@@ -4898,16 +4912,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1066000 1066000 858000>;
+			input_booster,cpu_freqs = <1469000 1469000 1469000>;
 			input_booster,hmp_boost = <1 1 1>;
-			input_booster,kfc_freqs = <832000 832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000 1456000>;
 			input_booster,mif_freqs = <0 0 0>;
 			input_booster,int_freqs = <0 0 0>;
 
 			/* Time table */
-			input_booster,head_times = <130 130 0>;
-			input_booster,tail_times = <0 0 500>;
-			input_booster,phase_times = <0 0 0>;
+			input_booster,head_times = <1000 1000 1000>;
+			input_booster,tail_times = <1000 1000 1000>;
+			input_booster,phase_times = <1000 1000 1000>;
 		};
 		booster_key@4 { // Input Booster +
 			input_booster,label = "MULTITOUCH";
@@ -4917,16 +4931,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1066000 858000>;
+			input_booster,cpu_freqs = <1469000 1469000>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 0>;
-			input_booster,tail_times = <0 500>;
-			input_booster,phase_times = <0 0>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
+			input_booster,phase_times = <1000 1000>;
 		};
 		booster_key@5 {
 			input_booster,label = "KEYBOARD";
@@ -4936,16 +4950,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1066000 1066000>;
+			input_booster,cpu_freqs = <1469000 1469000>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <130 130>;
-			input_booster,tail_times = <0 0>;
-			input_booster,phase_times = <0 0>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
+			input_booster,phase_times = <1000 1000>;
 		};
 		booster_key@6 {
 			input_booster,label = "MOUSE";
@@ -4955,16 +4969,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1066000 858000>;
+			input_booster,cpu_freqs = <1469000 1469000>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <130 0>;
-			input_booster,tail_times = <0 500>;
-			input_booster,phase_times = <0 0>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
+			input_booster,phase_times = <1000 1000>;
 		};
 		booster_key@7 {
 			input_booster,label = "MOUSE WHEEL";
@@ -4974,16 +4988,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1066000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <832000 0>;
+			input_booster,cpu_freqs = <1469000 1469000>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <130 0>;
-			input_booster,tail_times = <0 0>;
-			input_booster,phase_times = <0 0>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
+			input_booster,phase_times = <1000 1000>;
 		};
 		booster_key@8 {
 			input_booster,label = "PEN HOVER";
@@ -4993,16 +5007,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1066000 858000>;
+			input_booster,cpu_freqs = <1469000 1469000>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <130 0>;
-			input_booster,tail_times = <0 500>;
-			input_booster,phase_times = <0 0>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
+			input_booster,phase_times = <1000 1000>;
 		};
 		booster_key@9 {
 			input_booster,label = "PEN";
@@ -5012,14 +5026,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1469000 858000>;
+			input_booster,cpu_freqs = <1469000 1469000>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <832000 832000>;
+			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,bimc_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <200 0>;
-			input_booster,tail_times = <0 600>;
+			input_booster,head_times = <1000 1000>;
+			input_booster,tail_times = <1000 1000>;
 		};
 		booster_key@10 {
 			input_booster,label = "KEY_TWO";
@@ -5031,14 +5045,14 @@
 			/* for level	:	1_Head */
 			input_booster,cpu_freqs = <1469000>;
 			input_booster,hmp_boost = <1>;
-			input_booster,kfc_freqs = <0>;
+			input_booster,kfc_freqs = <1456000>;
 			input_booster,mif_freqs = <0>;
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <700>;
-			input_booster,tail_times = <700>;
-			input_booster,phase_times = <0>;
+			input_booster,head_times = <1000>;
+			input_booster,tail_times = <1000>;
+			input_booster,phase_times = <1000>;
 		}; // Input Booster -
 		/* If you need to add new key type, add it this position */
 	};
@@ -5062,51 +5076,81 @@
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "0-3";
 
-			user-default-qos = <715000>;
-		};
-
-		domain@1 {
-			device_type = "cpufreq-userctrl";
-			shared-cpus = "4-7";
-
-			user-default-qos = <962000>;
+			user-default-qos = <832000>;
 
 			min-limit {
 				ctrl-type = <PM_QOS_MIN_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2314000 1690000
-					2158000 715000
-					2002000 715000
-					1937000 715000
-					1807000 715000
-					1703000 715000
-					1469000 715000
-					1261000 715000
-					1170000 715000
-					1066000 715000
-					 962000 715000
-					 858000 715000
-					 741000 715000>;
+				table = <
+					 741000 455000
+					  >;
 			};
 
 			max-limit {
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2314000 1690000
-					2158000 1690000
-					2002000 1690000
-					1937000 1690000
-					1807000 1690000
-					1703000 1690000
-					1469000 1690000
-					1261000 1690000
-					1170000 1690000
-					1066000 1690000
-					 962000 1690000
-					 858000 1690000
-					 741000 1690000 >;
+				table = <
+					2808000 2002000
+					2704000 1898000
+					2652000 1794000
+					2574000 1690000
+					2496000 1456000
+					2314000 1248000
+					2158000 1053000
+					2002000 949000
+					1937000 832000
+					1807000 715000
+					1703000 598000
+					1469000 598000
+					1261000 598000
+					1170000 598000
+					1066000 598000
+					 962000 598000
+					 858000 598000
+					  >;
+			};
+		};
+
+		domain@1 {
+			device_type = "cpufreq-userctrl";
+			shared-cpus = "4-7";
+
+			user-default-qos = <858000>;
+
+			min-limit {
+				ctrl-type = <PM_QOS_MIN_LIMIT>;
+				execution-mode = <AARCH64_MODE>;
+					/* big	    lit */
+				table = <
+					 741000 455000
+					  >;
+			};
+
+			max-limit {
+				ctrl-type = <PM_QOS_MAX_LIMIT>;
+				execution-mode = <AARCH64_MODE>;
+					/* big	    lit */
+				table = <
+					2808000 2002000
+					2704000 1898000
+					2652000 1794000
+					2574000 1690000
+					2496000 1456000
+					2314000 1248000
+					2158000 1053000
+					2002000 949000
+					1937000 832000
+					1807000 715000
+					1703000 598000
+					1469000 598000
+					1261000 598000
+					1170000 598000
+					1066000 598000
+					 962000 598000
+					 858000 598000
+					  >;
 			};
 
 		};
