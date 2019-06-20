@@ -54,6 +54,13 @@ config CPU_FREQ_STAT_DETAILS
 
 	  If in doubt, say N.
 
+config CPU_FREQ_SUSPEND_LIMIT
+	bool "Limit suspend cpu frequency"
+	help
+	  Adds a sysfs interface to limit CPU frequency on suspend.
+
+	  If in doubt, say N.
+
 choice
 	prompt "Default CPUFreq governor"
 	default CPU_FREQ_DEFAULT_GOV_USERSPACE if ARM_SA1100_CPUFREQ || ARM_SA1110_CPUFREQ
