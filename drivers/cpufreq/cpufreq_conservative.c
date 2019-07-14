@@ -16,11 +16,78 @@
 #include <linux/pm_qos.h>
 
 /* Conservative governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(80)
-#define DEF_FREQUENCY_DOWN_THRESHOLD		(20)
-#define DEF_FREQUENCY_STEP			(5)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
-#define MAX_SAMPLING_DOWN_FACTOR		(10)
+#define DEF_FREQUENCY_UP_THRESHOLD			(70)
+
+/* Cluster 0 */
+#define DEF_FREQUENCY_STEP_CL0_0               (455000)
+#define DEF_FREQUENCY_STEP_CL0_1               (598000)
+#define DEF_FREQUENCY_STEP_CL0_2               (715000)
+#define DEF_FREQUENCY_STEP_CL0_3               (832000)
+#define DEF_FREQUENCY_STEP_CL0_4               (949000)
+#define DEF_FREQUENCY_STEP_CL0_5               (1053000)
+#define DEF_FREQUENCY_STEP_CL0_6               (1248000)
+#define DEF_FREQUENCY_STEP_CL0_7               (1456000)
+#define DEF_FREQUENCY_STEP_CL0_8               (1690000)
+#define DEF_FREQUENCY_STEP_CL0_9               (1794000)
+#define DEF_FREQUENCY_STEP_CL0_10              (1898000)
+#define DEF_FREQUENCY_STEP_CL0_11              (2002000)
+
+/* Cluster 1 */
+#define DEF_FREQUENCY_STEP_CL1_0               (741000)
+#define DEF_FREQUENCY_STEP_CL1_1               (858000)
+#define DEF_FREQUENCY_STEP_CL1_2               (962000)
+#define DEF_FREQUENCY_STEP_CL1_3               (1066000)
+#define DEF_FREQUENCY_STEP_CL1_4               (1170000)
+#define DEF_FREQUENCY_STEP_CL1_5               (1261000)
+#define DEF_FREQUENCY_STEP_CL1_6               (1469000)
+#define DEF_FREQUENCY_STEP_CL1_7               (1703000)
+#define DEF_FREQUENCY_STEP_CL1_8               (1807000)
+#define DEF_FREQUENCY_STEP_CL1_9               (1937000)
+#define DEF_FREQUENCY_STEP_CL1_10              (2002000)
+#define DEF_FREQUENCY_STEP_CL1_11              (2158000)
+#define DEF_FREQUENCY_STEP_CL1_12              (2314000)
+#define DEF_FREQUENCY_STEP_CL1_13              (2496000)
+#define DEF_FREQUENCY_STEP_CL1_14              (2574000)
+#define DEF_FREQUENCY_STEP_CL1_15              (2652000)
+#define DEF_FREQUENCY_STEP_CL1_16              (2704000)
+#define DEF_FREQUENCY_STEP_CL1_17              (2808000)
+
+/* Cluster 0 */
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_1             (43)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_2             (49)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_3             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_4             (51)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_5             (53)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_6             (49)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_7             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_8             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_9             (56)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_10            (56)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL0_11            (56)
+
+/* Cluster 1 */
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_1             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_2             (52)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_3             (53)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_4             (54)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_5             (55)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_6             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_7             (50)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_8             (56)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_9             (55)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_10            (58)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_11            (55)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_12            (55)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_13            (55)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_14            (58)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_15            (58)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_16            (59)
+#define DEF_FREQUENCY_DOWN_THRESHOLD_CL1_17            (57)
+
+#define DEF_FREQUENCY_STEP                     (2)
+#define DEF_SAMPLING_DOWN_FACTOR               (1)
+#define MAX_SAMPLING_DOWN_FACTOR               (10)
+#define DEF_FREQUENCY_MIN_SAMPLE_RATE		(100000)
 
 static DEFINE_PER_CPU(struct cs_cpu_dbs_info_s, cs_cpu_dbs_info);
 
@@ -73,7 +140,7 @@ static void cs_check_cpu(int cpu, unsigned int load)
 		return;
 
 	/* Check for frequency increase */
-	if (load > cs_tuners->up_threshold) {
+	if (load > cs_tuners->static_up_threshold) {
 		dbs_info->down_skip = 0;
 
 		/* if we are already at full speed then break out early */
@@ -95,8 +162,141 @@ static void cs_check_cpu(int cpu, unsigned int load)
 		return;
 	dbs_info->down_skip = 0;
 
+	/* Get dynamic down_threshold for Cluster 0 & 1 */
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_1) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_1;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_2) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_2;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_3) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_3;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_4) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_4;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_5) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_5;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_6) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_6;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_7) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_7;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL0_8) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_8;
+		goto check;
+	}
+
+	if (policy->cur >= DEF_FREQUENCY_STEP_CL0_9) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_9;
+		goto check;
+	}
+
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_1) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_1;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_2) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_2;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_3) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_3;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_4) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_4;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_5) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_5;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_6) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_6;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_7) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_7;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_8) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_8;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_9) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_9;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_10) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_10;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_11) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_11;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_12) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_12;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_13) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_13;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_14) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_14;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_15) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_15;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_16) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_16;
+		goto check;
+	}
+
+	if (policy->cur == DEF_FREQUENCY_STEP_CL1_17) {
+		cs_tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL1_17;
+		goto check;
+	}
+
+check:
 	/* Check for frequency decrease */
-	if (load < cs_tuners->down_threshold) {
+	if (load < cs_tuners->dynamic_down_threshold) {
 		unsigned int freq_target;
 		/*
 		 * if we cannot reduce the frequency anymore, break out early
@@ -190,35 +390,39 @@ static ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 	return count;
 }
 
-static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
+static ssize_t store_static_up_threshold(struct dbs_data *dbs_data, const char *buf,
 		size_t count)
 {
 	struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
+/*
 	unsigned int input;
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	if (ret != 1 || input > 100 || input <= cs_tuners->down_threshold)
+	if (ret != 1 || input > 100 || input <= cs_tuners->dynamic_down_threshold)
 		return -EINVAL;
 
-	cs_tuners->up_threshold = input;
+	cs_tuners->static_up_threshold = input;
+*/
 	return count;
 }
 
-static ssize_t store_down_threshold(struct dbs_data *dbs_data, const char *buf,
+static ssize_t store_dynamic_down_threshold(struct dbs_data *dbs_data, const char *buf,
 		size_t count)
 {
 	struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
+/*
 	unsigned int input;
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	/* cannot be lower than 1 otherwise freq will not fall */
+	// cannot be lower than 1 otherwise freq will not fall
 	if (ret != 1 || input < 1 || input > 100 ||
-			input >= cs_tuners->up_threshold)
+			input >= cs_tuners->static_up_threshold)
 		return -EINVAL;
 
-	cs_tuners->down_threshold = input;
+	cs_tuners->dynamic_down_threshold = input;
+*/
 	return count;
 }
 
@@ -278,16 +482,16 @@ static ssize_t store_freq_step(struct dbs_data *dbs_data, const char *buf,
 
 show_store_one(cs, sampling_rate);
 show_store_one(cs, sampling_down_factor);
-show_store_one(cs, up_threshold);
-show_store_one(cs, down_threshold);
+show_store_one(cs, static_up_threshold);
+show_store_one(cs, dynamic_down_threshold);
 show_store_one(cs, ignore_nice_load);
 show_store_one(cs, freq_step);
 declare_show_sampling_rate_min(cs);
 
 gov_sys_pol_attr_rw(sampling_rate);
 gov_sys_pol_attr_rw(sampling_down_factor);
-gov_sys_pol_attr_rw(up_threshold);
-gov_sys_pol_attr_rw(down_threshold);
+gov_sys_pol_attr_ro(static_up_threshold);
+gov_sys_pol_attr_ro(dynamic_down_threshold);
 gov_sys_pol_attr_rw(ignore_nice_load);
 gov_sys_pol_attr_rw(freq_step);
 gov_sys_pol_attr_ro(sampling_rate_min);
@@ -296,8 +500,8 @@ static struct attribute *dbs_attributes_gov_sys[] = {
 	&sampling_rate_min_gov_sys.attr,
 	&sampling_rate_gov_sys.attr,
 	&sampling_down_factor_gov_sys.attr,
-	&up_threshold_gov_sys.attr,
-	&down_threshold_gov_sys.attr,
+	&static_up_threshold_gov_sys.attr,
+	&dynamic_down_threshold_gov_sys.attr,
 	&ignore_nice_load_gov_sys.attr,
 	&freq_step_gov_sys.attr,
 	NULL
@@ -312,8 +516,8 @@ static struct attribute *dbs_attributes_gov_pol[] = {
 	&sampling_rate_min_gov_pol.attr,
 	&sampling_rate_gov_pol.attr,
 	&sampling_down_factor_gov_pol.attr,
-	&up_threshold_gov_pol.attr,
-	&down_threshold_gov_pol.attr,
+	&static_up_threshold_gov_pol.attr,
+	&dynamic_down_threshold_gov_pol.attr,
 	&ignore_nice_load_gov_pol.attr,
 	&freq_step_gov_pol.attr,
 	NULL
@@ -336,15 +540,14 @@ static int cs_init(struct dbs_data *dbs_data, bool notify)
 		return -ENOMEM;
 	}
 
-	tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
-	tuners->down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD;
+	tuners->static_up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
+	tuners->dynamic_down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD_CL0_1;
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
 	tuners->freq_step = DEF_FREQUENCY_STEP;
 
 	dbs_data->tuners = tuners;
-	dbs_data->min_sampling_rate = MIN_SAMPLING_RATE_RATIO *
-		jiffies_to_usecs(10);
+	dbs_data->min_sampling_rate = DEF_FREQUENCY_MIN_SAMPLE_RATE;
 
 	if (notify)
 		cpufreq_register_notifier(&cs_cpufreq_notifier_block,
