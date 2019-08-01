@@ -173,7 +173,7 @@ struct cs_dbs_tuners {
 	unsigned int ignore_nice_load;
 	unsigned int sampling_rate;
 	unsigned int sampling_down_factor;
-	unsigned int static_up_threshold;
+	unsigned int up_threshold;
 	unsigned int dynamic_down_threshold;
 	unsigned int freq_step;
 };
