@@ -3360,7 +3360,9 @@ static void remove_entity_load_avg(struct sched_entity *se)
 	if(entity_is_task(se)) {
 		trace_sched_task_load_contrib(task_of(se), se->avg.load_avg);
 		trace_sched_task_util_contrib(task_of(se), se->avg.util_avg);
+#ifdef CONFIG_SCHED_HMP
 		trace_sched_task_runnable_ratio(task_of(se), se->avg.hmp_load_avg);
+#endif
 	}
 }
 
@@ -6728,11 +6730,12 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	int new_cpu = prev_cpu;
 	int want_affine = 0;
 	int sync = wake_flags & WF_SYNC;
+#ifdef CONFIG_SCHED_HMP
 	int thread_pid;
 
 	if (hmp_wakeup_to_idle_cpu)
 		sd_flag |= SD_BALANCE_WAKE;
-
+#endif
 	if (sd_flag & SD_BALANCE_WAKE)
 #ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
 		want_affine = !wake_wide(p) && task_fits_max(p, cpu) &&

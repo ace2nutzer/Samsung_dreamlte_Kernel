@@ -316,7 +316,10 @@ fail_enc_init:
 	return 0;
 }
 
+#ifdef CONFIG_SCHED_HMP
 extern int set_hmp_family_boost(int enable);
+#endif
+
 /* Open an MFC node */
 static int s5p_mfc_open(struct file *file)
 {
@@ -345,6 +348,7 @@ static int s5p_mfc_open(struct file *file)
 
 	dev->num_inst++;	/* It is guarded by mfc_mutex in vfd */
 
+#ifdef CONFIG_SCHED_HMP
 	/* for family boost */
 	if (node == MFCNODE_ENCODER) {
 		dev->num_enc++;
@@ -356,6 +360,7 @@ static int s5p_mfc_open(struct file *file)
 			mfc_debug(1, "call set_hmp_family_boost(1)\n");
 		}
 	}
+#endif
 
 	/* Allocate memory for context */
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
@@ -594,6 +599,7 @@ err_vdev:
 
 err_ctx_alloc:
 	dev->num_inst--;
+#ifdef CONFIG_SCHED_HMP
 	if (node == MFCNODE_ENCODER) {
 		dev->num_enc--;
 		mfc_debug(1, "encoder count: %c\n", dev->num_enc);
@@ -604,6 +610,7 @@ err_ctx_alloc:
 			mfc_debug(1, "call cpuidle_resume()\n");
 		}
 	}
+#endif
 
 err_node_type:
 	mfc_info_dev("MFC driver open is failed [%d:%d]\n",
@@ -692,6 +699,7 @@ static int s5p_mfc_release(struct file *file)
 		dev->num_drm_inst--;
 	dev->num_inst--;
 
+#ifdef CONFIG_SCHED_HMP
 	/* for family boost */
 	if (ctx->type == MFCINST_ENCODER && !ctx->is_drm) {
 		dev->num_enc--;
@@ -703,6 +711,7 @@ static int s5p_mfc_release(struct file *file)
 			mfc_debug(1, "call cpuidle_resume()\n");
 		}
 	}
+#endif
 
 	if (dev->num_inst == 0) {
 		s5p_mfc_deinit_hw(dev);

@@ -459,8 +459,10 @@ static int _cpu_down(unsigned int cpu, int tasks_frozen)
 	/* This actually kills the CPU. */
 	__cpu_die(cpu);
 
+#if defined(CONFIG_HMP_FAST_CPU_MASK)
 	if (cpumask_test_cpu(cpu, &hmp_fast_cpu_mask))
 		cpus_notify_nofail(CPUS_DOWN_COMPLETE, (void *)cpu_online_mask);
+#endif
 
 	/* CPU is completely dead: tell everyone.  Too late to complain. */
 	tick_cleanup_dead_cpu(cpu);
@@ -675,7 +677,9 @@ void smpboot_thread_init(void)
 static int _cpu_up(unsigned int cpu, int tasks_frozen)
 {
 	int ret, nr_calls = 0;
+#if defined(CONFIG_HMP_FAST_CPU_MASK)
 	cpumask_t dest_cpus;
+#endif
 	void *hcpu = (void *)(long)cpu;
 	unsigned long mod = tasks_frozen ? CPU_TASKS_FROZEN : 0;
 	struct task_struct *idle;
@@ -687,13 +691,14 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out;
 	}
 
+#if defined(CONFIG_HMP_FAST_CPU_MASK)
 	if (cpumask_test_cpu(cpu, &hmp_fast_cpu_mask)) {
 		cpumask_or(&dest_cpus, cpumask_of(cpu), cpu_online_mask);
-
 		ret = cpus_notify(CPUS_UP_PREPARE, (void *)&dest_cpus);
 		if (ret)
 			goto out;
 	}
+#endif
 
 	idle = idle_thread_get(cpu);
 	if (IS_ERR(idle)) {

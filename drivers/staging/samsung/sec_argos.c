@@ -44,7 +44,9 @@ enum {
 	INTFREQ,
 	TASK_AFFINITY_EN,
 	IRQ_AFFINITY_EN,
+#ifdef CONFIG_SCHED_HMP
 	HMP_BOOST_EN,
+#endif
 	ITEM_MAX,
 };
 
@@ -87,7 +89,9 @@ struct argos {
 	bool task_hotplug_disable;
 	struct list_head irq_affinity_list;
 	bool irq_hotplug_disable;
+#ifdef CONFIG_SCHED_HMP
 	bool hmpboost_enable;
+#endif
 	bool argos_block;
 	struct blocking_notifier_head argos_notifier;
 	/* protect prev_level, qos, task/irq_hotplug_disable, hmpboost_enable */
@@ -366,6 +370,7 @@ int argos_irq_affinity_apply(int dev_num, bool enable)
 	return result;
 }
 
+#ifdef CONFIG_SCHED_HMP
 int argos_hmpboost_apply(int dev_num, bool enable)
 {
 	bool *hmpboost_enable;
@@ -390,6 +395,7 @@ int argos_hmpboost_apply(int dev_num, bool enable)
 
 	return 0;
 }
+#endif
 
 static void argos_freq_unlock(int type)
 {
@@ -489,7 +495,9 @@ void argos_block_enable(char *req_name, bool set)
 		argos_freq_unlock(dev_num);
 		argos_task_affinity_apply(dev_num, 0);
 		argos_irq_affinity_apply(dev_num, 0);
+#ifdef CONFIG_SCHED_HMP
 		argos_hmpboost_apply(dev_num, 0);
+#endif
 		cnode->prev_level = -1;
 		mutex_unlock(&cnode->level_mutex);
 	} else {
@@ -579,7 +587,9 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 				argos_freq_unlock(type);
 				argos_task_affinity_apply(type, 0);
 				argos_irq_affinity_apply(type, 0);
+#ifdef CONFIG_SCHED_HMP
 				argos_hmpboost_apply(type, 0);
+#endif
 			} else {
 				unsigned enable_flag;
 
@@ -591,8 +601,10 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 				enable_flag = argos_pdata->devices[type].tables[level].items[IRQ_AFFINITY_EN];
 				argos_irq_affinity_apply(type, enable_flag);
 
+#ifdef CONFIG_SCHED_HMP
 				enable_flag = argos_pdata->devices[type].tables[level].items[HMP_BOOST_EN];
 				argos_hmpboost_apply(type, enable_flag);
+#endif
 
 				if (cnode->argos_notifier.head) {
 					pr_debug("%s: Call argos notifier(%s lev:%d)\n", __func__, cnode->desc, level);
@@ -672,7 +684,9 @@ static int argos_parse_dt(struct device *dev)
 		INIT_LIST_HEAD(&cnode->irq_affinity_list);
 		cnode->task_hotplug_disable = false;
 		cnode->irq_hotplug_disable = false;
+#ifdef CONFIG_SCHED_HMP
 		cnode->hmpboost_enable = false;
+#endif
 		cnode->argos_block = false;
 		cnode->prev_level = -1;
 		mutex_init(&cnode->level_mutex);

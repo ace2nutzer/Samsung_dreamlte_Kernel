@@ -228,8 +228,10 @@ int mc_scheduler_start(void)
 		return PTR_ERR(sched_ctx.thread);
 	}
 
+#ifdef CONFIG_HMP_SLOW_CPU_MASK
 	/* ExySp: set affinity to little */
 	set_cpus_allowed_ptr(sched_ctx.thread, &hmp_slow_cpu_mask);
+#endif
 
 	nq_register_scheduler(mc_dev_command);
 	complete(&sched_ctx.idle_complete);
