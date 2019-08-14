@@ -19,6 +19,8 @@
 #include <linux/seq_file.h>
 #include "include/fuelgauge/max77865_fuelgauge.h"
 
+extern int charging_curr;
+
 static enum power_supply_property max77865_fuelgauge_props[] = {
 };
 
@@ -1165,7 +1167,7 @@ static void max77865_fg_get_scaled_capacity(
 #if defined(CONFIG_BATTERY_SWELLING)
 	union power_supply_propval swelling_val;
 #endif
-	int current_standard, raw_capacity = val->intval;
+	int raw_capacity = val->intval;
 	struct power_supply *psy = get_power_supply_by_name("battery");
 
 	if(!psy) {
@@ -1185,19 +1187,14 @@ static void max77865_fg_get_scaled_capacity(
 	psy_do_property("max77865-charger", get, POWER_SUPPLY_PROP_CHARGE_NOW,
 			chg_val2);
 
-	if (is_hv_wireless_type(fuelgauge->cable_type) || is_hv_wire_type(fuelgauge->cable_type))
-		current_standard = CAPACITY_SCALE_HV_CURRENT;
-	else
-		current_standard = CAPACITY_SCALE_DEFAULT_CURRENT;
-
-	pr_info("%s : current_standard(%d)\n", __func__, current_standard);
+	pr_info("%s : charging_curr(%d)\n", __func__, charging_curr);
 
 	if ((cable_val.intval != SEC_BATTERY_CABLE_NONE) &&
 #if defined(CONFIG_BATTERY_SWELLING)
 		(!swelling_val.intval) &&
 #endif
 		(!strcmp(chg_val2.strval, "CV Mode")) &&
-		(chg_val.intval >= current_standard)) {
+		(chg_val.intval >= charging_curr)) {
 		int max_temp;
 		int temp, sample;
 		int curr;

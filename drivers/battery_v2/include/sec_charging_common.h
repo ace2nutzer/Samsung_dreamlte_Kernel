@@ -69,15 +69,15 @@ enum power_supply_ext_property {
 };
 
 enum sec_battery_usb_conf {
-	USB_CURRENT_UNCONFIGURED = 100,
-	USB_CURRENT_HIGH_SPEED = 500,
-	USB_CURRENT_SUPER_SPEED = 900,
+	USB_CURRENT_UNCONFIGURED = 0,
+	USB_CURRENT_HIGH_SPEED = 0,
+	USB_CURRENT_SUPER_SPEED = 0,
 };
 
 enum sec_battery_rp_curr {
-	RP_CURRENT_RP1 = 500,
-	RP_CURRENT_RP2 = 1500,
-	RP_CURRENT_RP3 = 3000,
+	RP_CURRENT_RP1 = 0,
+	RP_CURRENT_RP2 = 0,
+	RP_CURRENT_RP3 = 0,
 };
 
 enum power_supply_ext_health {
@@ -1054,6 +1054,7 @@ static inline struct power_supply *get_power_supply_by_name(char *name)
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_HV_PACK || \
 	cable_type == SEC_BATTERY_CABLE_HV_WIRELESS_ETX || \
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_HV_STAND || \
+	cable_type == SEC_BATTERY_CABLE_PREPARE_WIRELESS_HV || \
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_HV_VEHICLE)
 
 #define is_nv_wireless_type(cable_type)	( \
@@ -1062,7 +1063,6 @@ static inline struct power_supply *get_power_supply_by_name(char *name)
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_PACK || \
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_STAND || \
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_VEHICLE || \
-	cable_type == SEC_BATTERY_CABLE_PREPARE_WIRELESS_HV || \
 	cable_type == SEC_BATTERY_CABLE_WIRELESS_TX)
 
 #define is_wireless_type(cable_type) \
@@ -1093,6 +1093,7 @@ static inline struct power_supply *get_power_supply_by_name(char *name)
 	cable_type == SEC_BATTERY_CABLE_9V_ERR || \
 	cable_type == SEC_BATTERY_CABLE_9V_TA || \
 	cable_type == SEC_BATTERY_CABLE_9V_UNKNOWN || \
+	cable_type == SEC_BATTERY_CABLE_PREPARE_TA || \
 	cable_type == SEC_BATTERY_CABLE_12V_TA)
 
 #define is_hv_wire_9v_type(cable_type) ( \

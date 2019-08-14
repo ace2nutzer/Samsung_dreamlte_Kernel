@@ -184,37 +184,37 @@
 		battery,chg_gpio_full_check = <0>;
 		battery,chg_polarity_full_check = <1>;
 
-		battery,chg_high_temp = <460>;
-		battery,chg_high_temp_recovery = <440>;
-		battery,chg_input_limit_current = <1000>;
-		battery,chg_charging_limit_current = <1250>; 
+		battery,chg_high_temp = <800>;
+		battery,chg_high_temp_recovery = <750>;
+		battery,chg_input_limit_current = <500>;
+		battery,chg_charging_limit_current = <500>;
 
 		/* TEMP_CONTROL_SOURCE_BAT_THM = WPC_THM */
 		battery,wpc_temp_control_source = <1>;
-		battery,wpc_high_temp = <380>;
-		battery,wpc_high_temp_recovery = <360>;
-		battery,wpc_charging_limit_current = <600>;
-		battery,wpc_lcd_on_high_temp = <430>;
-		battery,wpc_lcd_on_high_temp_rec = <300>;
-		battery,wpc_lcd_on_charging_limit_current = <450>;
+		battery,wpc_high_temp = <450>;
+		battery,wpc_high_temp_recovery = <400>;
+		battery,wpc_charging_limit_current = <500>;
+		battery,wpc_lcd_on_high_temp = <450>;
+		battery,wpc_lcd_on_high_temp_rec = <400>;
+		battery,wpc_lcd_on_charging_limit_current = <500>;
 
-		battery,wpc_store_high_temp = <380>;
-		battery,wpc_store_high_temp_recovery = <360>;
-		battery,wpc_store_charging_limit_current = <400>;
-		battery,wpc_store_lcd_on_high_temp = <380>;
-		battery,wpc_store_lcd_on_high_temp_rec = <300>;
+		battery,wpc_store_high_temp = <450>;
+		battery,wpc_store_high_temp_recovery = <400>;
+		battery,wpc_store_charging_limit_current = <500>;
+		battery,wpc_store_lcd_on_high_temp = <450>;
+		battery,wpc_store_lcd_on_high_temp_rec = <400>;
 
 		battery,sleep_mode_limit_current = <500>;
 		battery,wc_full_input_limit_current = <100>;
-		battery,wc_cv_current = <820>;
-		battery,wc_cv_pack_current = <630>;
+		battery,wc_cv_current = <0>;
+		battery,wc_cv_pack_current = <0>;
 		battery,wc_hero_stand_cc_cv = <70>;
-		battery,wc_hero_stand_cv_current = <600>;
-		battery,wc_hero_stand_hv_cv_current = <450>;
+		battery,wc_hero_stand_cv_current = <0>;
+		battery,wc_hero_stand_hv_cv_current = <0>;
 
-		battery,mix_high_temp = <420>;
-		battery,mix_high_chg_temp = <500>;
-		battery,mix_high_temp_recovery = <390>;
+		battery,mix_high_temp = <450>;
+		battery,mix_high_chg_temp = <800>;
+		battery,mix_high_temp_recovery = <400>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
@@ -237,59 +237,55 @@
 		battery,chg_float_voltage = <43500>;
 		battery,chg_float_voltage_conv = <10>;
 
-		battery,swelling_high_temp_block = <410>;
-		battery,swelling_high_temp_recov = <390>;
-		battery,swelling_wc_high_temp_recov = <390>;
+		battery,swelling_high_temp_block = <450>;
+		battery,swelling_high_temp_recov = <400>;
+		battery,swelling_wc_high_temp_recov = <400>;
 		battery,swelling_low_temp_block_1st = <150>;
 		battery,swelling_low_temp_recov_1st = <200>;
 		battery,swelling_low_temp_block_2nd = <50>;
 		battery,swelling_low_temp_recov_2nd = <100>;
 
-		battery,swelling_low_temp_current = <700>;	/* 0.3C */
-		battery,swelling_low_temp_topoff = <175>;	/* 0.05C */
-		battery,swelling_high_temp_current = <1090>;	/* 0.45C */
-		battery,swelling_high_temp_topoff = <175>;	/* 0.05C */
-		battery,swelling_wc_high_temp_current = <700>;	/* 0.3C */
-		battery,swelling_wc_low_temp_current = <700>;	/* 0.3C */
+		battery,swelling_low_temp_current = <500>;	/* 0.3C */
+		battery,swelling_low_temp_topoff = <300>;	/* 0.1C */
+		battery,swelling_high_temp_current = <500>;	/* 0.45C */
+		battery,swelling_high_temp_topoff = <300>;	/* 0.1C */
+		battery,swelling_wc_high_temp_current = <500>;	/* 0.3C */
+		battery,swelling_wc_low_temp_current = <500>;	/* 0.3C */
 
-		battery,swelling_drop_float_voltage = <41500>;
-		battery,swelling_high_rechg_voltage = <4000>;
-		battery,swelling_low_rechg_voltage = <4000>;
+		battery,swelling_drop_float_voltage = <43500>;
+		battery,swelling_high_rechg_voltage = <4280>;
+		battery,swelling_low_rechg_voltage = <4280>;
 
-		battery,siop_input_limit_current = <1200>;
-		battery,siop_charging_limit_current = <1000>;
-		battery,siop_hv_input_limit_current = <500>;
-		battery,siop_hv_charging_limit_current = <1000>;
+		battery,siop_input_limit_current = <0>;
+		battery,siop_charging_limit_current = <0>;
+		battery,siop_hv_input_limit_current = <0>;
+		battery,siop_hv_charging_limit_current = <0>;
 
-		battery,siop_wireless_input_limit_current = <600>;
-		battery,siop_wireless_charging_limit_current = <700>;
-		battery,siop_hv_wireless_input_limit_current = <600>;
-		battery,siop_hv_wireless_charging_limit_current = <700>;
-		battery,siop_store_hv_wireless_input_limit_current = <450>;
+		battery,siop_wireless_input_limit_current = <0>;
+		battery,siop_wireless_charging_limit_current = <0>;
+		battery,siop_hv_wireless_input_limit_current = <0>;
+		battery,siop_hv_wireless_charging_limit_current = <0>;
+		battery,siop_store_hv_wireless_input_limit_current = <0>;
 
-		battery,ttf_hv_charge_current = <2150>;
-		battery,ttf_hv_wireless_charge_current = <1050>;
-		battery,ttf_wireless_charge_current = <900>;
+		battery,ttf_hv_charge_current = <0>;
+		battery,ttf_hv_wireless_charge_current = <0>;
+		battery,ttf_wireless_charge_current = <0>;
 
 		battery,pd_charging_charge_power = <15000>;
-		battery,max_charging_current = <2150>;
+		battery,max_charging_current = <3000>;
 		battery,battery_full_capacity = <3000>;
 
 		/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
-		battery,age_data = <0 43500 4280 4250 93
-				300 43250 4255 4225 92
-				400 43125 4242 4212 91
-				700 42875 4217 4187 90
-				1000 42375 4167 4137 89>;
+		battery,age_data = <0 43500 4280 4250 93>;
 
 		battery,max_input_voltage = <12000>; /* mV */
 		battery,max_input_current = <3000>;  /* mA */
 
 		battery,enable_sysovlo_irq;
 
-		battery,standard_curr = <2150>;
-		battery,expired_time = <10800>;
-		battery,recharging_expired_time = <5400>;
+		battery,standard_curr = <500>;
+		battery,expired_time = <0>;
+		battery,recharging_expired_time = <0>;
 
 		battery,cisd_max_voltage_thr = <4400>; /* battery ovp detection voltage */
 		battery,cisd_alg_index = <7>;
@@ -455,65 +451,65 @@
  *  31	CABLE_MAX,
 */
 	cable-info {
-		   default_input_current = <1800>;
-		   default_charging_current = <2100>;
-		   full_check_current_1st = <300>;
-		   full_check_current_2nd = <150>;
+		   default_input_current = <500>;
+		   default_charging_current = <500>;
+		   full_check_current_1st = <305>;
+		   full_check_current_2nd = <300>;
 
 		   current_group_1 {
 		   	       cable_number = <1 4 19 21 22 23 30>;
-			       input_current = <500>;
-			       charging_current = <500>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		   };
 		   current_group_2 {
 		   	       cable_number = <2 25>;
-			       input_current = <1000>;
-			       charging_current = <1000>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_3 {
 		   	       cable_number = <5>;
-			       input_current = <1500>;
-			       charging_current = <1500>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_4 {
 		   	       cable_number = <6 7 8>;
-			       input_current = <1650>;
-			       charging_current = <2150>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_5 {
 		   	       cable_number = <9>;
-			       input_current = <1650>;
-			       charging_current = <2150>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_6 {
 		   	       cable_number = <10 12 15 27>;
-			       input_current = <900>;
-			       charging_current = <1200>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_7 {
 		   	       cable_number = <13>;
-			       input_current = <700>;
-			       charging_current = <1200>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_8 {
 		   	       cable_number = <24>;
-			       input_current = <1000>;
-			       charging_current = <450>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_9 {
 		   	       cable_number = <26>;
-			       input_current = <2000>;
-			       charging_current = <1800>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_10 {
 		   	       cable_number = <11 14 16 28>;
-			       input_current = <650>;
-			       charging_current = <1200>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 		   current_group_11 {
 		   	       cable_number = <29>;
-			       input_current = <500>;
-			       charging_current = <1200>;
+			       input_current = <0>;
+			       charging_current = <0>;
 		  };
 	};
 };

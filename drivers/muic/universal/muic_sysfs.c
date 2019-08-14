@@ -59,6 +59,8 @@
 #include "../../battery_v2/include/sec_charging_common.h"
 #endif
 
+bool afc_disable = true;
+
 static int muic_resolve_attached_dev(muic_data_t *pmuic)
 {
 #if defined(CONFIG_MUIC_SUPPORT_CCIC)
@@ -499,11 +501,11 @@ static ssize_t muic_show_afc_disable(struct device *dev,
 	struct muic_platform_data *pdata = pmuic->pdata;
 
 	if (pdata->afc_disable) {
-		pr_info("%s:%s AFC DISABLE\n", MUIC_DEV_NAME, __func__);
+		pr_info("%s:%s AFC DISABLED\n", MUIC_DEV_NAME, __func__);
 		return sprintf(buf, "1\n");
 	}
 
-	pr_info("%s:%s AFC ENABLE", MUIC_DEV_NAME, __func__);
+	pr_info("%s:%s AFC ENABLED", MUIC_DEV_NAME, __func__);
 	return sprintf(buf, "0\n");
 }
 
@@ -519,15 +521,21 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 	union power_supply_propval psy_val;
 #endif
 
-	/* Disable AFC */
-	if (!strncasecmp(buf, "1", 1))
+	if (!strncmp(buf, "true", 1)) {
 		pdata->afc_disable = true;
-	/* Enable AFC */
-	else if (!strncasecmp(buf, "0", 1))
+
+	} else if (!strncmp(buf, "false", 2)) {
 		pdata->afc_disable = false;
-	else {
-		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
-		return count;
+
+	} else if (sysfs_streq(buf, "1")) {
+		pdata->afc_disable = true;
+
+	} else if (sysfs_streq(buf, "0")) {
+		pdata->afc_disable = false;
+
+	} else {
+		pr_warn("%s:%s invalid value, use \"1\" to disable AFC or \"0\" to enable it.\n", MUIC_DEV_NAME, __func__);
+		return -EINVAL;
 	}
 
 	param_val = pdata->afc_disable ? '1' : '0';
@@ -552,12 +560,15 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 		POWER_SUPPLY_EXT_PROP_HV_DISABLE, psy_val);
 #endif
 
-	/* for factory self charging test (AFC-> NORMAL TA) */
+	// for factory self charging test (AFC-> NORMAL TA)
 	if (pmuic->is_factory_start)
 		hv_set_afc_by_user(pmuic->phv, pdata->afc_disable ? false: true);
 
+	afc_disable = pdata->afc_disable;
+
 	return count;
 }
+
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 static ssize_t muic_store_afc_set_voltage(struct device *dev,
 				    struct device_attribute *attr,
@@ -586,8 +597,8 @@ static DEVICE_ATTR(uart_sel, 0664, muic_show_uart_sel,
 		muic_set_uart_sel);
 static DEVICE_ATTR(usb_sel, 0664,
 		muic_show_usb_sel, muic_set_usb_sel);
-static DEVICE_ATTR(adc, 0664, muic_show_adc, NULL);
-static DEVICE_ATTR(usb_state, 0664, muic_show_usb_state, NULL);
+static DEVICE_ATTR(adc, 0444, muic_show_adc, NULL);
+static DEVICE_ATTR(usb_state, 0444, muic_show_usb_state, NULL);
 #if defined(CONFIG_USB_HOST_NOTIFY)
 static DEVICE_ATTR(otg_test, 0664,
 		muic_show_otg_test, muic_set_otg_test);
@@ -596,7 +607,7 @@ static DEVICE_ATTR(otg_test, 0664,
 static DEVICE_ATTR(usb_to_ta, 0664,
 		muic_show_usb_to_ta, muic_set_usb_to_ta);
 #endif
-static DEVICE_ATTR(attached_dev, 0664, muic_show_attached_dev, NULL);
+static DEVICE_ATTR(attached_dev, 0444, muic_show_attached_dev, NULL);
 static DEVICE_ATTR(audio_path, 0664,
 		muic_show_audio_path, muic_set_audio_path);
 static DEVICE_ATTR(apo_factory, 0664,
@@ -604,7 +615,7 @@ static DEVICE_ATTR(apo_factory, 0664,
 		muic_set_apo_factory);
 static DEVICE_ATTR(vbus_value, 0444, muic_show_vbus_value, NULL);
 #if defined(CONFIG_MUIC_HV_MAX77854) || defined(CONFIG_MUIC_HV_MAX77865)
-static DEVICE_ATTR(afc_disable, 0664,
+static DEVICE_ATTR(disable_afc, 0664,
 		muic_show_afc_disable, muic_set_afc_disable);
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 static DEVICE_ATTR(afc_set_voltage, 0220,
@@ -629,7 +640,7 @@ static struct attribute *muic_attributes[] = {
 	&dev_attr_apo_factory.attr,
 	&dev_attr_vbus_value.attr,
 #if defined(CONFIG_MUIC_HV_MAX77854) || defined(CONFIG_MUIC_HV_MAX77865)
-	&dev_attr_afc_disable.attr,
+	&dev_attr_disable_afc.attr,
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 	&dev_attr_afc_set_voltage.attr,
 #endif
