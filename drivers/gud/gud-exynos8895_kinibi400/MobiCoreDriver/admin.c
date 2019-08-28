@@ -903,7 +903,6 @@ static long admin_ioctl(struct file *file, unsigned int cmd,
 		}
 
 		/* Block until a request is available */
-		server_state_change(READY);
 		ret = wait_for_completion_interruptible(
 						&g_request.client_complete);
 		if (ret)
@@ -1070,10 +1069,9 @@ static int admin_open(struct inode *inode, struct file *file)
 		return admin_ctx.last_start_ret;
 	}
 
-	reinit_completion_local(&g_request.client_complete);
-	reinit_completion_local(&g_request.server_complete);
 	/* Requests from driver to daemon */
 	mc_dev_info("daemon connection open, TGID %d", admin_ctx.admin_tgid);
+	server_state_change(READY);
 	return 0;
 }
 
