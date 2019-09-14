@@ -16,9 +16,9 @@
 #include <linux/pm_qos.h>
 
 #define DEF_FREQUENCY_UP_THRESHOLD		(65) /* min 30, max 95 */
-#define ADDITIONAL_UP_THRESHOLD_SUSPEND		(5)
+#define ADDITIONAL_UP_THRESHOLD_SUSPEND	(5)
 #define DOWN_THRESHOLD_MARGIN			(15)
-#define DEF_FREQUENCY_STEP                     (2)
+#define DEF_FREQUENCY_STEP			(2)
 
 /* Cluster 0 */
 #define DEF_FREQUENCY_STEP_CL0_0               (455000)
@@ -58,9 +58,6 @@
 #define DEF_SAMPLING_DOWN_FACTOR               (1)
 #define MAX_SAMPLING_DOWN_FACTOR               (10)
 #define DEF_FREQUENCY_MIN_SAMPLE_RATE		(100000)
-
-static unsigned int up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
-static unsigned int suspend_up_threshold = DEF_FREQUENCY_UP_THRESHOLD + ADDITIONAL_UP_THRESHOLD_SUSPEND;
 
 /* Cluster 0 */
 static unsigned int down_threshold_cl0_1 = 0;
@@ -145,15 +142,9 @@ static void cs_check_cpu(int cpu, unsigned int load)
 	if (cs_tuners->freq_step == 0)
 		return;
 
-	/* Get up_threshold */
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_0) {
-		cs_tuners->up_threshold = suspend_up_threshold;
-	} else {
-		cs_tuners->up_threshold = up_threshold;
-	}
-
 	/* Check for frequency increase */
-	if (load > cs_tuners->up_threshold) {
+	if ((policy->cur == DEF_FREQUENCY_STEP_CL0_0 && load > cs_tuners->suspend_up_threshold) ||
+		(policy->cur != DEF_FREQUENCY_STEP_CL0_0 && load > cs_tuners->up_threshold)) {
 		dbs_info->down_skip = 0;
 
 		/* if we are already at full speed then break out early */
@@ -175,152 +166,37 @@ static void cs_check_cpu(int cpu, unsigned int load)
 		return;
 	dbs_info->down_skip = 0;
 
-	/* Get dynamic down_threshold */
-	/* Cluster 0 */
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_1) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_1;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_2) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_2;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_3) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_3;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_4) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_4;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_5) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_5;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_6) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_6;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_7) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_7;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_8) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_8;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_9) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_9;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_10) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_10;
-		goto cl1;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL0_11) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl0_11;
-
-	}
-
-cl1:
-	/* Cluster 1 */
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_1) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_1;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_2) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_2;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_3) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_3;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_4) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_4;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_5) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_5;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_6) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_6;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_7) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_7;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_8) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_8;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_9) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_9;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_10) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_10;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_11) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_11;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_12) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_12;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_13) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_13;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_14) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_14;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_15) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_15;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_16) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_16;
-		goto check;
-	}
-
-	if (policy->cur == DEF_FREQUENCY_STEP_CL1_17) {
-		cs_tuners->dynamic_down_threshold = down_threshold_cl1_17;
-
-	}
-
-check:
 	/* Check for frequency decrease */
-	if (load < cs_tuners->dynamic_down_threshold) {
+	if ((policy->cur == DEF_FREQUENCY_STEP_CL0_1 && load < down_threshold_cl0_1) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_2 && load < down_threshold_cl0_2) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_3 && load < down_threshold_cl0_3) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_4 && load < down_threshold_cl0_4) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_5 && load < down_threshold_cl0_5) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_6 && load < down_threshold_cl0_6) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_7 && load < down_threshold_cl0_7) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_8 && load < down_threshold_cl0_8) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_9 && load < down_threshold_cl0_9) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_10 && load < down_threshold_cl0_10) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL0_11 && load < down_threshold_cl0_11) ||
+
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_1 && load < down_threshold_cl1_1) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_2 && load < down_threshold_cl1_2) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_3 && load < down_threshold_cl1_3) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_4 && load < down_threshold_cl1_4) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_5 && load < down_threshold_cl1_5) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_6 && load < down_threshold_cl1_6) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_7 && load < down_threshold_cl1_7) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_8 && load < down_threshold_cl1_8) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_9 && load < down_threshold_cl1_9) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_10 && load < down_threshold_cl1_10) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_11 && load < down_threshold_cl1_11) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_12 && load < down_threshold_cl1_12) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_13 && load < down_threshold_cl1_13) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_14 && load < down_threshold_cl1_14) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_15 && load < down_threshold_cl1_15) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_16 && load < down_threshold_cl1_16) ||
+		(policy->cur == DEF_FREQUENCY_STEP_CL1_17 && load < down_threshold_cl1_17)) {
+
 		unsigned int freq_target;
 		/*
 		 * if we cannot reduce the frequency anymore, break out early
@@ -381,39 +257,39 @@ static struct notifier_block cs_cpufreq_notifier_block = {
 	.notifier_call = dbs_cpufreq_notifier,
 };
 
-static void recalculate_down_threshold(void)
+static void recalculate_down_threshold(struct cs_dbs_tuners *cs_tuners)
 {
 	/* Cluster 0 */
-	down_threshold_cl0_1 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_2 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_1 / DEF_FREQUENCY_STEP_CL0_2) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_3 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_2 / DEF_FREQUENCY_STEP_CL0_3) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_4 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_3 / DEF_FREQUENCY_STEP_CL0_4) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_5 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_4 / DEF_FREQUENCY_STEP_CL0_5) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_6 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_5 / DEF_FREQUENCY_STEP_CL0_6) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_7 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_6 / DEF_FREQUENCY_STEP_CL0_7) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_8 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_7 / DEF_FREQUENCY_STEP_CL0_8) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_9 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_8 / DEF_FREQUENCY_STEP_CL0_9) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_10 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_9 / DEF_FREQUENCY_STEP_CL0_10) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl0_11 = ((up_threshold * DEF_FREQUENCY_STEP_CL0_10 / DEF_FREQUENCY_STEP_CL0_11) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_1 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_2 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_1 / DEF_FREQUENCY_STEP_CL0_2) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_3 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_2 / DEF_FREQUENCY_STEP_CL0_3) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_4 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_3 / DEF_FREQUENCY_STEP_CL0_4) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_5 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_4 / DEF_FREQUENCY_STEP_CL0_5) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_6 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_5 / DEF_FREQUENCY_STEP_CL0_6) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_7 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_6 / DEF_FREQUENCY_STEP_CL0_7) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_8 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_7 / DEF_FREQUENCY_STEP_CL0_8) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_9 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_8 / DEF_FREQUENCY_STEP_CL0_9) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_10 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_9 / DEF_FREQUENCY_STEP_CL0_10) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl0_11 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_10 / DEF_FREQUENCY_STEP_CL0_11) - DOWN_THRESHOLD_MARGIN);
 
 	/* Cluster 1 */
-	down_threshold_cl1_1 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_0 / DEF_FREQUENCY_STEP_CL1_1) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_2 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_1 / DEF_FREQUENCY_STEP_CL1_2) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_3 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_2 / DEF_FREQUENCY_STEP_CL1_3) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_4 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_3 / DEF_FREQUENCY_STEP_CL1_4) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_5 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_4 / DEF_FREQUENCY_STEP_CL1_5) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_6 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_5 / DEF_FREQUENCY_STEP_CL1_6) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_7 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_6 / DEF_FREQUENCY_STEP_CL1_7) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_8 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_7 / DEF_FREQUENCY_STEP_CL1_8) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_9 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_8 / DEF_FREQUENCY_STEP_CL1_9) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_10 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_9 / DEF_FREQUENCY_STEP_CL1_10) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_11 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_10 / DEF_FREQUENCY_STEP_CL1_11) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_12 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_11 / DEF_FREQUENCY_STEP_CL1_12) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_13 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_12 / DEF_FREQUENCY_STEP_CL1_13) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_14 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_13 / DEF_FREQUENCY_STEP_CL1_14) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_15 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_14 / DEF_FREQUENCY_STEP_CL1_15) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_16 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_15 / DEF_FREQUENCY_STEP_CL1_16) - DOWN_THRESHOLD_MARGIN);
-	down_threshold_cl1_17 = ((up_threshold * DEF_FREQUENCY_STEP_CL1_16 / DEF_FREQUENCY_STEP_CL1_17) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_1 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_0 / DEF_FREQUENCY_STEP_CL1_1) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_2 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_1 / DEF_FREQUENCY_STEP_CL1_2) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_3 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_2 / DEF_FREQUENCY_STEP_CL1_3) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_4 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_3 / DEF_FREQUENCY_STEP_CL1_4) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_5 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_4 / DEF_FREQUENCY_STEP_CL1_5) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_6 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_5 / DEF_FREQUENCY_STEP_CL1_6) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_7 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_6 / DEF_FREQUENCY_STEP_CL1_7) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_8 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_7 / DEF_FREQUENCY_STEP_CL1_8) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_9 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_8 / DEF_FREQUENCY_STEP_CL1_9) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_10 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_9 / DEF_FREQUENCY_STEP_CL1_10) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_11 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_10 / DEF_FREQUENCY_STEP_CL1_11) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_12 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_11 / DEF_FREQUENCY_STEP_CL1_12) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_13 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_12 / DEF_FREQUENCY_STEP_CL1_13) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_14 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_13 / DEF_FREQUENCY_STEP_CL1_14) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_15 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_14 / DEF_FREQUENCY_STEP_CL1_15) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_16 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_15 / DEF_FREQUENCY_STEP_CL1_16) - DOWN_THRESHOLD_MARGIN);
+	down_threshold_cl1_17 = ((cs_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_16 / DEF_FREQUENCY_STEP_CL1_17) - DOWN_THRESHOLD_MARGIN);
 }
 
 /************************** sysfs interface ************************/
@@ -462,27 +338,9 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 		return -EINVAL;
 
 	cs_tuners->up_threshold = input;
-	up_threshold = input;
-	suspend_up_threshold = input + ADDITIONAL_UP_THRESHOLD_SUSPEND;
+	cs_tuners->suspend_up_threshold = input + ADDITIONAL_UP_THRESHOLD_SUSPEND;
 
-	recalculate_down_threshold();
-	return count;
-}
-
-static ssize_t store_dynamic_down_threshold(struct dbs_data *dbs_data, const char *buf,
-		size_t count)
-{
-	struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
-/*
-	unsigned int input;
-	int ret;
-	ret = sscanf(buf, "%u", &input);
-
-	if (ret != 1 || input < 1 || input > 100)
-		return -EINVAL;
-
-	cs_tuners->dynamic_down_threshold = input;
-*/
+	recalculate_down_threshold(cs_tuners);
 	return count;
 }
 
@@ -543,7 +401,6 @@ static ssize_t store_freq_step(struct dbs_data *dbs_data, const char *buf,
 show_store_one(cs, sampling_rate);
 show_store_one(cs, sampling_down_factor);
 show_store_one(cs, up_threshold);
-show_store_one(cs, dynamic_down_threshold);
 show_store_one(cs, ignore_nice_load);
 show_store_one(cs, freq_step);
 declare_show_sampling_rate_min(cs);
@@ -551,7 +408,6 @@ declare_show_sampling_rate_min(cs);
 gov_sys_pol_attr_rw(sampling_rate);
 gov_sys_pol_attr_rw(sampling_down_factor);
 gov_sys_pol_attr_rw(up_threshold);
-gov_sys_pol_attr_ro(dynamic_down_threshold);
 gov_sys_pol_attr_rw(ignore_nice_load);
 gov_sys_pol_attr_rw(freq_step);
 gov_sys_pol_attr_ro(sampling_rate_min);
@@ -561,7 +417,6 @@ static struct attribute *dbs_attributes_gov_sys[] = {
 	&sampling_rate_gov_sys.attr,
 	&sampling_down_factor_gov_sys.attr,
 	&up_threshold_gov_sys.attr,
-	&dynamic_down_threshold_gov_sys.attr,
 	&ignore_nice_load_gov_sys.attr,
 	&freq_step_gov_sys.attr,
 	NULL
@@ -577,7 +432,6 @@ static struct attribute *dbs_attributes_gov_pol[] = {
 	&sampling_rate_gov_pol.attr,
 	&sampling_down_factor_gov_pol.attr,
 	&up_threshold_gov_pol.attr,
-	&dynamic_down_threshold_gov_pol.attr,
 	&ignore_nice_load_gov_pol.attr,
 	&freq_step_gov_pol.attr,
 	NULL
@@ -600,7 +454,7 @@ static int cs_init(struct dbs_data *dbs_data, bool notify)
 	}
 
 	tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
-	tuners->dynamic_down_threshold = 0;
+	tuners->suspend_up_threshold = DEF_FREQUENCY_UP_THRESHOLD + ADDITIONAL_UP_THRESHOLD_SUSPEND;
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
 	tuners->freq_step = DEF_FREQUENCY_STEP;
@@ -608,7 +462,8 @@ static int cs_init(struct dbs_data *dbs_data, bool notify)
 	dbs_data->tuners = tuners;
 	dbs_data->min_sampling_rate = DEF_FREQUENCY_MIN_SAMPLE_RATE;
 
-	recalculate_down_threshold();
+	// init default Values
+	recalculate_down_threshold(tuners);
 
 	if (notify)
 		cpufreq_register_notifier(&cs_cpufreq_notifier_block,
