@@ -24,6 +24,10 @@
 #include <linux/ctype.h>
 #include <linux/of_gpio.h>
 
+// Torch Control
+// Range 1 - 15
+static unsigned int torch_brightness = 5; // 100 mA by default
+
 extern struct class *camera_class; /*sys/class/camera*/
 struct device *s2mpb02_led_dev;
 struct s2mpb02_led_data *global_led_datas[S2MPB02_LED_MAX];
@@ -308,6 +312,25 @@ ssize_t s2mpb02_store(struct device *dev,
 {
 	int value = 0;
 	int ret = 0;
+	unsigned int tmp = 0;
+
+	if (sscanf(buf, "torch_lux_boot=%d", &tmp)) {
+		if (tmp < 0 || tmp > 15) {
+			pr_err("[LED]s2mpb02_store , out of range 1 - 15.\n");
+			return -EINVAL;
+		}
+		torch_brightness = tmp;
+		return count;
+	} else if (sscanf(buf, "torch_lux=%d", &tmp)) {
+		if (tmp < 0 || tmp > 15) {
+			pr_err("[LED]s2mpb02_store , out of range 1 - 15.\n");
+			return -EINVAL;
+		}
+		torch_brightness = tmp;
+		/* Turn on Torch */
+		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_brightness;
+		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+	}
 
 	if ((buf == NULL) || kstrtouint(buf, 10, &value)) {
 		return -1;
@@ -327,7 +350,7 @@ ssize_t s2mpb02_store(struct device *dev,
 		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (value == 1) {
 		/* Turn on Torch */
-		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = S2MPB02_TORCH_OUT_I_60MA;
+		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_brightness;
 		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (value == 100) {
 		/* Factory mode Turn on Torch */
@@ -345,6 +368,7 @@ ssize_t s2mpb02_store(struct device *dev,
 		led_set(global_led_datas[S2MPB02_FLASH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (1001 <= value && value <= 1010) {
 		int brightness_value = value - 1001;
+/*
 		int torch_intensity = -1;
 
 		if (global_led_datas[S2MPB02_TORCH_LED_1]->data->torch_table[brightness_value] != 0) {
@@ -355,10 +379,11 @@ ssize_t s2mpb02_store(struct device *dev,
 				global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness);
 			torch_intensity = global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness;
 		}
-		/* Turn on Torch Step 40mA ~ 240mA */
+		// Turn on Torch Step 40mA ~ 240mA
 		pr_info("[LED]%s , %d->%d(%dmA)\n", __func__, brightness_value, torch_intensity, (torch_intensity)*20);
 		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_intensity;
 		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+*/
 	} else {
 		pr_info("[LED]%s , Invalid value:%d\n", __func__, value);
 	}
