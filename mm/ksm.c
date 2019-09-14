@@ -2302,7 +2302,7 @@ KSM_ATTR_RO(pages_sharing);
 static ssize_t mb_sharing_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%lu\n", ksm_pages_sharing / 256);
+	return sprintf(buf, "%sMB:   \t%lu\n", buf, ksm_pages_sharing / 256);
 }
 KSM_ATTR_RO(mb_sharing);
 
