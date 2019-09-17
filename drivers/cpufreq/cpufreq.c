@@ -46,6 +46,9 @@ unsigned int cpu4_suspend_min_freq = 0;
 unsigned int cpu4_suspend_max_freq = 0;
 module_param(cpu4_suspend_min_freq, uint, 0644);
 module_param(cpu4_suspend_max_freq, uint, 0644);
+
+bool enable_suspend_freqs = false;
+module_param(enable_suspend_freqs, bool, 0644);
 #endif
 
 static LIST_HEAD(cpufreq_policy_list);

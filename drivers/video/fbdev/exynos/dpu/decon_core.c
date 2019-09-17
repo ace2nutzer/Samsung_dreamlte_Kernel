@@ -643,6 +643,10 @@ static unsigned int cpu0_set_suspend_max_freq = 0;
 
 static unsigned int cpu4_set_suspend_min_freq = 0;
 static unsigned int cpu4_set_suspend_max_freq = 0;
+
+extern bool enable_suspend_freqs;
+
+static bool update_freqs = false;
 #endif
 /* ---------- FB_BLANK INTERFACE ----------- */
 static int decon_enable(struct decon_device *decon)
@@ -652,9 +656,11 @@ static int decon_enable(struct decon_device *decon)
 	struct decon_mode_info psr;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-	/* restore previous min/max cpu freq */
-	cpufreq_update_freq(0, cpu0_tmp_min_freq, cpu0_tmp_max_freq);
-	cpufreq_update_freq(4, cpu4_tmp_min_freq, cpu4_tmp_max_freq);
+	if (update_freqs) {
+		/* restore previous min/max cpu freq */
+		cpufreq_update_freq(0, cpu0_tmp_min_freq, cpu0_tmp_max_freq);
+		cpufreq_update_freq(4, cpu4_tmp_min_freq, cpu4_tmp_max_freq);
+	}
 #endif
 
 	decon_info("+ %s : %d\n", __func__, decon->id);
@@ -889,39 +895,43 @@ static int decon_disable(struct decon_device *decon)
 	decon->state = DECON_STATE_OFF;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-	/* save current min/max cpu0 freq */
-	cpu0_tmp_min_freq = policy0->min;
-	cpu0_tmp_max_freq = policy0->max;
+	if (enable_suspend_freqs) {
+		/* save current min/max cpu0 freq */
+		cpu0_tmp_min_freq = policy0->min;
+		cpu0_tmp_max_freq = policy0->max;
 
-	if (!cpu0_suspend_min_freq)
-		cpu0_set_suspend_min_freq = cpu0_tmp_min_freq;
-	else
-		cpu0_set_suspend_min_freq = cpu0_suspend_min_freq;
+		if (!cpu0_suspend_min_freq)
+			cpu0_set_suspend_min_freq = cpu0_tmp_min_freq;
+		else
+			cpu0_set_suspend_min_freq = cpu0_suspend_min_freq;
 
-	if (!cpu0_suspend_max_freq)
-		cpu0_set_suspend_max_freq = cpu0_tmp_max_freq;
-	else
-		cpu0_set_suspend_max_freq = cpu0_suspend_max_freq;
+		if (!cpu0_suspend_max_freq)
+			cpu0_set_suspend_max_freq = cpu0_tmp_max_freq;
+		else
+			cpu0_set_suspend_max_freq = cpu0_suspend_max_freq;
 
-	/* set min/max cpu0 freq for suspend */
-	cpufreq_update_freq(0, cpu0_set_suspend_min_freq, cpu0_set_suspend_max_freq);
+		/* set min/max cpu0 freq for suspend */
+		cpufreq_update_freq(0, cpu0_set_suspend_min_freq, cpu0_set_suspend_max_freq);
 
-	/* save current min/max cpu4 freq */
-	cpu4_tmp_min_freq = policy4->min;
-	cpu4_tmp_max_freq = policy4->max;
+		/* save current min/max cpu4 freq */
+		cpu4_tmp_min_freq = policy4->min;
+		cpu4_tmp_max_freq = policy4->max;
 
-	if (!cpu4_suspend_min_freq)
-		cpu4_set_suspend_min_freq = cpu4_tmp_min_freq;
-	else
-		cpu4_set_suspend_min_freq = cpu4_suspend_min_freq;
+		if (!cpu4_suspend_min_freq)
+			cpu4_set_suspend_min_freq = cpu4_tmp_min_freq;
+		else
+			cpu4_set_suspend_min_freq = cpu4_suspend_min_freq;
 
-	if (!cpu4_suspend_max_freq)
-		cpu4_set_suspend_max_freq = cpu4_tmp_max_freq;
-	else
-		cpu4_set_suspend_max_freq = cpu4_suspend_max_freq;
+		if (!cpu4_suspend_max_freq)
+			cpu4_set_suspend_max_freq = cpu4_tmp_max_freq;
+		else
+			cpu4_set_suspend_max_freq = cpu4_suspend_max_freq;
 
-	/* set min/max cpu4 freq for suspend */
-	cpufreq_update_freq(4, cpu4_set_suspend_min_freq, cpu4_set_suspend_max_freq);
+		/* set min/max cpu4 freq for suspend */
+		cpufreq_update_freq(4, cpu4_set_suspend_min_freq, cpu4_set_suspend_max_freq);
+
+		update_freqs = true;
+	}
 #endif
 
 err:
