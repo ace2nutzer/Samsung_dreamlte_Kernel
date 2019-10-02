@@ -274,7 +274,7 @@ char *sec_cable_type[SEC_BATTERY_CABLE_MAX] = {
 	"WIRELESS_HV_PREPARE",	   /* 29 */
 	"TIMEOUT",                 /* 30 */
 	"SMART_OTG",               /* 31 */
-	"SMART_NOTG"               /* 32 */
+	"SMART_NOTG",               /* 32 */
 	"WIRELESS_TX",			   /* 33 */
 };
 
@@ -382,23 +382,24 @@ static int sec_bat_get_wireless_current(struct sec_battery_info *battery, int in
 	}
 
 	/* 4. WPC_CV_MODE */
-	if (battery->pdata->set_cv_vout_in_low_capacity &&
-		is_nv_wireless_type(battery->cable_type)) {
-		union power_supply_propval value = {0,};
-
-		if (battery->capacity <= battery->pdata->set_cv_vout_in_low_capacity &&
-				!battery->wc_cv_mode) {
-			battery->wc_cv_mode = true;
-			value.intval = WIRELESS_VOUT_CC_CV_VOUT; // 5.5V
-			psy_do_property(battery->pdata->wireless_charger_name, set,
-				POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION, value);
-		} else if (battery->capacity > battery->pdata->set_cv_vout_in_low_capacity &&
-				battery->capacity < battery->pdata->wireless_cc_cv &&
-				battery->wc_cv_mode) {
-			battery->wc_cv_mode = false;
-			value.intval = WIRELESS_VOUT_5V; // 5V
-			psy_do_property(battery->pdata->wireless_charger_name, set,
-				POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION, value);
+	if (is_nv_wireless_type(battery->cable_type)) {
+		if (battery->pdata->set_cv_vout_in_low_capacity) {
+			union power_supply_propval value = {0,};
+			
+			if (battery->capacity <= battery->pdata->set_cv_vout_in_low_capacity &&
+					!battery->wc_cv_mode) {
+				battery->wc_cv_mode = true;
+				value.intval = WIRELESS_VOUT_CC_CV_VOUT; // 5.5V
+				psy_do_property(battery->pdata->wireless_charger_name, set,
+					POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION, value);
+			} else if (battery->capacity > battery->pdata->set_cv_vout_in_low_capacity &&
+					battery->capacity < battery->pdata->wireless_cc_cv &&
+					battery->wc_cv_mode) {
+				battery->wc_cv_mode = false;
+				value.intval = WIRELESS_VOUT_5V; // 5V
+				psy_do_property(battery->pdata->wireless_charger_name, set,
+					POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION, value);
+			}
 		}
 	}
 
@@ -3834,7 +3835,8 @@ static void sec_bat_monitor_work(
 #endif
 
 	if ((battery->cable_type == SEC_BATTERY_CABLE_WIRELESS ||
-		battery->cable_type == SEC_BATTERY_CABLE_WIRELESS_STAND) &&
+		battery->cable_type == SEC_BATTERY_CABLE_WIRELESS_STAND ||
+		battery->cable_type == SEC_BATTERY_CABLE_WIRELESS_TX) &&
 		!battery->wc_cv_mode && battery->charging_passed_time > 10)
 		sec_bat_wc_cv_mode_check(battery);
 
@@ -8189,8 +8191,17 @@ static int sec_bat_parse_dt(struct device *dev,
 
 	ret = of_property_read_u32(np, "battery,wc_cv_current",
 		&pdata->wc_cv_current);
-	if (ret)
+	if (ret) {
 		pr_info("%s : wc_cv_current is Empty\n", __func__);
+		pdata->wc_cv_current = 0;
+	}
+
+	ret = of_property_read_u32(np, "battery,wc_cv_tx_current",
+		&pdata->wc_cv_tx_current);
+	if (ret) {
+		pr_info("%s : wc_cv_tx_current is Empty\n", __func__);
+		pdata->wc_cv_tx_current = 650;
+	}
 
 	ret = of_property_read_u32(np, "battery,wc_cv_pack_current",
 		&pdata->wc_cv_pack_current);

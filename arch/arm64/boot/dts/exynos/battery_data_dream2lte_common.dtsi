@@ -211,6 +211,7 @@
 		battery,sleep_mode_limit_current = <500>;
 		battery,wc_full_input_limit_current = <100>;
 		battery,wc_cv_current = <0>;
+		battery,wc_cv_tx_current = <0>;
 		battery,wc_cv_pack_current = <0>;
 		battery,wc_hero_stand_cc_cv = <70>;
 		battery,wc_hero_stand_cv_current = <0>;
@@ -452,8 +453,8 @@
  *  28	WIRELESS_HV_VEHICLE,
  *  29	PREPARE_WIRELESS_HV,
  *  30	TIMEOUT,
- *  31  SMART_OTG,
- *  32  SMART_NOTG,
+ *  31	SMART_OTG,
+ *  32	SMART_NOTG,
  *  33	WIRELESS_TX,
  *  34	CABLE_MAX,
 */

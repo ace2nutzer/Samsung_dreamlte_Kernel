@@ -207,6 +207,7 @@
 		battery,sleep_mode_limit_current = <500>;
 		battery,wc_full_input_limit_current = <100>;
 		battery,wc_cv_current = <0>;
+		battery,wc_cv_tx_current = <0>;
 		battery,wc_cv_pack_current = <0>;
 		battery,wc_hero_stand_cc_cv = <70>;
 		battery,wc_hero_stand_cv_current = <0>;
@@ -448,7 +449,10 @@
  *  28	WIRELESS_HV_VEHICLE,
  *  29	PREPARE_WIRELESS_HV,
  *  30	TIMEOUT,
- *  31	CABLE_MAX,
+ *  31	SMART_OTG,
+ *  32	SMART_NOTG,
+ *  33	WIRELESS_TX,
+ *  34	CABLE_MAX,
 */
 	cable-info {
 		   default_input_current = <500>;
@@ -462,12 +466,12 @@
 			       charging_current = <0>;
 		   };
 		   current_group_2 {
-		   	       cable_number = <2 25>;
+		   	       cable_number = <2 25 31>;
 			       input_current = <0>;
 			       charging_current = <0>;
 		  };
 		   current_group_3 {
-		   	       cable_number = <5>;
+		   	       cable_number = <5 32>;
 			       input_current = <0>;
 			       charging_current = <0>;
 		  };
@@ -482,7 +486,7 @@
 			       charging_current = <0>;
 		  };
 		   current_group_6 {
-		   	       cable_number = <10 12 15 27>;
+		   	       cable_number = <10 12 15 27 33>;
 			       input_current = <0>;
 			       charging_current = <0>;
 		  };
