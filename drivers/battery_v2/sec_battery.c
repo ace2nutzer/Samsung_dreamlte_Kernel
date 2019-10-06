@@ -20,10 +20,10 @@
 bool sleep_mode = false;
 
 /* Charger Control */
-static unsigned int ac_curr_max = 1200;
+static unsigned int ac_curr_max = 1500;
 static unsigned int usb2_curr_max = 500;
 static unsigned int usb3_curr_max = 900;
-static unsigned int wc_curr_max = 500;
+static unsigned int wc_curr_max = 1500;
 static unsigned int input_volt = 0;
 int charging_curr = 0;
 static bool is_ac_charger = false;
@@ -416,49 +416,6 @@ static int sec_bat_get_wireless_current(struct sec_battery_info *battery, int in
 	return incurr;
 }
 
-static void sec_bat_get_charging_current_by_user(struct sec_battery_info *battery, int *input_current, int *charging_current)
-{
-	// Charger Control
-
-	// AC AFC 12 V
-	if ((is_hv_wire_12v_type(battery->cable_type) || is_hv_12v) && (!afc_disable)) {
-		*input_current = 1300; // supports max 3 A charging_current
-		*charging_current = ac_curr_max;
-	// AC AFC 9 V
-	} else if ((is_hv_wire_type(battery->cable_type) || is_afc) && (!afc_disable)) {
-		*input_current = 1700; // supports max 3 A charging_current
-		*charging_current = ac_curr_max;
-	// USB
-	} else if (is_usb_charger) {
-		// USB 3.0
-		if (battery->current_event & SEC_BAT_CURRENT_EVENT_USB_SUPER) {
-			*input_current = usb3_curr_max;
-			*charging_current = usb3_curr_max;
-		// USB 2.0
-		} else {
-			*input_current = usb2_curr_max;
-			*charging_current = usb2_curr_max;
-		}
-	// WC
-	} else if (is_wireless_type(battery->cable_type)) {
-		// WC HV 10 V
-		if (is_hv_wireless_type(battery->cable_type)) {
-			*input_current = 1500; // supports max 3 A charging_current
-			*charging_current = wc_curr_max;
-		// WC 5 V
-		} else {
-			*input_current = wc_curr_max;
-			*charging_current = wc_curr_max;
-		}
-	// AC 5 V
-	} else if (is_ac_charger) {
-		*input_current = ac_curr_max;
-		*charging_current = ac_curr_max;
-	}
-
-	pr_info("%s: incurr(%d), chgcurr(%d)\n", __func__, *input_current, *charging_current);
-}
-
 #if defined(CONFIG_MUIC_HV) || defined(CONFIG_SUPPORT_QC30)
 extern int muic_afc_set_voltage(int vol);
 #endif
@@ -823,7 +780,42 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 #endif
 
 	// Charger Control
-	sec_bat_get_charging_current_by_user(battery, &input_current, &charging_current);
+
+	// AC AFC 12 V
+	if ((is_hv_wire_12v_type(battery->cable_type) || is_hv_12v) && (!afc_disable)) {
+		input_current = 1300; // supports max 3 A charging_current
+		charging_current = ac_curr_max;
+	// AC AFC 9 V
+	} else if ((is_hv_wire_type(battery->cable_type) || is_afc) && (!afc_disable)) {
+		input_current = 1700; // supports max 3 A charging_current
+		charging_current = ac_curr_max;
+	// USB
+	} else if (is_usb_charger) {
+		// USB 3.0
+		if (battery->current_event & SEC_BAT_CURRENT_EVENT_USB_SUPER) {
+			input_current = usb3_curr_max;
+			charging_current = usb3_curr_max;
+		// USB 2.0
+		} else {
+			input_current = usb2_curr_max;
+			charging_current = usb2_curr_max;
+		}
+	// WC
+	} else if (is_wireless_type(battery->cable_type)) {
+		// WC HV 10 V
+		if (is_hv_wireless_type(battery->cable_type)) {
+			input_current = 1500; // supports max 3 A charging_current
+			charging_current = wc_curr_max;
+		// WC 5 V
+		} else {
+			input_current = wc_curr_max;
+			charging_current = wc_curr_max;
+		}
+	// AC 5 V
+	} else if (is_ac_charger) {
+		input_current = ac_curr_max;
+		charging_current = ac_curr_max;
+	}
 
 	if (battery->aicl_current)
 		input_current = battery->aicl_current;
