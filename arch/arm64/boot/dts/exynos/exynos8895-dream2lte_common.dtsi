@@ -3212,23 +3212,23 @@
 				cl0 {
 					qos,label="LIT";
 					qos,delay_time=<9>;
-					qos,table_size=<12>;
-					qos,table=<2002000 1898000 1794000 1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
+					qos,table_size=<11>;
+					qos,table=<1898000 1794000 1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
 				};
 
 				cl1 {
 					qos,label="BIG";
 					qos,delay_time=<8>;
-					qos,table_size=<18>;
-					qos,table=<2808000 2704000 2652000 2574000 2496000 2314000 2158000 2002000 1937000 1807000 1703000 1469000 
+					qos,table_size=<16>;
+					qos,table=<2652000 2574000 2496000 2314000 2158000 2002000 1937000 1807000 1703000 1469000 
 						1261000 1170000 1066000 962000 858000 741000>;
 				};
 
 				mif {
 					qos,label="MIF";
 					qos,delay_time=<10>;
-					qos,table_size=<10>;
-					qos,table=<2093000 2002000 1794000 1540000 1352000 1014000 845000 676000 546000 421000>;
+					qos,table_size=<6>;
+					qos,table=<1794000 1540000 1352000 1014000 845000 676000>;
 				};
 			};
 	};
@@ -3261,9 +3261,9 @@
 			net_boost,node="rmnet0 rmnet1 rmnet2 rmnet3 rmnet4 rmnet5 rmnet6 rmnet7 umts_dm0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				100 0 0 1053000 0 845000 0 0 1 0
-				150 0 0 1248000 0 1014000 0 0 1 0
-				200 12610000 0 1690000 0 1794000 0 0 1 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 		/* Example
@@ -3272,7 +3272,7 @@
 			net_boost,node="";
 			net_boost,sysnode="/sys/class/mmc_host/mmc0/trans_count";
 			net_boost,table_size = <1>;
-			net_boost,table= <64 0 0 1274000 0 845000 400000 0 0>;
+			net_boost,table= <0 0 0 0 0 0 0 0 0>;
 		};
 		*/
 		boot_device@2 {
@@ -3281,8 +3281,8 @@
 			net_boost,sysnode="/sys/class/scsi_host/host0/transferred_cnt";
 			net_boost,table_size = <2>;
 			net_boost,table= <
-				112 0 0 1456000 0 1352000 0 0 0 0
-				800 2314000 0 1690000 0 1539000 0 0 0 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 		boot_device@3 {
@@ -3290,9 +3290,9 @@
 			net_boost,node="p2p-wlan0-0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				30 1144000 0 1170000 0 0 0 0 0 0
-				90 1872000 0 1586000 0 0 255000 0 0 0
-				300 2080000 0 1586000 0 546000 255000 1 1 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 		boot_device@4 {
@@ -3300,11 +3300,11 @@
 			net_boost,node="clat clat4 v4-rmnet0 v4-rmnet1 v4-rmnet2 v4-rmnet3 v4-rmnet4 v4-rmnet5 v4-rmnet6 v4-rmnet7";
 			net_boost,table_size = <5>;
 			net_boost,table= <
-				1 0 0 0 0 0 0 0 0 0
-				100 1066000 0 0 0 1014000 0 0 0 0
-				200 1117000 0 0 0 1794000 0 0 0 0
-				300 1261000 0 0 0 1794000 0 0 0 0
-				400 1469000 0 0 0 1794000 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 
@@ -3313,8 +3313,8 @@
 			net_boost,node="rmnet_data0 rmnet_data1 rmnet_data2 rmnet_data3 rmnet_data4 rmnet_data5 rmnet_data6 rmnet_data7";
 			net_boost,table_size = <2>;
 			net_boost,table= <
-				10 0 0 1066000 0 845000 0 0 1 0 /* 10Mbps little core 1.1G */
-				100 0 0 1482000 0 845000 0 0 1 0 /* 100Mbps little core 1.5G */
+				0 0 0 0 0 0 0 0 0 0 /* 10Mbps little core 1.1G */
+				0 0 0 0 0 0 0 0 0 0 /* 100Mbps little core 1.5G */
 				>;
 		};
 
@@ -3322,7 +3322,7 @@
 			net_boost,label="USB";
 			net_boost,node="rndis0";
 			net_boost,table_size = <1>;
-			net_boost,table= < 0 0 0 0 0 0 0 0 1 0 >;
+			net_boost,table= < 0 0 0 0 0 0 0 0 0 0 >;
 		};
 
 		boot_device@7 {
@@ -3330,9 +3330,9 @@
 			net_boost,node="wlan0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				150 0 0 0 0 0 0 0 0 0
-				200 0 0 0 0 0 0 1 1 1
-				300 0 0 0 0 0 0 1 1 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 
@@ -3341,10 +3341,10 @@
 			net_boost,node="wlan0";
 			net_boost,table_size = <4>;
 			net_boost,table= <
-				60 1664000 0 1586000 0 0 0 0 0 0
-				150 1664000 0 1586000 0 0 0 0 0 0
-				200 2288000 0 1586000 0 1352000 400000 1 1 1
-				300 2496000 0 1586000 0 2002000 533000 1 1 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 
@@ -3353,10 +3353,10 @@
 			net_boost,node="wlan0";
 			net_boost,table_size = <4>;
 			net_boost,table= <
-				100 1144000 0 1066000 0 0 0 0 0 0
-				150 1456000 0 1378000 0 0 0 0 0 0
-				200 1664000 0 1586000 0 845000 400000 1 1 1
-				300 2288000 0 1586000 0 1352000 533000 1 1 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 
@@ -3365,9 +3365,9 @@
 			net_boost,node="swlan0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				20 1456000 0 1170000 0 0 0 0 0 0
-				60 1664000 0 1586000 0 0 0 0 0 0
-				180 2288000 0 1586000 0 845000 400000 1 1 1
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
+				0 0 0 0 0 0 0 0 0 0
 				>;
 		};
 	};
