@@ -39,7 +39,7 @@ static struct gb_qos_request gb_req = {
 static struct gb_qos_request gb_req = {
 		.name = "ehmp_boost",
 };
-#elif defined(CONFIG_SCHED_HMP)
+#elif defined(CONFIG_HMP_VARIABLE_SCALE)
 extern int set_hmp_boost(int enable);
 #endif
 
@@ -139,9 +139,11 @@ void gpu_destroy_context(void *ctx)
     mutex_lock(&platform->gpu_sched_hmp_lock);
     if (platform->ctx_need_qos) {
         platform->ctx_need_qos = false;
+#ifdef CONFIG_HMP_VARIABLE_SCALE
         set_hmp_boost(0);
         set_hmp_aggressive_up_migration(false);
         set_hmp_aggressive_yield(false);
+#endif
     }
     mutex_unlock(&platform->gpu_sched_hmp_lock);
 #endif
@@ -212,10 +214,12 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (!platform->ctx_need_qos) {
 				platform->ctx_need_qos = true;
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 				/* set hmp boost */
 				set_hmp_boost(1);
 				set_hmp_aggressive_up_migration(true);
 				set_hmp_aggressive_yield(true);
+#endif
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_SET);
@@ -242,10 +246,12 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (platform->ctx_need_qos) {
 				platform->ctx_need_qos = false;
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 				/* unset hmp boost */
 				set_hmp_boost(0);
 				set_hmp_aggressive_up_migration(false);
 				set_hmp_aggressive_yield(false);
+#endif
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_RESET);

@@ -842,6 +842,7 @@ static inline int abox_request_big_freq_dai(struct device *dev,
 			freq);
 }
 
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 /**
  * Request hmp boost
  * @param[in]	dev		pointer to struct dev which invokes this API
@@ -868,6 +869,7 @@ static inline int abox_request_hmp_boost_dai(struct device *dev,
 	return abox_request_hmp_boost(dev, data, ABOX_CPU_GEAR_DAI | dai->id,
 			on);
 }
+#endif
 
 /**
  * Try to turn off ASRC when sampling rate auto control is enabled

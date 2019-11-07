@@ -5,7 +5,7 @@
 #include <linux/pm_qos.h>
 #include <linux/of.h>
 
-#ifdef CONFIG_SCHED_HMP
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 #define USE_HMP_BOOST
 #endif
 

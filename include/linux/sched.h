@@ -1259,7 +1259,9 @@ struct hmp_domain {
 
 #define HMP_BOOSTING_ENABLE 	1
 #define HMP_BOOSTING_DISABLE	0
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 extern int set_hmp_boost(int enable);
+#endif
 extern int set_hmp_semiboost(int enable);
 extern int set_hmp_boostpulse(int duration);
 extern int get_hmp_boost(void);

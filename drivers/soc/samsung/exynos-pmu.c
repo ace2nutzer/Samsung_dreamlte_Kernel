@@ -265,7 +265,7 @@ static int pmu_cpus_notifier(struct notifier_block *nb,
 
 	switch (event) {
 	case CPUS_DOWN_COMPLETE:
-#if defined(CONFIG_HMP_FAST_CPU_MASK)
+#if defined(CONFIG_SCHED_HMP)
 		cpumask_andnot(&mask, &hmp_fast_cpu_mask, (struct cpumask *)data);
 #endif
 		/*
