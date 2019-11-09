@@ -767,18 +767,18 @@
 		samsung,power-domain = <&pd_g3d>;
 		g3d_genpd_name = "pd-g3d"; /*KC: pg-g3d, LT,MK: pd-embedded_g3d*/
 		#cooling-cells = <2>; /* min followed by max */
-		governor = "interactive";
+		governor = "Default";
 		interactive_info = <0 0 0>;
 		gpu_dvfs_table_size = <9 7>; /*<row col>*/
-		gpu_dvfs_table = <  839000    67   95   1  1794000  0     0
-		                    764000    65   95   1  1794000  0     0
-		                    683000    60   95   1  1794000  0     0
-		                    572000    71   95   1  1794000  0     0
-		                    546000    59   95   1  1794000  0     0
-		                    455000    60   95   1  1794000  0     0
-		                    385000    63   95   1  1540000  0     0
-		                    338000    53   95   1  1352000  0     0
-		                    260000    53   95   1  1014000  0     0 >;
+		gpu_dvfs_table = <  839000    21   45   1  1794000  0     0
+		                    764000    20   45   1  1794000  0     0
+		                    683000    18   45   1  1794000  0     0
+		                    572000    23   45   1  1794000  0     0
+		                    546000    17   45   1  1794000  0     0
+		                    455000    18   45   1  1794000  0     0
+		                    385000    20   45   1  1540000  0     0
+		                    338000    15   45   1  1352000  0     0
+		                    260000    15   45   1  1014000  0     0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
@@ -4869,7 +4869,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <858000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <1>;
 			input_booster,kfc_freqs = <832000>;
 			input_booster,mif_freqs = <0>;
@@ -4888,7 +4888,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <858000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <1>;
 			input_booster,kfc_freqs = <832000>;
 			input_booster,mif_freqs = <0>;
@@ -4907,7 +4907,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <858000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <0>;
 			input_booster,kfc_freqs = <832000>;
 			input_booster,mif_freqs = <0>;
@@ -4926,7 +4926,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,mif_freqs = <0 0>;
@@ -4945,7 +4945,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,mif_freqs = <0 0>;
@@ -4964,7 +4964,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,mif_freqs = <0 0>;
@@ -4983,7 +4983,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,mif_freqs = <0 0>;
@@ -5002,7 +5002,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,mif_freqs = <0 0>;
@@ -5021,7 +5021,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <858000 858000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <832000 832000>;
 			input_booster,bimc_freqs = <0 0>;
@@ -5038,7 +5038,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <858000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <1>;
 			input_booster,kfc_freqs = <832000>;
 			input_booster,mif_freqs = <0>;
