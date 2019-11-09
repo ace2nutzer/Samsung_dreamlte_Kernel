@@ -15,7 +15,7 @@
 #include "cpufreq_governor.h"
 #include <linux/pm_qos.h>
 
-#define DEF_FREQUENCY_UP_THRESHOLD		(65) /* min 35, max 95 */
+#define DEF_FREQUENCY_UP_THRESHOLD		(45) /* min 35, max 95 */
 #define ADDITIONAL_UP_THRESHOLD_SUSPEND	(5)
 #define DOWN_THRESHOLD_MARGIN			(20)
 #define DEF_FREQUENCY_STEP			(2)
@@ -57,7 +57,6 @@
 /* Conservative governor macros */
 #define DEF_SAMPLING_DOWN_FACTOR               (1)
 #define MAX_SAMPLING_DOWN_FACTOR               (10)
-#define DEF_FREQUENCY_MIN_SAMPLE_RATE		(30000)
 
 /* Cluster 0 */
 static unsigned int down_threshold_cl0_1 = 0;
@@ -460,7 +459,7 @@ static int cs_init(struct dbs_data *dbs_data, bool notify)
 	tuners->freq_step = DEF_FREQUENCY_STEP;
 
 	dbs_data->tuners = tuners;
-	dbs_data->min_sampling_rate = DEF_FREQUENCY_MIN_SAMPLE_RATE;
+	dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 
 	// init default Values
 	recalculate_down_threshold(tuners);
