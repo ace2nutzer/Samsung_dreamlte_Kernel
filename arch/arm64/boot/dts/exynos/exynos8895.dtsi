@@ -519,7 +519,7 @@
 			dm-type = <DM_CPU_CL1>;
 
 			min-freq = <741000>;
-			max-freq = <2652000>;
+			max-freq = <2314000>;
 
 			/* PM QoS Class ID*/
 			pm_qos-min-class = <5>;
