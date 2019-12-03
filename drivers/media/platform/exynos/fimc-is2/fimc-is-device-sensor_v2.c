@@ -3492,7 +3492,7 @@ p_err:
 				pm_qos_remove_request(&exynos_isp_qos_cam);
 			if (hpg_qos > 0)
 				pm_qos_remove_request(&exynos_isp_qos_hpg);
-#if defined(CONFIG_HMP_VARIABLE_SCALE)
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 			if (core->resourcemgr.dvfs_ctrl.cur_hmp_bst)
 				set_hmp_boost(0);
 #endif

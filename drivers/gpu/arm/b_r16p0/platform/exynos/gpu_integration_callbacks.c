@@ -34,12 +34,12 @@
 static struct gb_qos_request gb_req = {
 	.name = "ems_boost",
 };
-#elif defined(CONFIG_SCHED_EHMP)
+#elif (defined(CONFIG_SCHED_EHMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 #include <linux/ehmp.h>
 static struct gb_qos_request gb_req = {
 		.name = "ehmp_boost",
 };
-#elif defined(CONFIG_HMP_VARIABLE_SCALE)
+#elif (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 extern int set_hmp_boost(int enable);
 #endif
 
@@ -107,7 +107,7 @@ void gpu_destroy_context(void *ctx)
 #if MALI_SEC_PROBE_TEST != 1
 	struct kbase_context *kctx;
 	struct kbase_device *kbdev;
-#if (defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP) || defined(CONFIG_MALI_VK_BOOST))
+#if ((defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP) || defined(CONFIG_MALI_VK_BOOST)) && !defined(CONFIG_SCHED_HMP_RELAX))
 	struct exynos_context *platform;
 #endif
 
@@ -124,7 +124,7 @@ void gpu_destroy_context(void *ctx)
 #ifdef CONFIG_MALI_DVFS
 	gpu_dvfs_boost_lock(GPU_DVFS_BOOST_UNSET);
 #endif
-#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)
+#if ((defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)) && !defined(CONFIG_SCHED_HMP_RELAX))
 	platform = (struct exynos_context *) kbdev->platform_context;
 	mutex_lock(&platform->gpu_sched_hmp_lock);
 	if (platform->ctx_need_qos)
@@ -134,12 +134,12 @@ void gpu_destroy_context(void *ctx)
 	}
 
 	mutex_unlock(&platform->gpu_sched_hmp_lock);
-#elif defined(CONFIG_SCHED_HMP)
+#elif (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
     platform = (struct exynos_context *) kbdev->platform_context;
     mutex_lock(&platform->gpu_sched_hmp_lock);
     if (platform->ctx_need_qos) {
         platform->ctx_need_qos = false;
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
         set_hmp_boost(0);
         set_hmp_aggressive_up_migration(false);
         set_hmp_aggressive_yield(false);
@@ -201,7 +201,7 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 #if defined(CONFIG_MALI_PM_QOS)
 			struct exynos_context *platform;
 			platform = (struct exynos_context *) kbdev->platform_context;
-#if (defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP))
+#if ((defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)) && !defined(CONFIG_SCHED_HMP_RELAX))
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (!platform->ctx_need_qos) {
 				platform->ctx_need_qos = true;
@@ -210,11 +210,11 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_SET);
-#elif defined(CONFIG_SCHED_HMP)
+#elif (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (!platform->ctx_need_qos) {
 				platform->ctx_need_qos = true;
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 				/* set hmp boost */
 				set_hmp_boost(1);
 				set_hmp_aggressive_up_migration(true);
@@ -233,7 +233,7 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 #if defined(CONFIG_MALI_PM_QOS)
 			struct exynos_context *platform;
 			platform = (struct exynos_context *) kbdev->platform_context;
-#if (defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP))
+#if ((defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)) && !defined(CONFIG_SCHED_HMP_RELAX))
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (platform->ctx_need_qos) {
 				platform->ctx_need_qos = false;
@@ -242,11 +242,11 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_RESET);
-#elif defined(CONFIG_SCHED_HMP)
+#elif (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (platform->ctx_need_qos) {
 				platform->ctx_need_qos = false;
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 				/* unset hmp boost */
 				set_hmp_boost(0);
 				set_hmp_aggressive_up_migration(false);

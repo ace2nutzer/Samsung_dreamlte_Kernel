@@ -1159,7 +1159,7 @@ static int abox_rdma_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	int id = data->id;
 	unsigned int lit, big;
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 	unsigned int hmp;
 #endif
 	int result;
@@ -1207,12 +1207,12 @@ static int abox_rdma_hw_params(struct snd_pcm_substream *substream,
 
 	lit = data->pm_qos_lit[abox_get_rate_type(params_rate(params))];
 	big = data->pm_qos_big[abox_get_rate_type(params_rate(params))];
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 	hmp = data->pm_qos_hmp[abox_get_rate_type(params_rate(params))];
 #endif
 	abox_request_lit_freq_dai(dev, data->abox_data, rtd->cpu_dai, lit);
 	abox_request_big_freq_dai(dev, data->abox_data, rtd->cpu_dai, big);
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 	abox_request_hmp_boost_dai(dev, data->abox_data, rtd->cpu_dai, hmp);
 #endif
 	dev_info(dev, "%s:Total=%zu PrdSz=%u(%u) #Prds=%u rate=%u, width=%d, channels=%u\n",
@@ -1249,7 +1249,7 @@ static int abox_rdma_hw_free(struct snd_pcm_substream *substream)
 #endif
 	abox_request_lit_freq_dai(dev, data->abox_data, rtd->cpu_dai, 0);
 	abox_request_big_freq_dai(dev, data->abox_data, rtd->cpu_dai, 0);
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 	abox_request_hmp_boost_dai(dev, data->abox_data, rtd->cpu_dai, 0);
 #endif
 
@@ -1698,7 +1698,7 @@ static int samsung_abox_rdma_probe(struct platform_device *pdev)
 	if (IS_ERR_VALUE(result))
 		dev_dbg(dev, "Failed to read %s: %d\n", "pm_qos_big", result);
 
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 	result = of_property_read_u32_array(np, "pm_qos_hmp", data->pm_qos_hmp,
 			ARRAY_SIZE(data->pm_qos_hmp));
 	if (IS_ERR_VALUE(result))

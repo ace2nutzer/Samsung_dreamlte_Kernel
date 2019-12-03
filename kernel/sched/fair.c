@@ -5493,7 +5493,7 @@ done:
  * fastest domain first.
  */
 DEFINE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
-static const int hmp_max_tasks=5;
+static const int hmp_max_tasks = 4;
 
 extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
 
@@ -5652,11 +5652,11 @@ static DEFINE_RAW_SPINLOCK(hmp_semiboost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_sysfs_lock);
 static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 
-#define BOOT_BOOST_DURATION 40000000 /* microseconds */
+#define BOOT_BOOST_DURATION 30000000 /* microseconds */
 #define YIELD_CORRECTION_TIME 10000000 /* nanoseconds */
 
-unsigned int hmp_next_up_threshold = 4096;
-unsigned int hmp_next_down_threshold = 4096;
+unsigned int hmp_next_up_threshold = 0;
+unsigned int hmp_next_down_threshold = 0;
 
 static inline int hmp_boost(void)
 {

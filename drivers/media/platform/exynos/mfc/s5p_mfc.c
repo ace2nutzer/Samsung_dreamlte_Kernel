@@ -316,7 +316,7 @@ fail_enc_init:
 	return 0;
 }
 
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 extern int set_hmp_family_boost(int enable);
 #endif
 
@@ -355,7 +355,7 @@ static int s5p_mfc_open(struct file *file)
 		if (dev->num_enc == 1) {
 			disable_priv_cpuidle();
 			mfc_debug(1, "call cpuidle_pause()\n");
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 			set_hmp_family_boost(1);
 			mfc_debug(1, "call set_hmp_family_boost(1)\n");
 #endif
@@ -603,7 +603,7 @@ err_ctx_alloc:
 		dev->num_enc--;
 		mfc_debug(1, "encoder count: %c\n", dev->num_enc);
 		if (dev->num_enc == 0) {
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 			set_hmp_family_boost(0);
 			mfc_debug(1, "call set_hmp_family_boost(0)\n");
 #endif
@@ -704,7 +704,7 @@ static int s5p_mfc_release(struct file *file)
 		dev->num_enc--;
 		mfc_debug(1, "encoder count: %c\n", dev->num_enc);
 		if (dev->num_enc == 0) {
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 			set_hmp_family_boost(0);
 			mfc_debug(1, "call set_hmp_family_boost(0)\n");
 #endif

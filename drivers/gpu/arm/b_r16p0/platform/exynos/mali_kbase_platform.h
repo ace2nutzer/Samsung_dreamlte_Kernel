@@ -289,6 +289,7 @@ struct exynos_context {
 
 #ifdef CONFIG_MALI_ASV_CALIBRATION_SUPPORT
 	bool gpu_auto_cali_status;
+	int gpu_asv_cali_lock_val;
 #endif
 
 #if (defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP))

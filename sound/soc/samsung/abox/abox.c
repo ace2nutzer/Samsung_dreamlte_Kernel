@@ -77,7 +77,7 @@ static void update_mask_value(void __iomem *sfr,
 #define DEFAULT_CPU_GEAR_ID		(0xAB0CDEFA)
 #define DEFAULT_LIT_FREQ_ID		DEFAULT_CPU_GEAR_ID
 #define DEFAULT_BIG_FREQ_ID		DEFAULT_CPU_GEAR_ID
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 #define DEFAULT_HMP_BOOST_ID		DEFAULT_CPU_GEAR_ID
 #endif
 #define AUD_PLL_RATE_KHZ		(1179648)
@@ -3483,7 +3483,7 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 	return 0;
 }
 
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 static void abox_change_hmp_boost_work_func(struct work_struct *work)
 {
 	struct abox_data *data = container_of(work, struct abox_data,
@@ -5366,7 +5366,7 @@ static int samsung_abox_probe(struct platform_device *pdev)
 	INIT_WORK(&data->change_mif_freq_work, abox_change_mif_freq_work_func);
 	INIT_WORK(&data->change_lit_freq_work, abox_change_lit_freq_work_func);
 	INIT_WORK(&data->change_big_freq_work, abox_change_big_freq_work_func);
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 	INIT_WORK(&data->change_hmp_boost_work,
 			abox_change_hmp_boost_work_func);
 #endif

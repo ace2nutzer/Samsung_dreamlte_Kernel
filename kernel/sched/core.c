@@ -2454,7 +2454,7 @@ void wake_up_new_task(struct task_struct *p)
 	/* Initialize new task's runnable average */
 	init_entity_runnable_average(&p->se);
 	init_rt_entity_runnable_average(&p->rt);
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 	trace_sched_task_runnable_ratio(p, p->se.avg.hmp_load_avg);
 #endif
 	trace_sched_task_load_contrib(p, p->se.avg.load_avg);
@@ -3841,7 +3841,7 @@ static void __setscheduler_params(struct task_struct *p,
 	set_load_weight(p);
 }
 
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 extern struct cpumask hmp_slow_cpu_mask;
 #endif
 
@@ -3864,7 +3864,7 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio)) {
 		p->sched_class = &rt_sched_class;
-#ifdef CONFIG_SCHED_HMP
+#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
 		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
 			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
 #endif
