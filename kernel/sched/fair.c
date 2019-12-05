@@ -5652,7 +5652,7 @@ static DEFINE_RAW_SPINLOCK(hmp_semiboost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_sysfs_lock);
 static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 
-#define BOOT_BOOST_DURATION 30000000 /* microseconds */
+#define BOOT_BOOST_DURATION 40000000 /* microseconds */
 #define YIELD_CORRECTION_TIME 10000000 /* nanoseconds */
 
 unsigned int hmp_next_up_threshold = 0;

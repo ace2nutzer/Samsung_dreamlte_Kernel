@@ -37,7 +37,7 @@
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
 /* suspend min/max cpu freq tunable */
-unsigned int cpu0_suspend_min_freq = 455000;
+unsigned int cpu0_suspend_min_freq = 0;
 unsigned int cpu0_suspend_max_freq = 0;
 module_param(cpu0_suspend_min_freq, uint, 0644);
 module_param(cpu0_suspend_max_freq, uint, 0644);

@@ -32,7 +32,7 @@
 #if defined(CONFIG_INPUT_BOOSTER) // Input Booster +
 #include <linux/input/input.h>
 
-static bool use_input_booster = false;
+static bool use_input_booster = true;
 module_param(use_input_booster, bool, 0644);
 #endif // Input Booster -
 

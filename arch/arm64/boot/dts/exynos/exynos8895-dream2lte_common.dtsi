@@ -57,6 +57,22 @@
 		};
 	};
 
+	firmware {
+		android {
+			compatible = "android,firmware";
+			fstab {
+				compatible = "android,fstab";
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/platform/11120000.ufs/by-name/SYSTEM";
+					type = "ext4";
+					mnt_flags = "ro,noatime";
+					fsmgr_flags = "wait";
+				};
+			};
+		};
+	};
+
 	serial_0: uart@10430000 {
 		status = "okay";
 	};
@@ -876,7 +892,7 @@
 		card-detect-delay = <200>;
 		data-timeout = <200>;
 		hto-timeout = <80>;
-		qos-int-level = <400000>;
+		qos-int-level = <667000>;
 		clock-frequency = <800000000>;
 		samsung,dw-mshc-sdr-timing = <3 0 2 0>;
 		samsung,dw-mshc-ddr-timing = <3 0 2 1>;
@@ -2003,7 +2019,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L0>;
+				default_mif = <DVFS_MIF_L2>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 				default_hpg = <1>;
@@ -2290,7 +2306,7 @@
 
 				max_int_cam = <DVFS_INT_CAM_L0>;
 				max_cam = <DVFS_CAM_L0>;
-				max_mif = <DVFS_MIF_L0>;
+				max_mif = <DVFS_MIF_L2>;
 				max_int = <DVFS_INT_L0>;
 				max_i2c = <0>;
 				max_hpg = <1>;
@@ -2301,7 +2317,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L0>;
+				default_mif = <DVFS_MIF_L2>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 				default_hpg = <1>;
@@ -2581,7 +2597,7 @@
 
 				max_int_cam = <DVFS_INT_CAM_L0>;
 				max_cam = <DVFS_CAM_L0>;
-				max_mif = <DVFS_MIF_L0>;
+				max_mif = <DVFS_MIF_L2>;
 				max_int = <DVFS_INT_L0>;
 				max_i2c = <0>;
 				max_hpg = <1>;
@@ -3211,24 +3227,24 @@
 			qos {
 				cl0 {
 					qos,label="LIT";
-					qos,delay_time=<9>;
-					qos,table_size=<11>;
-					qos,table=<1898000 1794000 1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
+					qos,delay_time=<0>;
+					qos,table_size=<9>;
+					qos,table=<1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
 				};
 
 				cl1 {
 					qos,label="BIG";
-					qos,delay_time=<8>;
-					qos,table_size=<16>;
-					qos,table=<2652000 2574000 2496000 2314000 2158000 2002000 1937000 1807000 1703000 1469000 
+					qos,delay_time=<0>;
+					qos,table_size=<13>;
+					qos,table=<2314000 2158000 2002000 1937000 1807000 1703000 1469000 
 						1261000 1170000 1066000 962000 858000 741000>;
 				};
 
 				mif {
 					qos,label="MIF";
-					qos,delay_time=<10>;
-					qos,table_size=<6>;
-					qos,table=<1794000 1540000 1352000 1014000 845000 676000>;
+					qos,delay_time=<0>;
+					qos,table_size=<10>;
+					qos,table=<1794000 1540000 1352000 1014000 845000 676000 546000 421000 286000 208000>;
 				};
 			};
 	};
