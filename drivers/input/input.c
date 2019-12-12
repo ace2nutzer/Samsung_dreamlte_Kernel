@@ -31,9 +31,6 @@
 
 #if defined(CONFIG_INPUT_BOOSTER) // Input Booster +
 #include <linux/input/input.h>
-
-static bool use_input_booster = true;
-module_param(use_input_booster, bool, 0644);
 #endif // Input Booster -
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@suse.cz>");
@@ -856,7 +853,6 @@ void input_event(struct input_dev *dev,
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 
 #if defined(CONFIG_INPUT_BOOSTER) // Input Booster +
-	if (use_input_booster) {
 		if(device_tree_infor != NULL) {
 			if (type == EV_SYN && input_count > 0) {
 				pr_debug("[Input Booster1] ==============================================\n");
@@ -875,7 +871,6 @@ void input_event(struct input_dev *dev,
 				pr_debug("[Input Booster1] type = %x, code = %x, value =%x   Booster Event Exceeded\n", type, code, value);
 			}
 		}
-	}
 #endif  // Input Booster -
 	}
 }
