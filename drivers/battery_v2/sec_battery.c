@@ -20,10 +20,17 @@
 bool sleep_mode = false;
 
 /* Charger Control */
+#ifdef CONFIG_CAMERA_DREAM2
+static unsigned int ac_curr_max = 1800;
+static unsigned int usbpd_curr_max = 1800;
+static unsigned int wc_curr_max = 1800;
+#else
 static unsigned int ac_curr_max = 1500;
+static unsigned int usbpd_curr_max = 1500;
+static unsigned int wc_curr_max = 1500;
+#endif
 static unsigned int usb2_curr_max = 500;
 static unsigned int usb3_curr_max = 900;
-static unsigned int wc_curr_max = 1500;
 static unsigned int input_volt = 0;
 int charging_curr = 0;
 static bool is_ac_charger = false;
@@ -781,9 +788,17 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 
 	// Charger Control
 
+	// USB-PD 9 V
+	if ((battery->pd_usb_attached) && (!afc_disable)) {
+		input_current = 2000; // supports max 3.5 A charging_current
+		charging_current = usbpd_curr_max;
+	// USB-PD 5 V
+	} else if (battery->pd_usb_attached) {
+		input_current = usbpd_curr_max;
+		charging_current = usbpd_curr_max;
 	// AC AFC 12 V
-	if ((is_hv_wire_12v_type(battery->cable_type) || is_hv_12v) && (!afc_disable)) {
-		input_current = 1300; // supports max 3 A charging_current
+	} else if ((is_hv_wire_12v_type(battery->cable_type) || is_hv_12v) && (!afc_disable)) {
+		input_current = 1500; // supports max 3.5 A charging_current
 		charging_current = ac_curr_max;
 	// AC AFC 9 V
 	} else if ((is_hv_wire_type(battery->cable_type) || is_afc) && (!afc_disable)) {
@@ -957,25 +972,16 @@ static ssize_t curr_max_show(struct kobject *kobj,
 
 	sprintf(buf, "%sAC current max:   \t%d\n", buf, ac_curr_max);
 
-	sprintf(buf, "%sUSB 2.0 current max:   \t%d\n", buf, usb2_curr_max);
-
-	sprintf(buf, "%sUSB 3.0 current max:   \t%d\n", buf, usb3_curr_max);
+	sprintf(buf, "%sUSB-PD current max:   \t%d\n", buf, usbpd_curr_max);
 
 	sprintf(buf, "%sWC current max:   \t%d\n", buf, wc_curr_max);
 
-	return strlen(buf);
-}
+	sprintf(buf, "%sUSB 3.0 current max:   \t%d\n", buf, usb3_curr_max);
 
-static ssize_t afc_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	sprintf(buf, "%sInput Voltage:   \t%d\n\n", buf, input_volt);
-
-	sprintf(buf, "%s[AFC]   \t[%s]\n\n", buf, !afc_disable ? "*" : " ");
+	sprintf(buf, "%sUSB 2.0 current max:   \t%d\n", buf, usb2_curr_max);
 
 	return strlen(buf);
 }
-SEC_BAT_ATTR_RO(afc);
 
 static struct sec_battery_info *_battery;
 
@@ -983,11 +989,11 @@ static ssize_t curr_max_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
-	int ac, usb2, usb3, wc;
+	int ac, usb2, usb3, usbpd, wc;
 
 	if (sscanf(buf, "ac=%d", &ac)) {
-		if (ac < 100 || ac > 3000) {
-			pr_err("[sec_battery] Out of valid range 100 - 3000\n");
+		if (ac < 100 || ac > 3500) {
+			pr_err("[sec_battery] Out of valid range 100 - 3500\n");
 			return -EINVAL;
 		}
 		ac_curr_max = ac;
@@ -997,8 +1003,8 @@ static ssize_t curr_max_store(struct kobject *kobj,
 	}
 
 	if (sscanf(buf, "usb2=%d", &usb2)) {
-		if (usb2 < 100 || usb2 > 3000) {
-			pr_err("[sec_battery] Out of valid range 100 - 3000\n");
+		if (usb2 < 100 || usb2 > 3500) {
+			pr_err("[sec_battery] Out of valid range 100 - 3500\n");
 			return -EINVAL;
 		}
 		usb2_curr_max = usb2;
@@ -1008,8 +1014,8 @@ static ssize_t curr_max_store(struct kobject *kobj,
 	}
 
 	if (sscanf(buf, "usb3=%d", &usb3)) {
-		if (usb3 < 100 || usb3 > 3000) {
-			pr_err("[sec_battery] Out of valid range 100 - 3000\n");
+		if (usb3 < 100 || usb3 > 3500) {
+			pr_err("[sec_battery] Out of valid range 100 - 3500\n");
 			return -EINVAL;
 		}
 		usb3_curr_max = usb3;
@@ -1018,9 +1024,20 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		return count;
 	}
 
+	if (sscanf(buf, "usbpd=%d", &usbpd)) {
+		if (usbpd < 100 || usbpd > 3500) {
+			pr_err("[sec_battery] Out of valid range 100 - 3500\n");
+			return -EINVAL;
+		}
+		usbpd_curr_max = usbpd;
+		_battery->aicl_current = 0; /* reset aicl current */
+
+		return count;
+	}
+
 	if (sscanf(buf, "wc=%d", &wc)) {
-		if (wc < 100 || wc > 3000) {
-			pr_err("[sec_battery] Out of valid range 100 - 3000\n");
+		if (wc < 100 || wc > 3500) {
+			pr_err("[sec_battery] Out of valid range 100 - 3500\n");
 			return -EINVAL;
 		}
 		wc_curr_max = wc;
@@ -1035,9 +1052,45 @@ static ssize_t curr_max_store(struct kobject *kobj,
 }
 SEC_BAT_ATTR_RW(curr_max);
 
+static ssize_t afc_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%sInput Voltage:   \t%d\n\n", buf, input_volt);
+
+	sprintf(buf, "%s[AFC]   \t[%s]\n\n", buf, !afc_disable ? "*" : " ");
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(afc);
+
+#ifdef CONFIG_CAMERA_DREAM2
+static ssize_t s8_plus_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf,   "\n[Max allowed current is 3500 mA]\n");
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(s8_plus_mode);
+#else
+static ssize_t s8_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf,   "\n[Max allowed current is 3000 mA]\n");
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(s8_mode);
+#endif
+
 static struct attribute *sec_bat_attrs[] = {
 	&curr_max_attr.attr,
 	&afc_attr.attr,
+#ifdef CONFIG_CAMERA_DREAM2
+	&s8_plus_mode_attr.attr,
+#else
+	&s8_mode_attr.attr,
+#endif
 	NULL,
 };
 
@@ -3345,10 +3398,10 @@ static void sec_bat_check_input_voltage(struct sec_battery_info *battery)
 {
 	unsigned int voltage = 0;
 
-	if (battery->cable_type == SEC_BATTERY_CABLE_PDIC) {
-		battery->max_charge_power = battery->pd_max_charge_power;
-		return;
-	}
+	if ((battery->cable_type == SEC_BATTERY_CABLE_PDIC) && (!afc_disable))
+		voltage = SEC_INPUT_VOLTAGE_9V;
+	else if (battery->cable_type == SEC_BATTERY_CABLE_PDIC)
+		voltage = SEC_INPUT_VOLTAGE_5V;
 	else if (is_hv_wire_12v_type(battery->cable_type) || is_hv_12v)
 		voltage = SEC_INPUT_VOLTAGE_12V;
 	else if (is_hv_wire_9v_type(battery->cable_type) || is_afc)
@@ -4245,14 +4298,14 @@ ssize_t sec_bat_show_attrs(struct device *dev,
 		{
 			int check_val = 0;
 			if (is_hv_wire_12v_type(battery->cable_type) ||
-				battery->max_charge_power >= HV_CHARGER_STATUS_STANDARD2) /* 20000mW */
+				battery->max_charge_power >= HV_CHARGER_STATUS_STANDARD) /* 17500 mW */
 				check_val = 2;
 			else if (is_hv_wire_type(battery->cable_type) ||
 				(battery->cable_type == SEC_BATTERY_CABLE_PDIC &&
-				battery->pd_max_charge_power >= HV_CHARGER_STATUS_STANDARD1 &&
+				battery->pd_max_charge_power >= HV_CHARGER_STATUS_STANDARD &&
 				battery->pdic_info.sink_status.available_pdo_num > 1) ||
 				battery->cable_type == SEC_BATTERY_CABLE_PREPARE_TA ||
-				battery->max_charge_power >= HV_CHARGER_STATUS_STANDARD1) /* 15000mW */
+				battery->max_charge_power >= HV_CHARGER_STATUS_STANDARD)
 				check_val = 1;
 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", check_val);
@@ -5287,7 +5340,7 @@ ssize_t sec_bat_store_attrs(
 #if defined(CONFIG_ENG_BATTERY_CONCEPT)
 	case TEST_CHARGE_CURRENT:
 		if (sscanf(buf, "%10d\n", &x) == 1) {
-			if (x >= 0 && x <= 3000) {
+			if (x >= 0 && x <= 3500) {
 				dev_err(battery->dev,
 					"%s: BATT_TEST_CHARGE_CURRENT(%d)\n", __func__, x);
 				battery->pdata->charging_current[
@@ -5699,7 +5752,7 @@ ssize_t sec_bat_store_attrs(
 	case BATT_TUNE_CHG_LIMMIT_CUR:
 		sscanf(buf, "%10d\n", &x);
 		pr_info("%s chg_charging_limit_current	= %d ",__func__, x);
-		if(x < 3000 && x > 0)
+		if(x < 3500 && x > 0)
 		{
 			battery->pdata->chg_charging_limit_current = x;
 			battery->pdata->charging_current[SEC_BATTERY_CABLE_9V_ERR].input_current_limit= x;
@@ -5714,7 +5767,7 @@ ssize_t sec_bat_store_attrs(
 	case BATT_TUNE_COIL_LIMMIT_CUR:
 		sscanf(buf, "%10d\n", &x);
 		pr_info("%s wpc_charging_limit_current	= %d ",__func__, x);
-		if(x < 3000 && x > 0)
+		if(x < 3500 && x > 0)
 		{
 			battery->pdata->charging_current[SEC_BATTERY_CABLE_9V_ERR].input_current_limit= x;
 			battery->pdata->charging_current[SEC_BATTERY_CABLE_9V_UNKNOWN].input_current_limit= x;
@@ -7412,8 +7465,6 @@ static int batt_pdic_handle_notification(struct notifier_block *nb,
 			cmd = "ATTACH";
 			battery->wire_status = SEC_BATTERY_CABLE_PDIC;
 			battery->pdic_attach = true;
-			battery->input_voltage =
-				battery->pdic_info.sink_status.power_list[selected_pdo].max_voltage / 1000;
 
 			pr_info("%s: total pdo : %d, selected pdo : %d\n", __func__,
 					battery->pdic_info.sink_status.available_pdo_num, selected_pdo);
@@ -8876,13 +8927,13 @@ static int sec_bat_parse_dt(struct device *dev,
 	ret = of_property_read_u32(np, "battery,max_input_current",
 			&pdata->max_input_current);
 	if (ret)
-		pdata->max_input_current = 3000;
+		pdata->max_input_current = 3500;
 
 	ret = of_property_read_u32(np, "battery,pd_charging_charge_power",
 			&pdata->pd_charging_charge_power);
 	if (ret) {
 		pr_err("%s: pd_charging_charge_power is Empty\n", __func__);
-		pdata->pd_charging_charge_power = 15000;
+		pdata->pd_charging_charge_power = 17500;
 	}
 
 	ret = of_property_read_u32(np, "battery,nv_charge_power",
@@ -8914,7 +8965,7 @@ static int sec_bat_parse_dt(struct device *dev,
 			&pdata->max_charging_current);
 	if (ret) {
 		pr_err("%s: max_charging_current is Empty\n", __func__);
-		pdata->max_charging_current = 3000;
+		pdata->max_charging_current = 3500;
 	}
 
 #endif

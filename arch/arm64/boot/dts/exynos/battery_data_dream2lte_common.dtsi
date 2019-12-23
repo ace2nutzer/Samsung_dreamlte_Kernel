@@ -276,15 +276,15 @@
 		battery,ttf_hv_wireless_charge_current = <0>;
 		battery,ttf_wireless_charge_current = <0>;
 
-		battery,pd_charging_charge_power = <15000>;
-		battery,max_charging_current = <3000>;
+		battery,pd_charging_charge_power = <17500>;
+		battery,max_charging_current = <3500>;
 		battery,battery_full_capacity = <3500>;
 
 		/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
 		battery,age_data = <0 43500 4280 4250 93>;
 
 		battery,max_input_voltage = <12000>; /* mV */
-		battery,max_input_current = <3000>;  /* mA */
+		battery,max_input_current = <3500>;  /* mA */
 
 		battery,enable_sysovlo_irq;
 
