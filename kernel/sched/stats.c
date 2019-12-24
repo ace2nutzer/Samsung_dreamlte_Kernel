@@ -12,7 +12,7 @@
  */
 #define SCHEDSTAT_VERSION 15
 
-#ifdef DEFAULT_USE_ENERGY_AWARE
+#ifdef CONFIG_DEFAULT_USE_ENERGY_AWARE
 static inline void show_easstat(struct seq_file *seq, struct eas_stats *stats)
 {
 	/* eas-specific runqueue stats */
@@ -64,7 +64,7 @@ static int show_schedstat(struct seq_file *seq, void *v)
 		seq_printf(seq, "\n");
 
 #ifdef CONFIG_SMP
-#ifdef DEFAULT_USE_ENERGY_AWARE
+#ifdef CONFIG_DEFAULT_USE_ENERGY_AWARE
 		show_easstat(seq, &rq->eas_stats);
 #endif
 		/* domain-specific stats */
