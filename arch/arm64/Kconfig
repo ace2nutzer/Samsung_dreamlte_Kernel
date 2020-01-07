@@ -661,12 +661,10 @@ config SCHED_HMP_TASK_BASED_SOFTLANDING
 	  to the down-migrated task by frequency qos lock.
 
 config SCHED_HMP_RELAX
-	bool "(EXPERIMENTAL) Relax HMP restrictions"
+	bool "(EXPERIMENTAL) Relax HMP boost"
 	depends on SCHED_HMP
 	help
-	  This removes forced use of hmp_slow_cpu_mask,
-	  hmp_fast_cpu_mask and hmp_boost from drivers
-	  like GPU / Audio and so on.
+	  This removes forced use of hmp_boost from various drivers.
 
 	  If unsure, say Y
 

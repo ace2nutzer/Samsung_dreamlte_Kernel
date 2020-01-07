@@ -565,9 +565,11 @@ struct abox_data {
 	unsigned int big_freq;
 	struct abox_qos_request big_requests[16];
 	struct work_struct change_big_freq_work;
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 	unsigned int hmp_boost;
 	struct abox_qos_request hmp_requests[16];
 	struct work_struct change_hmp_boost_work;
+#endif
 	struct abox_dram_request dram_requests[16];
 	unsigned int uaif_fmt[ABOX_DAI_COUNT];
 	unsigned long audif_rates[ABOX_DAI_COUNT];
@@ -678,7 +680,9 @@ struct abox_platform_data {
 	unsigned long quirks;
 	int pm_qos_lit[RATE_COUNT];
 	int pm_qos_big[RATE_COUNT];
+#ifdef CONFIG_HMP_VARIABLE_SCALE
 	int pm_qos_hmp[RATE_COUNT];
+#endif
 	struct platform_device *pdev_abox;
 	struct abox_data *abox_data;
 	struct snd_pcm_substream *substream;

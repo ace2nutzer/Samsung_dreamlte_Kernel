@@ -160,15 +160,15 @@
 		#size-cells = <0>;
 
 		hmp {
-			up_threshold = <819>;
-			down_threshold = <393>;
-			semiboost_up_threshold = <819>;
-			semiboost_down_threshold = <393>;
+			up_threshold = <461>;
+			down_threshold = <205>;
+			semiboost_up_threshold = <461>;
+			semiboost_down_threshold = <205>;
 			bootboost-duration-us = <40000000>;
 			down_compensation_timeout = <30>;               /* ms */
-			down_compensation_high_freq = <0>;        /* min qos lock for little cpu */
-			down_compensation_mid_freq = <0>;          /* min qos lock for little cpu */
-			down_compensation_low_freq = <0>;          /* min qos lock for little cpu */
+			down_compensation_high_freq = <1690000>;        /* min qos lock for little cpu */
+			down_compensation_mid_freq = <1690000>;          /* min qos lock for little cpu */
+			down_compensation_low_freq = <1690000>;          /* min qos lock for little cpu */
 			hmp_up_compst_ratio = <512>;
 			hmp_down_compst_ratio = <2048>;
 			little-id = <1>;
@@ -494,13 +494,13 @@
 						  1898000  1352000
 						  1794000  1352000
 						  1690000  1352000
-						  1456000  1352000
-						  1248000  1352000
-						  1053000  1352000
-						   949000  1352000
-						   832000  1352000
-						   715000  1352000
-						   598000  1352000
+						  1456000  1014000
+						  1248000  1014000
+						  1053000  1014000
+						   949000  1014000
+						   832000  1014000
+						   715000   845000
+						   598000   845000
 						   455000   421000
 						   >;
 				};
@@ -547,7 +547,7 @@
 						  2158000  1794000
 						  2002000  1794000
 						  1937000  1794000
-						  1807000  1540000
+						  1807000  1794000
 						  1703000  1540000
 						  1469000  1540000
 						  1261000  1540000
@@ -773,7 +773,7 @@
 		gpu_dvfs_table = <
 		                    572000    23   45   1  1794000  0     0
 		                    546000    17   45   1  1794000  0     0
-		                    455000    18   45   1  1540000  0     0
+		                    455000    18   45   1  1794000  0     0
 		                    385000    20   45   1  1540000  0     0
 		                    338000    15   45   1  1540000  0     0
 		                    260000    15   45   1  1352000  0     0 >;

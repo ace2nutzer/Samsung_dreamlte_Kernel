@@ -24,7 +24,7 @@
  */
 static struct lock_class_key irq_desc_lock_class;
 
-#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_SCHED_HMP)
 extern struct cpumask hmp_slow_cpu_mask;
 #endif
 #if defined(CONFIG_SMP)

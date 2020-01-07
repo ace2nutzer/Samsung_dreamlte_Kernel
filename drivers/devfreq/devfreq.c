@@ -318,7 +318,7 @@ static void devfreq_monitor(struct work_struct *work)
 	err = update_devfreq(devfreq);
 	if (err && err != -EAGAIN)
 		dev_err(&devfreq->dev, "dvfs failed with (%d) error\n", err);
-#if (defined(CONFIG_SCHED_HMP) && !defined(CONFIG_SCHED_HMP_RELAX))
+#ifdef CONFIG_SCHED_HMP
 	mod_delayed_work_on(0, devfreq_wq, &devfreq->work,
 				msecs_to_jiffies(devfreq->profile->polling_ms));
 #else

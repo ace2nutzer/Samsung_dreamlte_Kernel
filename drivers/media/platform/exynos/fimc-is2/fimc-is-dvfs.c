@@ -511,13 +511,14 @@ int fimc_is_set_dvfs(struct fimc_is_core *core, struct fimc_is_device_ischain *d
 		dvfs_ctrl->cur_cam_qos = cam_qos;
 	}
 
+#ifdef CONFIG_SCHED_HMP
 #if defined(ENABLE_HMP_BOOST)
 	/* hpg_qos : number of minimum online CPU */
 	if (hpg_qos && dvfs_ctrl->cur_hpg_qos != hpg_qos) {
 		pm_qos_update_request(&exynos_isp_qos_hpg, hpg_qos);
 		dvfs_ctrl->cur_hpg_qos = hpg_qos;
 
-#if defined(CONFIG_HMP_VARIABLE_SCALE)
+#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
 		/* for migration to big core */
 		if (hpg_qos > 4) {
 			if (!dvfs_ctrl->cur_hmp_bst) {
@@ -532,6 +533,7 @@ int fimc_is_set_dvfs(struct fimc_is_core *core, struct fimc_is_device_ischain *d
 		}
 #endif
 	}
+#endif
 #endif
 
 #if defined(CONFIG_SOC_EXYNOS8895)
