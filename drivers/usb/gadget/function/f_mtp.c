@@ -1514,7 +1514,7 @@ struct usb_function_instance *alloc_inst_mtp_ptp(bool mtp_config)
 
 	return  &fi_mtp->func_inst;
 }
-EXPORT_SYMBOL_GPL(alloc_inst_mtp_ptp);
+//EXPORT_SYMBOL_GPL(alloc_inst_mtp_ptp);
 
 static struct usb_function_instance *mtp_alloc_inst(void)
 {
@@ -1603,7 +1603,7 @@ struct usb_function *function_alloc_mtp_ptp(struct usb_function_instance *fi,
 	return &dev->function;
 #endif
 }
-EXPORT_SYMBOL_GPL(function_alloc_mtp_ptp);
+//EXPORT_SYMBOL_GPL(function_alloc_mtp_ptp);
 
 static struct usb_function *mtp_alloc(struct usb_function_instance *fi)
 {

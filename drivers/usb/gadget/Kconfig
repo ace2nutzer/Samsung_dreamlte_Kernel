@@ -448,14 +448,14 @@ config USB_CONFIGFS_F_ADB
 	  USB gadget ADB support
 
 config USB_CONFIGFS_F_MTP
-	boolean "MTP gadget"
+	tristate "MTP gadget"
 	depends on USB_CONFIGFS
 	select USB_F_MTP
 	help
 	  USB gadget MTP support
 
 config USB_CONFIGFS_F_PTP
-	boolean "PTP gadget"
+	tristate "PTP gadget"
 	depends on USB_CONFIGFS && USB_CONFIGFS_F_MTP
 	select USB_F_PTP
 	help
