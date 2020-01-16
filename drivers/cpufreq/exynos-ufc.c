@@ -22,6 +22,11 @@
 
 #include "exynos-acme.h"
 
+#include <linux/moduleparam.h>
+
+static unsigned int cool_freq = 2002000;
+module_param(cool_freq, uint, 0644);
+
 /*********************************************************************
  *                          SYSFS INTERFACES                         *
  *********************************************************************/
@@ -506,9 +511,9 @@ static ssize_t store_cpufreq_max_limit(struct kobject *kobj, struct attribute *a
 	if (sscanf(buf, "%8d", &input) < 1)
 		return -EINVAL;
 
-	/* HACK: force 2002 MHz instead 1469 MHz from system */
+	/* HACK: force user cool_freq instead 1469 MHz from system */
 	if (input != -1)
-		input = 2002000;
+		input = cool_freq;
 
 	last_max_limit = input;
 	cpufreq_max_limit_update(input);
