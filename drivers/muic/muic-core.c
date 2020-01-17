@@ -521,7 +521,7 @@ static int muic_init_gpio_cb(int switch_sel)
 	/* These flags MUST be updated again from probe function */
 	pdata->rustproof_on = false;
 
-	pdata->afc_disable = false;
+	pdata->afc_disable = true;
 
 	if (pdata->set_gpio_uart_sel)
 		ret = pdata->set_gpio_uart_sel(pdata->uart_path);
