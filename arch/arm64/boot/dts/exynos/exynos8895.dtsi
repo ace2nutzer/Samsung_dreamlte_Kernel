@@ -490,18 +490,18 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 2002000  1352000
-						  1898000  1352000
-						  1794000  1352000
-						  1690000  1352000
-						  1456000  1014000
-						  1248000  1014000
-						  1053000  1014000
-						   949000  1014000
-						   832000  1014000
+					table = < 2002000  1014000
+						  1898000  1014000
+						  1794000  1014000
+						  1690000  1014000
+						  1456000   845000
+						  1248000   845000
+						  1053000   845000
+						   949000   845000
+						   832000   845000
 						   715000   845000
 						   598000   845000
-						   455000   421000
+						   455000   845000
 						   >;
 				};
 				mif-skew {
@@ -548,14 +548,14 @@
 						  2002000  1794000
 						  1937000  1794000
 						  1807000  1794000
-						  1703000  1540000
-						  1469000  1540000
-						  1261000  1540000
-						  1170000  1352000
-						  1066000  1352000
-						   962000  1352000
-						   858000  1352000
-						   741000   421000 >;
+						  1703000  1794000
+						  1469000  1794000
+						  1261000  1794000
+						  1170000  1794000
+						  1066000  1794000
+						   962000  1794000
+						   858000  1794000
+						   741000   845000 >;
 				};
 				mif-skew {
 					guidance;
@@ -767,33 +767,36 @@
 		samsung,power-domain = <&pd_g3d>;
 		g3d_genpd_name = "pd-g3d"; /*KC: pg-g3d, LT,MK: pd-embedded_g3d*/
 		#cooling-cells = <2>; /* min followed by max */
-		governor = "Default";
-		interactive_info = <0 0 0>;
-		gpu_dvfs_table_size = <6 7>; /*<row col>*/
+		governor = "default";
+		interactive_info = <839000 45 0>;
+		gpu_dvfs_table_size = <9 7>; /*<row col>*/
 		gpu_dvfs_table = <
-		                    572000    23   45   1  1794000  0     0
-		                    546000    17   45   1  1794000  0     0
-		                    455000    18   45   1  1794000  0     0
-		                    385000    20   45   1  1540000  0     0
-		                    338000    15   45   1  1540000  0     0
-		                    260000    15   45   1  1352000  0     0 >;
+		                    839000    16   45   1  1794000   0   0
+		                    764000    15   45   1  1794000   0   0
+		                    683000    13   45   1  1794000   0   0
+		                    572000    18   45   1  1794000   0   0
+		                    546000    12   45   1  1794000   0   0
+		                    455000    13   45   1  1794000   0   0
+		                    385000    15   45   1  1794000   0   0
+		                    338000    10   45   1  1794000   0   0
+		                    260000    10   45   1  1352000   0   0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
 		gpu_pmu_status_local_pwr_mask = <0xF>; /*0xF << 0*/
-		gpu_max_clock = <572000>;
-		gpu_max_clock_limit = <572000>;
+		gpu_max_clock = <839000>;
+		gpu_max_clock_limit = <839000>;
 		gpu_min_clock = <260000>;
 		gpu_dvfs_start_clock = <260000>;
 		gpu_dvfs_bl_config_clock = <260000>;
-		gpu_default_voltage = <800000>;
+		gpu_default_voltage = <718750>;
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
 		gpu_tmu_control = <1>;
 		gpu_temp_throttling_level_num = <6>;
 		gpu_temp_throttling = <546000 455000 385000 338000 260000 260000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
+		gpu_dvfs_time_interval = <10>; /*1 tick : 10ms if HZ=100*/
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
@@ -814,7 +817,7 @@
 		gpu_vk_boost_max_lock = <0>;
 		gpu_vk_boost_mif_min_lock = <0>;
 		gpu_bts_support = <1>;
-		gpu_asv_cali_lock_val = <572000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
+		gpu_asv_cali_lock_val = <839000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
 		gpu_set_pmu_duration_val = <0xfffff363>; /* only for KC for now*/
 	};
@@ -2467,7 +2470,7 @@
 		use_delay_time = "false";
 		delay_time_list = "20";
 
-		freq_info = <1794000 421000 421000 421000 1794000 1794000>;
+		freq_info = <1794000 845000 845000 845000 1794000 1794000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq reboot_freq */
 
 		/* Booting value */
@@ -3420,9 +3423,9 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_hmp = <1 1 1>; /* SUHQA UHQA NORMAL */
 		};
 
 		abox_rdma_1: abox_rdma@0x13E51100 {
@@ -3431,8 +3434,8 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -3442,8 +3445,8 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <0 0 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -4871,9 +4874,9 @@
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <1000>;
-			input_booster,tail_times = <1000>;
-			input_booster,phase_times = <1000>;
+			input_booster,head_times = <0>;
+			input_booster,tail_times = <0>;
+			input_booster,phase_times = <0>;
 		};
 		booster_key@2 {
 			input_booster,label = "TOUCHKEY";
@@ -4890,9 +4893,9 @@
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <1000>;
-			input_booster,tail_times = <1000>;
-			input_booster,phase_times = <1000>;
+			input_booster,head_times = <0>;
+			input_booster,tail_times = <0>;
+			input_booster,phase_times = <0>;
 		};
 		booster_key@3 {
 			input_booster,label = "TOUCH";
@@ -4909,9 +4912,9 @@
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000 1000>;
-			input_booster,tail_times = <1000 1000 1000>;
-			input_booster,phase_times = <1000 1000 1000>;
+			input_booster,head_times = <0 0 0>;
+			input_booster,tail_times = <0 0 0>;
+			input_booster,phase_times = <0 0 0>;
 		};
 		booster_key@4 { // Input Booster +
 			input_booster,label = "MULTITOUCH";
@@ -4928,9 +4931,9 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
-			input_booster,phase_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@5 {
 			input_booster,label = "KEYBOARD";
@@ -4947,9 +4950,9 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
-			input_booster,phase_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@6 {
 			input_booster,label = "MOUSE";
@@ -4966,9 +4969,9 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
-			input_booster,phase_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@7 {
 			input_booster,label = "MOUSE WHEEL";
@@ -4985,9 +4988,9 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
-			input_booster,phase_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@8 {
 			input_booster,label = "PEN HOVER";
@@ -5004,9 +5007,9 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
-			input_booster,phase_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@9 {
 			input_booster,label = "PEN";
@@ -5022,8 +5025,8 @@
 			input_booster,bimc_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <1000 1000>;
-			input_booster,tail_times = <1000 1000>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
 		};
 		booster_key@10 {
 			input_booster,label = "KEY_TWO";
@@ -5040,9 +5043,9 @@
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <1000>;
-			input_booster,tail_times = <1000>;
-			input_booster,phase_times = <1000>;
+			input_booster,head_times = <0>;
+			input_booster,tail_times = <0>;
+			input_booster,phase_times = <0>;
 		}; // Input Booster -
 		/* If you need to add new key type, add it this position */
 	};

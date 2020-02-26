@@ -339,9 +339,11 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	gpu_update_config_data_int(np, "gpu_set_pmu_duration_reg", &platform->gpu_set_pmu_duration_reg);
 	gpu_update_config_data_int(np, "gpu_set_pmu_duration_val", &platform->gpu_set_pmu_duration_val);
 
+#ifdef CONFIG_MALI_DVFS
 	gpu_update_config_data_string(np, "g3d_genpd_name", &of_string);
 	if (of_string)
 		strncpy(platform->g3d_genpd_name, of_string, sizeof(platform->g3d_genpd_name));
+#endif
 
 	platform->gpu_dss_freq_id = 0;
 	gpu_update_config_data_int(np, "gpu_ess_id_type", &platform->gpu_dss_freq_id);
@@ -395,6 +397,8 @@ static int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
 				table_idx = j * dvfs_table_col_num;
 				// Compare cal_freq with DVFS table freq
 				if (cal_freq == of_data_int_array[table_idx]) {
+					if (!cal_vol)
+						cal_vol = platform->gpu_default_vol;
 					dvfs_table[j].clock = cal_freq;
 					dvfs_table[j].voltage = cal_vol;
 					dvfs_table[j].min_threshold = of_data_int_array[table_idx+1];
@@ -459,7 +463,7 @@ static int gpu_context_init(struct kbase_device *kbdev)
 #endif
 
 	core_props = &(kbdev->gpu_props.props.core_props);
-	core_props->gpu_freq_khz_max = platform->gpu_max_clock * 1000;
+	core_props->gpu_freq_khz_max = platform->gpu_max_clock;
 
 #if MALI_SEC_PROBE_TEST != 1
 	kbdev->vendor_callbacks = (struct kbase_vendor_callbacks *)gpu_get_callbacks();
