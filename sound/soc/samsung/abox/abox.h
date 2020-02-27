@@ -680,7 +680,7 @@ struct abox_platform_data {
 	unsigned long quirks;
 	int pm_qos_lit[RATE_COUNT];
 	int pm_qos_big[RATE_COUNT];
-#ifdef CONFIG_HMP_VARIABLE_SCALE
+#ifdef CONFIG_SCHED_HMP
 	int pm_qos_hmp[RATE_COUNT];
 #endif
 	struct platform_device *pdev_abox;

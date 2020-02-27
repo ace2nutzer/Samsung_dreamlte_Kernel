@@ -660,14 +660,6 @@ config SCHED_HMP_TASK_BASED_SOFTLANDING
 	  The task based softlanding guarantees proper performance
 	  to the down-migrated task by frequency qos lock.
 
-config SCHED_HMP_RELAX
-	bool "(EXPERIMENTAL) Relax HMP boost"
-	depends on SCHED_HMP
-	help
-	  This removes forced use of hmp_boost from various drivers.
-
-	  If unsure, say Y
-
 config NR_CPUS
 	int "Maximum number of CPUs (2-4096)"
 	range 2 4096

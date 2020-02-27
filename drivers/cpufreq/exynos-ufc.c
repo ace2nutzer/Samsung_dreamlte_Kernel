@@ -103,7 +103,7 @@ static ssize_t show_cpufreq_min_limit(struct kobject *kobj,
 		first_domain()->min_freq >> (scale * SCALE_SIZE));
 }
 
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 static bool boosted;
 static inline void control_boost(bool enable)
 {
@@ -185,7 +185,7 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 		/* Clear all constraint by cpufreq_min_limit */
 		if (input < 0) {
 			pm_qos_update_request(&domain->user_min_qos_req, 0);
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 			control_boost(0);
 #endif
 			continue;
@@ -222,7 +222,7 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 
 		freq = min(freq, domain->max_freq);
 		pm_qos_update_request(&domain->user_min_qos_req, freq);
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 		control_boost(1);
 #endif
 		set_max = true;

@@ -44,7 +44,7 @@ enum {
 	INTFREQ,
 	TASK_AFFINITY_EN,
 	IRQ_AFFINITY_EN,
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 	HMP_BOOST_EN,
 #endif
 	ITEM_MAX,
@@ -89,7 +89,7 @@ struct argos {
 	bool task_hotplug_disable;
 	struct list_head irq_affinity_list;
 	bool irq_hotplug_disable;
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 	bool hmpboost_enable;
 #endif
 	bool argos_block;
@@ -370,7 +370,7 @@ int argos_irq_affinity_apply(int dev_num, bool enable)
 	return result;
 }
 
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 int argos_hmpboost_apply(int dev_num, bool enable)
 {
 	bool *hmpboost_enable;
@@ -495,7 +495,7 @@ void argos_block_enable(char *req_name, bool set)
 		argos_freq_unlock(dev_num);
 		argos_task_affinity_apply(dev_num, 0);
 		argos_irq_affinity_apply(dev_num, 0);
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 		argos_hmpboost_apply(dev_num, 0);
 #endif
 		cnode->prev_level = -1;
@@ -587,7 +587,7 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 				argos_freq_unlock(type);
 				argos_task_affinity_apply(type, 0);
 				argos_irq_affinity_apply(type, 0);
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 				argos_hmpboost_apply(type, 0);
 #endif
 			} else {
@@ -601,7 +601,7 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 				enable_flag = argos_pdata->devices[type].tables[level].items[IRQ_AFFINITY_EN];
 				argos_irq_affinity_apply(type, enable_flag);
 
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 				enable_flag = argos_pdata->devices[type].tables[level].items[HMP_BOOST_EN];
 				argos_hmpboost_apply(type, enable_flag);
 #endif
@@ -684,7 +684,7 @@ static int argos_parse_dt(struct device *dev)
 		INIT_LIST_HEAD(&cnode->irq_affinity_list);
 		cnode->task_hotplug_disable = false;
 		cnode->irq_hotplug_disable = false;
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 		cnode->hmpboost_enable = false;
 #endif
 		cnode->argos_block = false;

@@ -214,7 +214,7 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			if (!platform->ctx_need_qos) {
 				platform->ctx_need_qos = true;
-#if defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX)
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 				/* set hmp boost */
 				set_hmp_boost(1);
 				set_hmp_aggressive_up_migration(true);

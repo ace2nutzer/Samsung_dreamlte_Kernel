@@ -348,7 +348,7 @@ static int s5p_mfc_open(struct file *file)
 
 	dev->num_inst++;	/* It is guarded by mfc_mutex in vfd */
 
-#if (defined(CONFIG_HMP_VARIABLE_SCALE) && !defined(CONFIG_SCHED_HMP_RELAX))
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 	/* for family boost */
 	if (node == MFCNODE_ENCODER) {
 		dev->num_enc++;
