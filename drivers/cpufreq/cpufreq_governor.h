@@ -145,6 +145,7 @@ struct cpu_dbs_info {
 struct od_cpu_dbs_info_s {
 	struct cpu_dbs_info cdbs;
 	struct cpufreq_frequency_table *freq_table;
+	struct cpufreq_policy *policy;
 	unsigned int freq_lo;
 	unsigned int freq_lo_jiffies;
 	unsigned int freq_hi_jiffies;
@@ -167,6 +168,7 @@ struct od_dbs_tuners {
 	unsigned int up_threshold;
 	unsigned int powersave_bias;
 	unsigned int io_is_busy;
+	unsigned int freq_step_khz;
 };
 
 struct cs_dbs_tuners {
@@ -174,8 +176,8 @@ struct cs_dbs_tuners {
 	unsigned int sampling_rate;
 	unsigned int sampling_down_factor;
 	unsigned int up_threshold;
-	unsigned int suspend_up_threshold;
-	unsigned int freq_step;
+	unsigned int freq_step_khz;
+	bool boost;
 };
 
 /* Common Governor data across policies */
