@@ -1614,6 +1614,70 @@ static ssize_t set_kernel_sysfs_min_lock_dvfs(struct kobject *kobj, struct kobj_
 
 	return count;
 }
+
+static ssize_t show_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	sprintf(buf, "%s[gpu_max_clock]   \t[%d]\n\n", buf, platform->gpu_max_clock);
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int clock = 0;
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	if (!platform)
+		return -ENODEV;
+
+	if (sscanf(buf, "%d", &clock)) {
+
+		if (clock == 260000 || clock == 338000 || clock == 385000 || clock == 455000 || clock == 546000
+				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000) {
+
+			platform->gpu_max_clock = clock;
+		} else {
+			pr_warning("[GPU:] Invaild input\n");
+			return -EINVAL;
+		}
+
+	}
+
+	return count;
+}
+
+static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	sprintf(buf, "%s[gpu_min_clock]   \t[%d]\n\n", buf, platform->gpu_min_clock);
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int clock = 0;
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	if (!platform)
+		return -ENODEV;
+
+	if (sscanf(buf, "%d", &clock)) {
+
+		if (clock == 260000 || clock == 338000 || clock == 385000 || clock == 455000 || clock == 546000
+				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000) {
+
+			platform->gpu_min_clock = clock;
+		} else {
+			pr_warning("[GPU:] Invaild input\n");
+			return -EINVAL;
+		}
+
+	}
+
+	return count;
+}
 #endif /* #ifdef CONFIG_MALI_DVFS */
 
 static ssize_t show_kernel_sysfs_utilization(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -1684,7 +1748,7 @@ static ssize_t show_kernel_sysfs_freq_table(struct kobject *kobj, struct kobj_at
 	if (!platform)
 		return -ENODEV;
 
-	for (i = gpu_dvfs_get_level(platform->gpu_min_clock); i >= gpu_dvfs_get_level(platform->gpu_max_clock); i--) {
+	for (i = gpu_dvfs_get_level(platform->gpu_min_clock); i >= gpu_dvfs_get_level(platform->gpu_max_clock_limit); i--) {
 		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%d ", platform->table[i].clock);
 	}
 
@@ -1869,6 +1933,12 @@ static struct kobj_attribute gpu_max_lock_attribute =
 
 static struct kobj_attribute gpu_min_lock_attribute =
 	__ATTR(gpu_min_clock, S_IRUGO|S_IWUSR, show_kernel_sysfs_min_lock_dvfs, set_kernel_sysfs_min_lock_dvfs);
+
+static struct kobj_attribute user_max_clock_attribute =
+	__ATTR(user_max_clock, S_IRUGO|S_IWUSR, show_kernel_sysfs_user_max_clock, set_kernel_sysfs_user_max_clock);
+
+static struct kobj_attribute user_min_clock_attribute =
+	__ATTR(user_min_clock, S_IRUGO|S_IWUSR, show_kernel_sysfs_user_min_clock, set_kernel_sysfs_user_min_clock);
 #endif /* #ifdef CONFIG_MALI_DVFS */
 
 static struct kobj_attribute gpu_busy_attribute =
@@ -1900,6 +1970,8 @@ static struct attribute *attrs[] = {
 	&gpu_info_attribute.attr,
 	&gpu_max_lock_attribute.attr,
 	&gpu_min_lock_attribute.attr,
+	&user_max_clock_attribute.attr,
+	&user_min_clock_attribute.attr,
 #endif /* #ifdef CONFIG_MALI_DVFS */
 	&gpu_busy_attribute.attr,
 	&gpu_clock_attribute.attr,

@@ -392,7 +392,7 @@ static int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
 	for (i = 0; i < cal_get_dvfs_lv_num; i++) {
 		cal_freq = g3d_rate_volt[i].rate;
 		cal_vol = g3d_rate_volt[i].volt;
-		if (cal_freq <= platform->gpu_max_clock && cal_freq >= platform->gpu_min_clock) {
+		if (cal_freq <= platform->gpu_max_clock_limit && cal_freq >= platform->gpu_min_clock) {
 			for (j = 0; j < dvfs_table_row_num; j++) {
 				table_idx = j * dvfs_table_col_num;
 				// Compare cal_freq with DVFS table freq
