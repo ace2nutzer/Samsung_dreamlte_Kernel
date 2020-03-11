@@ -24,7 +24,7 @@
 
 #include <linux/moduleparam.h>
 
-static unsigned int cool_freq = 2002000;
+static unsigned int cool_freq = 1469000;
 module_param(cool_freq, uint, 0644);
 
 /*********************************************************************
