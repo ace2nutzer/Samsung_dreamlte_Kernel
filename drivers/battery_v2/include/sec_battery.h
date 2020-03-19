@@ -117,7 +117,8 @@
 #define SEC_INPUT_VOLTAGE_10V	10
 #define SEC_INPUT_VOLTAGE_12V	12
 
-#define HV_CHARGER_STATUS_STANDARD	17500 /* mW */
+#define HV_CHARGER_STATUS_STANDARD1	10000 /* mW */
+#define HV_CHARGER_STATUS_STANDARD2	20000 /* mW */
 
 #if defined(CONFIG_CCIC_NOTIFIER)
 struct sec_bat_pdic_info {

@@ -501,11 +501,11 @@ static ssize_t muic_show_afc_disable(struct device *dev,
 	struct muic_platform_data *pdata = pmuic->pdata;
 
 	if (pdata->afc_disable) {
-		pr_info("%s:%s AFC DISABLED\n", MUIC_DEV_NAME, __func__);
+		pr_info("%s:%s AFC DISABLE\n", MUIC_DEV_NAME, __func__);
 		return sprintf(buf, "1\n");
 	}
 
-	pr_info("%s:%s AFC ENABLED", MUIC_DEV_NAME, __func__);
+	pr_info("%s:%s AFC ENABLE", MUIC_DEV_NAME, __func__);
 	return sprintf(buf, "0\n");
 }
 

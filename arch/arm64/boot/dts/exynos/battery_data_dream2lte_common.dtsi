@@ -188,8 +188,8 @@
 		battery,chg_gpio_full_check = <0>;
 		battery,chg_polarity_full_check = <1>;
 
-		battery,chg_high_temp = <800>;
-		battery,chg_high_temp_recovery = <750>;
+		battery,chg_high_temp = <550>;
+		battery,chg_high_temp_recovery = <500>;
 		battery,chg_input_limit_current = <500>;
 		battery,chg_charging_limit_current = <500>; 
 
@@ -218,7 +218,7 @@
 		battery,wc_hero_stand_hv_cv_current = <0>;
 
 		battery,mix_high_temp = <450>;
-		battery,mix_high_chg_temp = <800>;
+		battery,mix_high_chg_temp = <550>;
 		battery,mix_high_temp_recovery = <400>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
@@ -251,9 +251,9 @@
 		battery,swelling_low_temp_recov_2nd = <100>;
 
 		battery,swelling_low_temp_current = <500>;	/* 0.3C */
-		battery,swelling_low_temp_topoff = <300>;	/* 0.1C */
+		battery,swelling_low_temp_topoff = <350>;	/* 0.1C */
 		battery,swelling_high_temp_current = <500>;	/* 0.45C */
-		battery,swelling_high_temp_topoff = <300>;	/* 0.1C */
+		battery,swelling_high_temp_topoff = <350>;	/* 0.1C */
 		battery,swelling_wc_high_temp_current = <500>;	/* 0.3C */
 		battery,swelling_wc_low_temp_current = <500>;	/* 0.3C */
 
@@ -288,7 +288,7 @@
 
 		battery,enable_sysovlo_irq;
 
-		battery,standard_curr = <500>;
+		battery,standard_curr = <0>;
 		battery,expired_time = <0>;
 		battery,recharging_expired_time = <0>;
 
@@ -464,10 +464,10 @@
  *  34	CABLE_MAX,
 */
 	cable-info {
-		   default_input_current = <500>;
-		   default_charging_current = <500>;
-		   full_check_current_1st = <305>;
-		   full_check_current_2nd = <300>;
+		   default_input_current = <0>;
+		   default_charging_current = <0>;
+		   full_check_current_1st = <355>;
+		   full_check_current_2nd = <350>;
 
 		   current_group_1 {
 		   	       cable_number = <1 4 19 21 22 23 30>;
