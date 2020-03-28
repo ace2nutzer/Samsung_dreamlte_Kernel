@@ -1546,6 +1546,7 @@ u8 GREAT_A2_S3_DISABLE_ACTIVE_CLK[] = {
 	0xE3,
 	0x00, 0x00
 };
+#if 0
 u8 GREAT_A2_S3_SET_SELF_DRAWER[] = {
 	0xE2,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1558,7 +1559,7 @@ u8 GREAT_A2_S3_SET_SELF_DRAWER[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
 };
-
+#endif
 u8 GREAT_A2_S3_DISABLE_SELF_DRAWER[] = {
 	0xE2,
 	0x00, 0x00
@@ -1801,7 +1802,7 @@ DEFINE_VARIABLE_PACKET(great_a2_s3_lpm_mode, DSI_PKT_TYPE_WR, GREAT_A2_S3_LPM_MO
 
 #ifdef CONFIG_ACTIVE_CLOCK
 DEFINE_VARIABLE_PACKET(great_a2_s3_enable_active_clk, DSI_PKT_TYPE_WR, GREAT_A2_S3_ENABLE_ACTIVE_CLK, &great_a2_s3_maptbl[ACTIVE_CLK_CTRL_MAPTBL], 1);
-DEFINE_VARIABLE_PACKET(great_a2_s3_set_self_drawer, DSI_PKT_TYPE_WR, GREAT_A2_S3_SET_SELF_DRAWER, &great_a2_s3_maptbl[ACTIVE_CLK_SELF_DRAWER], 1);
+//DEFINE_VARIABLE_PACKET(great_a2_s3_set_self_drawer, DSI_PKT_TYPE_WR, GREAT_A2_S3_SET_SELF_DRAWER, &great_a2_s3_maptbl[ACTIVE_CLK_SELF_DRAWER], 1);
 DEFINE_VARIABLE_PACKET(great_a2_s3_update_active_clk, DSI_PKT_TYPE_WR, GREAT_A2_S3_UPDATE_ACTIVE_CLK, &great_a2_s3_maptbl[ACTIVE_CLK_CTRL_UPDATE_MAPTBL], 1);
 DEFINE_STATIC_PACKET(great_a2_s3_disable_self_drawer, DSI_PKT_TYPE_WR, GREAT_A2_S3_DISABLE_SELF_DRAWER);
 DEFINE_STATIC_PACKET(great_a2_s3_disable_active_clk, DSI_PKT_TYPE_WR, GREAT_A2_S3_DISABLE_ACTIVE_CLK);
@@ -2328,14 +2329,14 @@ static void *great_a2_s3_active_clk_img_cmdtbl[] = {
 static void *great_a2_s3_active_clk_ctrl_cmdtbl[] = {
 	&KEYINFO(great_a2_s3_level2_key_enable),
 	&PKTINFO(great_a2_s3_enable_active_clk),
-	&PKTINFO(great_a2_s3_set_self_drawer),
+	//&PKTINFO(great_a2_s3_set_self_drawer),
 	&KEYINFO(great_a2_s3_level2_key_disable),
 };
 
 static void *great_a2_s3_active_clk_update_cmdtbl[] = {
 	&KEYINFO(great_a2_s3_level2_key_enable),
 	&PKTINFO(great_a2_s3_enable_active_clk),
-	&PKTINFO(great_a2_s3_set_self_drawer),
+	//&PKTINFO(great_a2_s3_set_self_drawer),
 	&DLYINFO(great_a2_s3_wait_1_frame_in_30hz),
 	&PKTINFO(great_a2_s3_update_active_clk),
 	&KEYINFO(great_a2_s3_level2_key_disable),
