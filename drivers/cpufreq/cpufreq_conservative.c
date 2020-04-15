@@ -17,7 +17,7 @@
 #include <linux/pm_qos.h>
 
 /* Conservative governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(95) /* min 20, max 99 */
+#define DEF_FREQUENCY_UP_THRESHOLD		(95) /* min 20, max 100 */
 #define DOWN_THRESHOLD_MARGIN			(10)
 #define DEF_FREQUENCY_STEP_KHZ			(60000)
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
@@ -62,7 +62,7 @@ static void cs_check_cpu(int cpu, unsigned int load)
 	struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
 
 	/* Check for frequency increase */
-	if (load > cs_tuners->up_threshold) {
+	if (load >= cs_tuners->up_threshold) {
 		dbs_info->down_skip = 0;
 
 		/* if we are already at full speed then break out early */
@@ -195,7 +195,7 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	if (input < 20 || input > 99)
+	if (input < 20 || input > 100)
 		return -EINVAL;
 
 	cs_tuners->up_threshold = input;
