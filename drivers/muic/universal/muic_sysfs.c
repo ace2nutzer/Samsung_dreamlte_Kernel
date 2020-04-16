@@ -59,8 +59,6 @@
 #include "../../battery_v2/include/sec_charging_common.h"
 #endif
 
-bool afc_disable = true;
-
 static int muic_resolve_attached_dev(muic_data_t *pmuic)
 {
 #if defined(CONFIG_MUIC_SUPPORT_CCIC)
@@ -559,12 +557,6 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 	psy_do_property("battery", set,
 		POWER_SUPPLY_EXT_PROP_HV_DISABLE, psy_val);
 #endif
-
-	// for factory self charging test (AFC-> NORMAL TA)
-	if (pmuic->is_factory_start)
-		hv_set_afc_by_user(pmuic->phv, pdata->afc_disable ? false: true);
-
-	afc_disable = pdata->afc_disable;
 
 	return count;
 }
