@@ -8,8 +8,6 @@
 # published by the Free Software Foundation.
 #
 
-KBUILD_CFLAGS += $(SIMD_CFLAGS)
-
 #Keep this at the top
 obj-$(CONFIG_CRYPTO_FIPS) += first_file_asm.o
 
@@ -32,6 +30,7 @@ aes-ce-ccm-y := aes-ce-ccm-glue.o aes-ce-ccm-core.o
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_BLK) += aes-ce-blk.o
 aes-ce-blk-y := aes-glue-ce.o aes-ce.o
+CFLAGS_aes-glue-ce.o	:= -DUSE_V8_CRYPTO_EXTENSIONS
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_NEON_BLK) += aes-neon-blk.o
 aes-neon-blk-y := aes-glue-neon.o aes-neon.o

@@ -1,5 +1,6 @@
 obj-$(CONFIG_FIMC_IS_V5_10_0) += fimc-is-hw-pwr.o
 obj-$(CONFIG_FIMC_IS_V5_10_0) += fimc-is-hw-chain.o
+
 ifeq ($(CONFIG_PM_DEVFREQ),y)
 obj-$(CONFIG_FIMC_IS_V5_10_0) += fimc-is-hw-dvfs.o
 endif

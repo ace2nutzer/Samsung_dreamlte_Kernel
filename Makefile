@@ -306,9 +306,9 @@ HOSTCXX      = g++
 HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
 HOSTCXXFLAGS := -O2
 
-# Host specifc Flags
-HOSTCFLAGS   += -m64 -march=core2 -mtune=core2 -Wno-format-overflow -pipe
-HOSTCXXFLAGS += -m64 -march=core2 -mtune=core2 -Wno-format-overflow -pipe
+# Host specific Flags
+HOSTCFLAGS   += -march=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -ftree-vectorize -pipe -Wno-format-overflow
+HOSTCXXFLAGS += -march=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -ftree-vectorize -pipe -Wno-format-overflow
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
@@ -419,16 +419,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 # Target specific Flags
 KBUILD_CFLAGS   += \
-		   -march=armv8-a+crc+nofp \
-		   -mcpu=exynos-m1+crc+nofp \
-		   -mtune=exynos-m1
-
-# VFP / SIMD Flags
-SIMD_CFLAGS := \
-		   -DUSE_V8_CRYPTO_EXTENSIONS \
 		   -march=armv8-a+crc+crypto \
 		   -mcpu=exynos-m1+crc+crypto \
-		   -ftree-vectorize
+		   -mtune=exynos-m1 \
+		   -mgeneral-regs-only
 
 
 KBUILD_AFLAGS_KERNEL :=
@@ -453,7 +447,7 @@ export KBUILD_CFLAGS CFLAGS_KERNEL CFLAGS_MODULE CFLAGS_GCOV CFLAGS_KCOV CFLAGS_
 export KBUILD_AFLAGS AFLAGS_KERNEL AFLAGS_MODULE
 export KBUILD_AFLAGS_MODULE KBUILD_CFLAGS_MODULE KBUILD_LDFLAGS_MODULE
 export KBUILD_AFLAGS_KERNEL KBUILD_CFLAGS_KERNEL
-export KBUILD_ARFLAGS SIMD_CFLAGS
+export KBUILD_ARFLAGS
 
 # When compiling out-of-tree modules, put MODVERDIR in the module
 # tree rather than in the kernel tree. The kernel tree might

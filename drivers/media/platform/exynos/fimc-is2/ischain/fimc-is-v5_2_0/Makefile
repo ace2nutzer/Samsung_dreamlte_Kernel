@@ -1,6 +1,5 @@
 obj-$(CONFIG_FIMC_IS_V5_2_0) += fimc-is-hw-pwr.o
 obj-$(CONFIG_FIMC_IS_V5_2_0) += fimc-is-hw-chain.o
-CFLAGS_fimc-is-hw-chain.o := $(SIMD_CFLAGS)
 obj-$(CONFIG_FIMC_IS_V5_2_0) += fimc-is-hw-dvfs.o
 
 obj-$(CONFIG_FIMC_IS_V5_2_0) += fimc-is-subdev-3aa.o

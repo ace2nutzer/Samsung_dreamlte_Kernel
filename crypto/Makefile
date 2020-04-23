@@ -2,8 +2,6 @@
 # Cryptographic API
 #
 
-KBUILD_CFLAGS += $(SIMD_CFLAGS)
-
 # ---------------------------------------
 # Keep this at the top of FIPS boundary
 obj-$(CONFIG_CRYPTO_FIPS) += first_file.o

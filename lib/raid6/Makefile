@@ -18,21 +18,6 @@ ifeq ($(CONFIG_ALTIVEC),y)
 altivec_flags := -maltivec $(call cc-option,-mabi=altivec)
 endif
 
-# The GCC option -ffreestanding is required in order to compile code containing
-# ARM/NEON intrinsics in a non C99-compliant environment (such as the kernel)
-ifeq ($(CONFIG_KERNEL_MODE_NEON),y)
-NEON_FLAGS := -ffreestanding
-ifeq ($(ARCH),arm)
-NEON_FLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4
-endif
-ifeq ($(ARCH),arm64)
-CFLAGS_REMOVE_neon1.o += -mgeneral-regs-only
-CFLAGS_REMOVE_neon2.o += -mgeneral-regs-only
-CFLAGS_REMOVE_neon4.o += -mgeneral-regs-only
-CFLAGS_REMOVE_neon8.o += -mgeneral-regs-only
-endif
-endif
-
 targets += int1.c
 $(obj)/int1.c:   UNROLL := 1
 $(obj)/int1.c:   $(src)/int.uc $(src)/unroll.awk FORCE
@@ -87,25 +72,21 @@ $(obj)/altivec8.c:   UNROLL := 8
 $(obj)/altivec8.c:   $(src)/altivec.uc $(src)/unroll.awk FORCE
 	$(call if_changed,unroll)
 
-CFLAGS_neon1.o += $(NEON_FLAGS)
 targets += neon1.c
 $(obj)/neon1.c:   UNROLL := 1
 $(obj)/neon1.c:   $(src)/neon.uc $(src)/unroll.awk FORCE
 	$(call if_changed,unroll)
 
-CFLAGS_neon2.o += $(NEON_FLAGS)
 targets += neon2.c
 $(obj)/neon2.c:   UNROLL := 2
 $(obj)/neon2.c:   $(src)/neon.uc $(src)/unroll.awk FORCE
 	$(call if_changed,unroll)
 
-CFLAGS_neon4.o += $(NEON_FLAGS)
 targets += neon4.c
 $(obj)/neon4.c:   UNROLL := 4
 $(obj)/neon4.c:   $(src)/neon.uc $(src)/unroll.awk FORCE
 	$(call if_changed,unroll)
 
-CFLAGS_neon8.o += $(NEON_FLAGS)
 targets += neon8.c
 $(obj)/neon8.c:   UNROLL := 8
 $(obj)/neon8.c:   $(src)/neon.uc $(src)/unroll.awk FORCE
