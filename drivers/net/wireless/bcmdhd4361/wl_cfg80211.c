@@ -4743,9 +4743,6 @@ static s32
 wl_role_to_cfg80211_type(uint16 role, uint16 *wl_iftype, uint16 *mode)
 {
 	switch (role) {
-		*wl_iftype = WL_IF_TYPE_AWDL;
-		*mode = WL_MODE_AWDL;
-		return NL80211_IFTYPE_STATION;
 	case WLC_E_IF_ROLE_STA:
 		*wl_iftype = WL_IF_TYPE_STA;
 		*mode = WL_MODE_BSS;
@@ -4778,6 +4775,10 @@ wl_role_to_cfg80211_type(uint16 role, uint16 *wl_iftype, uint16 *mode)
 #else
 		return NL80211_IFTYPE_STATION;
 #endif /* ((LINUX_VER >= KERNEL_VERSION(4, 9, 0))) && WL_CFG80211_NAN */
+
+		*wl_iftype = WL_IF_TYPE_AWDL;
+		*mode = WL_MODE_AWDL;
+		return NL80211_IFTYPE_STATION;
 
 	default:
 		WL_ERR(("Unknown interface role:0x%x. Forcing type station\n", role));
