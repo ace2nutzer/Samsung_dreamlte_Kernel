@@ -1649,6 +1649,8 @@ struct sock *tcp_try_fastopen(struct sock *sk, struct sk_buff *skb,
 void tcp_fastopen_init_key_once(bool publish);
 #define TCP_FASTOPEN_KEY_LENGTH 16
 
+static inline void tcp_init_send_head(struct sock *sk);
+
 /* Fastopen key context */
 struct tcp_fastopen_context {
 	struct crypto_cipher	*tfm;
@@ -1663,6 +1665,7 @@ static inline void tcp_write_queue_purge(struct sock *sk)
 
 	while ((skb = __skb_dequeue(&sk->sk_write_queue)) != NULL)
 		sk_wmem_free_skb(sk, skb);
+	tcp_init_send_head(sk);
 	sk_mem_reclaim(sk);
 	tcp_clear_all_retrans_hints(tcp_sk(sk));
 }
