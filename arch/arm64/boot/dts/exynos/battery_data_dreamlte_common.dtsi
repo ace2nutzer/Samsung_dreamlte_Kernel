@@ -184,8 +184,8 @@
 		battery,chg_gpio_full_check = <0>;
 		battery,chg_polarity_full_check = <1>;
 
-		battery,chg_high_temp = <550>;
-		battery,chg_high_temp_recovery = <500>;
+		battery,chg_high_temp = <700>;
+		battery,chg_high_temp_recovery = <650>;
 		battery,chg_input_limit_current = <500>;
 		battery,chg_charging_limit_current = <500>;
 
@@ -214,7 +214,7 @@
 		battery,wc_hero_stand_hv_cv_current = <0>;
 
 		battery,mix_high_temp = <450>;
-		battery,mix_high_chg_temp = <550>;
+		battery,mix_high_chg_temp = <700>;
 		battery,mix_high_temp_recovery = <400>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
