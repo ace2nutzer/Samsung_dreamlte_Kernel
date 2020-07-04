@@ -52,8 +52,12 @@ static unsigned int usb2_curr_max = 500;
 static unsigned int input_volt = 0;
 static int charging_curr = 0;
 static int batt_temp = 0;
+static bool water_detected = false;
+#if defined(CONFIG_CCIC_WATER_DETECT)
+static bool water_detect = true;
+#endif
 
-#define CHARGER_CONTROL_VERSION		"2.2"
+#define CHARGER_CONTROL_VERSION		"2.3"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -1167,6 +1171,46 @@ static ssize_t batt_temp_show(struct kobject *kobj,
 }
 SEC_BAT_ATTR_RO(batt_temp);
 
+#if defined(CONFIG_CCIC_WATER_DETECT)
+static ssize_t water_detection_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%sWater detected:   \t%s \n\n", buf, water_detected ? "YES" : "NO");
+	sprintf(buf, "%sWater detection:   \t%s \n", buf, water_detect ? "ENABLED" : "DISABLED");
+
+	return strlen(buf);
+}
+
+static ssize_t water_detection_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	if (!strncmp(buf, "true", 1)) {
+		water_detect = true;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "1")) {
+		water_detect = true;
+		return count;
+	}
+
+	if (!strncmp(buf, "false", 2)) {
+		water_detect = false;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "0")) {
+		water_detect = false;
+		return count;
+	}
+
+	pr_err("[sec_battery] Invaild cmd\n");
+	return -EINVAL;
+}
+SEC_BAT_ATTR_RW(water_detection);
+#endif
+
 static struct attribute *sec_bat_attrs[] = {
 	&curr_max_attr.attr,
 	&input_volt_attr.attr,
@@ -1175,6 +1219,9 @@ static struct attribute *sec_bat_attrs[] = {
 	&s8_plus_mode_attr.attr,
 #else
 	&s8_mode_attr.attr,
+#endif
+#if defined(CONFIG_CCIC_WATER_DETECT)
+	&water_detection_attr.attr,
 #endif
 	NULL,
 };
@@ -3498,6 +3545,7 @@ static void sec_bat_monitor_work(
 		charging_curr = 0;
 		input_volt = 0;
 		battery->aicl_current = 0; /* reset aicl current */
+		water_detected = false;
 	}
 
 	mutex_lock(&battery->wclock);
@@ -5988,7 +6036,9 @@ ssize_t sec_bat_store_attrs(
 					pcisd->data[CISD_DATA_VSYS_OVP] = temp_data[36];
 					pcisd->data[CISD_DATA_VBAT_OVP] = temp_data[37];
 					pcisd->data[CISD_DATA_AFC_FAIL] = temp_data[39];
+#if defined(CONFIG_CCIC_WATER_DETECT)
 					pcisd->data[CISD_DATA_WATER_DETECT] = temp_data[38];
+#endif
 				}
 			} else {
 				const char *p = buf;
@@ -6786,14 +6836,22 @@ static int sec_ac_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_MAX ... POWER_SUPPLY_EXT_PROP_MAX:
 		switch (ext_psp) {
+#if defined(CONFIG_CCIC_WATER_DETECT)
 			case POWER_SUPPLY_EXT_PROP_WATER_DETECT:
 				if (battery->misc_event & (BATT_MISC_EVENT_UNDEFINED_RANGE_TYPE |
 					BATT_MISC_EVENT_HICCUP_TYPE)) {
-					val->intval = 1;
-					pr_info("%s: Water Detect\n", __func__);
-				} else {
+					water_detected = true;
+					if (water_detect) {
+						val->intval = 1;
+						pr_info("%s: Water Detect\n", __func__);
+					} else {
+						val->intval = 0;
+						pr_info("%s: Water Detected but disabled by user\n", __func__);
+					}
+				} else
+#endif
 					val->intval = 0;
-				}
+				water_detected = false;
 				break;
 			default:
 				return -EINVAL;
@@ -7022,11 +7080,11 @@ static int sec_bat_cable_check(struct sec_battery_info *battery,
 	case ATTACHED_DEV_UNDEFINED_CHARGING_MUIC:
 	case ATTACHED_DEV_UNDEFINED_RANGE_MUIC:
 		current_cable_type = SEC_BATTERY_CABLE_NONE;
-#if defined(CONFIG_BATTERY_CISD)
+#if defined(CONFIG_BATTERY_CISD) && defined(CONFIG_CCIC_WATER_DETECT)
 		battery->cisd.data[CISD_DATA_WATER_DETECT]++;
 		battery->cisd.data[CISD_DATA_WATER_DETECT_PER_DAY]++;
 #endif
-#if defined(CONFIG_SEC_ABC)
+#if defined(CONFIG_SEC_ABC) && defined(CONFIG_CCIC_WATER_DETECT)
 		sec_abc_send_event("MODULE=battery@ERROR=water_detect");
 #endif
 		break;
@@ -7283,7 +7341,9 @@ static int usb_typec_handle_notification(struct notifier_block *nb, unsigned lon
 
 	mutex_lock(&battery->typec_notylock);
 	switch (usb_typec_info.id) {
+#if defined(CONFIG_CCIC_WATER_DETECT)
 	case CCIC_NOTIFY_ID_WATER:
+#endif
 	case CCIC_NOTIFY_ID_ATTACH:
 		switch (usb_typec_info.attach) {
 		case MUIC_NOTIFY_CMD_DETACH:
