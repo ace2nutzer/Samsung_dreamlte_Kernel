@@ -560,9 +560,16 @@ config DISABLE_CPU_SCHED_DOMAIN_BALANCE
 	help
 	  Disables scheduler load-balancing at CPU sched domain level.
 
+config SCHED_HMP_CUSTOM
+	bool "(EXPERIMENTAL) Custom Heterogenous multiprocessor scheduling"
+	depends on DISABLE_CPU_SCHED_DOMAIN_BALANCE && SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP
+	help
+	  Experimental custom scheduler optimizations for heterogeneous platforms.
+	  This will try to manage only some essentials. No task migration at all.
+
 config SCHED_HMP
 	bool "(EXPERIMENTAL) Heterogenous multiprocessor scheduling"
-	depends on DISABLE_CPU_SCHED_DOMAIN_BALANCE && SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP
+	depends on DISABLE_CPU_SCHED_DOMAIN_BALANCE && SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP && !SCHED_HMP_CUSTOM
 	help
 	  Experimental scheduler optimizations for heterogeneous platforms.
 	  Attempts to introspectively select task affinity to optimize power
@@ -587,7 +594,7 @@ config SCHED_HMP_PRIO_FILTER_VAL
 
 config HMP_FAST_CPU_MASK
 	string "HMP scheduler fast CPU mask"
-	depends on SCHED_HMP
+	depends on SCHED_HMP || SCHED_HMP_CUSTOM
 	help
           Leave empty to use device tree information.
 	  Specify the cpuids of the fast CPUs in the system as a list string,
@@ -595,7 +602,7 @@ config HMP_FAST_CPU_MASK
 
 config HMP_SLOW_CPU_MASK
 	string "HMP scheduler slow CPU mask"
-	depends on SCHED_HMP
+	depends on SCHED_HMP || SCHED_HMP_CUSTOM
 	help
 	  Leave empty to use device tree information.
 	  Specify the cpuids of the slow CPUs in the system as a list string,

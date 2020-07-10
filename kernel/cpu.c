@@ -459,7 +459,7 @@ static int _cpu_down(unsigned int cpu, int tasks_frozen)
 	/* This actually kills the CPU. */
 	__cpu_die(cpu);
 
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	if (cpumask_test_cpu(cpu, &hmp_fast_cpu_mask))
 		cpus_notify_nofail(CPUS_DOWN_COMPLETE, (void *)cpu_online_mask);
 #endif
@@ -691,7 +691,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 		goto out;
 	}
 
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	if (cpumask_test_cpu(cpu, &hmp_fast_cpu_mask)) {
 		cpumask_or(&dest_cpus, cpumask_of(cpu), cpu_online_mask);
 		ret = cpus_notify(CPUS_UP_PREPARE, (void *)&dest_cpus);

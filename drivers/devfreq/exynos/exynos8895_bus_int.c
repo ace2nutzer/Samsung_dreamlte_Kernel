@@ -76,11 +76,14 @@ static int exynos8895_devfreq_int_set_freq(struct device *dev, u32 new_freq,
 static int exynos8895_devfreq_int_pm_suspend_prepare(struct exynos_devfreq_data *data)
 {
 #ifdef CONFIG_SND_SOC_SAMSUNG_ABOX
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	unsigned long abox_freq;
+#endif
 #endif
 	if (!origin_suspend_freq)
 		origin_suspend_freq = data->devfreq_profile.suspend_freq;
 #ifdef CONFIG_SND_SOC_SAMSUNG_ABOX
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	if (abox_is_on()) {
 		abox_freq = (unsigned long)abox_get_requiring_int_freq_in_khz();
 		if (abox_freq)
@@ -90,6 +93,7 @@ static int exynos8895_devfreq_int_pm_suspend_prepare(struct exynos_devfreq_data 
 	} else {
 		data->devfreq_profile.suspend_freq = origin_suspend_freq;
 	}
+#endif
 #endif
 	return 0;
 }

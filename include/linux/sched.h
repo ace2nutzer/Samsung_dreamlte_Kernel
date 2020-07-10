@@ -1250,13 +1250,13 @@ extern void wake_up_if_idle(int cpu);
 # define SD_INIT_NAME(type)
 #endif
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 struct hmp_domain {
 	struct cpumask cpus;
 	struct cpumask possible_cpus;
 	struct list_head hmp_domains;
 };
-
+#ifdef CONFIG_SCHED_HMP
 #define HMP_BOOSTING_ENABLE 	1
 #define HMP_BOOSTING_DISABLE	0
 #ifdef CONFIG_HMP_VARIABLE_SCALE
@@ -1272,6 +1272,7 @@ extern int set_active_down_migration(int enable);
 extern int set_hmp_aggressive_up_migration(int enable);
 extern int set_hmp_aggressive_yield(int enable);
 #endif /* CONFIG_SCHED_HMP */
+#endif /* CONFIG_SCHED_HMP || CONFIG_SCHED_HMP_CUSTOM */
 
 #else /* CONFIG_SMP */
 

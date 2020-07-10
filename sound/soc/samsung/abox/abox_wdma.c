@@ -127,8 +127,10 @@ static int abox_wdma_hw_params(struct snd_pcm_substream *substream,
 	pcmtask_msg->param.hw_params.channels = params_channels(params);
 	abox_request_ipc(dev_abox, msg.ipcid, &msg, sizeof(msg), 0, 1);
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	if (params_rate(params) > 48000)
 		abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 2);
+#endif
 
 	dev_info(dev, "%s:Total=%zu PrdSz=%u(%u) #Prds=%u rate=%u, width=%d, channels=%u\n",
 			snd_pcm_stream_str(substream), runtime->dma_bytes,
@@ -322,15 +324,18 @@ static int abox_wdma_open(struct snd_pcm_substream *substream)
 	dev_dbg(dev, "%s[%d]\n", __func__, id);
 
 	if (data->type == PLATFORM_CALL) {
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 		abox_request_cpu_gear_sync(dev, data->abox_data,
 				ABOX_CPU_GEAR_CALL_KERNEL, 1);
+#endif
 		result = abox_request_l2c_sync(dev, data->abox_data, dev, true);
 		if (IS_ERR_VALUE(result))
 			return result;
 	}
 	pm_runtime_get_sync(rtd->codec->dev);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 3);
-
+#endif
 	snd_soc_set_runtime_hwparams(substream, &abox_wdma_hardware);
 
 	data->substream = substream;
@@ -378,12 +383,16 @@ static int abox_wdma_close(struct snd_pcm_substream *substream)
 		break;
 	}
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 12);
+#endif
 	pm_runtime_put(rtd->codec->dev);
 	if (data->type == PLATFORM_CALL) {
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 		abox_request_cpu_gear_sync(dev, data->abox_data,
 				ABOX_CPU_GEAR_CALL_KERNEL,
 				ABOX_CPU_GEAR_LOWER_LIMIT);
+#endif
 		result = abox_request_l2c(dev, data->abox_data, dev, false);
 		if (IS_ERR_VALUE(result))
 			return result;
@@ -404,10 +413,12 @@ static int abox_wdma_mmap(struct snd_pcm_substream *substream,
 
 	dev_info(dev, "%s[%d]\n", __func__, id);
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	/* Increased cpu gear for sound camp.
 	 * Only sound camp uses mmap now.
 	 */
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 2);
+#endif
 
 	return dma_mmap_writecombine(dev, vma,
 			runtime->dma_area,

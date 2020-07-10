@@ -502,7 +502,7 @@ void make_gpio_floating(unsigned int gpio, bool floating);
 #ifdef CONFIG_ARGOS
 /* kernel team needs to provide argos header file. !!!
  * As of now, there's nothing to use. */
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 extern struct cpumask hmp_slow_cpu_mask;
 extern struct cpumask hmp_fast_cpu_mask;
 #endif

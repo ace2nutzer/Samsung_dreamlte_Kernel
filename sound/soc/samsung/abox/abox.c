@@ -593,7 +593,9 @@ static int abox_uaif_startup(struct snd_pcm_substream *substream,
 
 	pm_runtime_get_sync(dev);
 	abox_uaif_control_bclk_polarity(dai, true);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_sync_dai(dev, data, dai, 3);
+#endif
 	result = clk_enable(data->clk_bclk[id]);
 	if (IS_ERR_VALUE(result)) {
 		dev_err(dev, "Failed to enable bclk: %d\n", result);
@@ -628,7 +630,9 @@ static void abox_uaif_shutdown(struct snd_pcm_substream *substream,
 	clk_disable(data->clk_bclk_gate[id]);
 	clk_disable(data->clk_bclk[id]);
 	abox_unregister_audif_rates(data, id);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data, dai, 12);
+#endif
 	abox_uaif_control_bclk_polarity(dai, false);
 	pm_runtime_put(dev);
 }
@@ -925,7 +929,9 @@ static int abox_dsif_startup(struct snd_pcm_substream *substream,
 	dev_info(dev, "%s[%d]\n", __func__, id);
 
 	pm_runtime_get_sync(dev);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_sync_dai(dev, data, dai, 3);
+#endif
 	result = clk_enable(data->clk_bclk[id]);
 	if (IS_ERR_VALUE(result)) {
 		dev_err(dev, "Failed to enable bclk: %d\n", result);
@@ -955,7 +961,9 @@ static void abox_dsif_shutdown(struct snd_pcm_substream *substream,
 
 	clk_disable(data->clk_bclk_gate[id]);
 	clk_disable(data->clk_bclk[id]);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data, dai, 12);
+#endif
 	pm_runtime_put(dev);
 }
 
@@ -3094,6 +3102,7 @@ EXPORT_SYMBOL(abox_hw_params_fixup_helper);
 static struct pm_qos_request abox_pm_qos_int;
 static struct pm_qos_request abox_pm_qos_mif;
 static struct pm_qos_request abox_pm_qos_lit;
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 static struct pm_qos_request abox_pm_qos_big;
 
 unsigned int abox_get_requiring_int_freq_in_khz(void)
@@ -3115,6 +3124,7 @@ unsigned int abox_get_requiring_int_freq_in_khz(void)
 	return int_freq;
 }
 EXPORT_SYMBOL(abox_get_requiring_int_freq_in_khz);
+#endif
 
 bool abox_cpu_gear_idle(struct device *dev, struct abox_data *data,
 		unsigned int id)
@@ -3281,6 +3291,7 @@ static void abox_change_cpu_gear_work_func(struct work_struct *work)
 	abox_change_cpu_gear(&data->pdev->dev, data);
 }
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 int abox_request_cpu_gear(struct device *dev, struct abox_data *data,
 		unsigned int id, unsigned int gear)
 {
@@ -3338,6 +3349,7 @@ static void abox_clear_cpu_gear_requests(struct device *dev,
 		}
 	}
 }
+#endif
 
 static void abox_change_mif_freq_work_func(struct work_struct *work)
 {
@@ -3421,6 +3433,7 @@ int abox_request_lit_freq(struct device *dev, struct abox_data *data,
 	return 0;
 }
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 static void abox_change_big_freq_work_func(struct work_struct *work)
 {
 	struct abox_data *data = container_of(work, struct abox_data,
@@ -3482,6 +3495,7 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 
 	return 0;
 }
+#endif
 
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 static void abox_change_hmp_boost_work_func(struct work_struct *work)
@@ -3982,7 +3996,9 @@ static void abox_boot_done_work_func(struct work_struct *work)
 
 	abox_cpu_pm_ipc(dev, true);
 	abox_restore_data(dev);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear(dev, data, DEFAULT_CPU_GEAR_ID, 12);
+#endif
 	abox_request_dram_on(pdev, dev, false);
 	wake_unlock(&data->wake_lock);
 }
@@ -4083,8 +4099,10 @@ static void abox_system_ipc_handler(struct device *dev,
 		}
 		break;
 	case ABOX_CHANGE_GEAR:
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 		abox_request_cpu_gear(dev, data, system_msg->param2,
 				system_msg->param1);
+#endif
 		break;
 	case ABOX_END_L2C_CONTROL:
 		data->l2c_controlled = true;
@@ -4988,9 +5006,9 @@ static int abox_enable(struct device *dev)
 
 	abox_cpu_enable(false);
 	abox_cpu_power(false);
-
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_sync(dev, data, DEFAULT_CPU_GEAR_ID, 3);
-
+#endif
 	if (is_secure_gic()) {
 		exynos_pmu_write(ABOX_MAGIC, 0);
 		result = exynos_smc(0x82000501, 0, 0, 0);
@@ -5086,7 +5104,9 @@ static int abox_disable(struct device *dev)
 		break;
 	}
 	abox_clear_l2c_requests(dev, data);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_clear_cpu_gear_requests(dev, data);
+#endif
 	flush_work(&data->boot_done_work);
 	flush_work(&data->l2c_work);
 
@@ -5365,7 +5385,9 @@ static int samsung_abox_probe(struct platform_device *pdev)
 	INIT_WORK(&data->change_cpu_gear_work, abox_change_cpu_gear_work_func);
 	INIT_WORK(&data->change_mif_freq_work, abox_change_mif_freq_work_func);
 	INIT_WORK(&data->change_lit_freq_work, abox_change_lit_freq_work_func);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	INIT_WORK(&data->change_big_freq_work, abox_change_big_freq_work_func);
+#endif
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 	INIT_WORK(&data->change_hmp_boost_work,
 			abox_change_hmp_boost_work_func);
@@ -5555,7 +5577,9 @@ static int samsung_abox_probe(struct platform_device *pdev)
 	pm_qos_add_request(&abox_pm_qos_int, PM_QOS_DEVICE_THROUGHPUT, 0);
 	pm_qos_add_request(&abox_pm_qos_mif, PM_QOS_BUS_THROUGHPUT, 0);
 	pm_qos_add_request(&abox_pm_qos_lit, PM_QOS_CLUSTER0_FREQ_MIN, 0);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	pm_qos_add_request(&abox_pm_qos_big, PM_QOS_CLUSTER1_FREQ_MIN, 0);
+#endif
 
 	abox_gic_register_irq_handler(data->pdev_gic, abox_irq_handler, pdev);
 
@@ -5615,7 +5639,9 @@ static int samsung_abox_remove(struct platform_device *pdev)
 	pm_qos_remove_request(&abox_pm_qos_int);
 	pm_qos_remove_request(&abox_pm_qos_mif);
 	pm_qos_remove_request(&abox_pm_qos_lit);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	pm_qos_remove_request(&abox_pm_qos_big);
+#endif
 	snd_soc_unregister_codec(dev);
 	iommu_unmap(data->iommu_domain, IOVA_DRAM_FIRMWARE, DRAM_FIRMWARE_SIZE);
 #ifdef EMULATOR

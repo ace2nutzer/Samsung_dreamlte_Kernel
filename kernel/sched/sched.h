@@ -937,7 +937,7 @@ static inline unsigned int group_first_cpu(struct sched_group *group)
 
 extern int group_balance_cpu(struct sched_group *sg);
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 extern struct list_head hmp_domains;
 DECLARE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
 #define hmp_cpu_domain(cpu)	(per_cpu(hmp_cpu_domain, (cpu)))

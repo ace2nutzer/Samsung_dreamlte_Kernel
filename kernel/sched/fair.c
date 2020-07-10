@@ -49,7 +49,7 @@
 #include "sched.h"
 #include "tune.h"
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 LIST_HEAD(hmp_domains);
 #endif
 
@@ -5483,7 +5483,7 @@ done:
 	return target;
 }
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 /*
  * Heterogenous multiprocessor (HMP) optimizations
  *
@@ -5558,7 +5558,7 @@ static void hmp_offline_cpu(int cpu)
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
 }
-
+#ifdef CONFIG_SCHED_HMP
 /* must hold runqueue lock for queue se is currently on */
 
 static struct sched_entity *hmp_get_heaviest_task(struct sched_entity* se, int migrate_up)
@@ -6672,8 +6672,8 @@ static int hmp_is_family_in_fastest_domain(struct task_struct *p)
 	}
 	return 0;
 }
-
 #endif /* CONFIG_SCHED_HMP */
+#endif /* CONFIG_SCHED_HMP || CONFIG_SCHED_HMP_CUSTOM */
 
 #ifndef CONFIG_SCHED_USE_FLUID_RT
 /*
@@ -9367,7 +9367,7 @@ static struct {
 static inline int find_new_ilb(int call_cpu)
 {
 	int ilb = cpumask_first(nohz.idle_cpus_mask);
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	/* restrict nohz balancing to occur in the same hmp domain */
 	ilb = cpumask_first_and(nohz.idle_cpus_mask,
 			&((struct hmp_domain *)hmp_cpu_domain(call_cpu))->cpus);
@@ -9713,7 +9713,7 @@ static inline bool nohz_kick_needed(struct rq *rq)
 	if (time_before(now, nohz.next_balance))
 		return false;
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	/*
 	 * Bail out if there are no nohz CPUs in our
 	 * HMP domain, since we will move tasks between
@@ -10412,7 +10412,7 @@ void trigger_load_balance(struct rq *rq, int cpu)
 
 static void rq_online_fair(struct rq *rq)
 {
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	hmp_online_cpu(rq->cpu);
 #endif
 	update_sysctl();
@@ -10422,7 +10422,7 @@ static void rq_online_fair(struct rq *rq)
 
 static void rq_offline_fair(struct rq *rq)
 {
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	hmp_offline_cpu(rq->cpu);
 #endif
 	update_sysctl();
@@ -10935,7 +10935,7 @@ __init void init_sched_fair_class(void)
 	cpu_notifier(sched_ilb_notifier, 0);
 #endif
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	hmp_cpu_mask_setup();
 #endif
 #endif /* SMP */
@@ -11098,7 +11098,7 @@ core_initcall(register_sched_cpufreq_notifier);
 
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
 
-#if defined(CONFIG_SCHED_HMP)
+#ifdef CONFIG_SCHED_HMP
 static int __init hmp_param_init(void)
 {
 #if defined(CONFIG_OF)

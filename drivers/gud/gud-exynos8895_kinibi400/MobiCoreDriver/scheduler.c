@@ -228,7 +228,7 @@ int mc_scheduler_start(void)
 		return PTR_ERR(sched_ctx.thread);
 	}
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	/* ExySp: set affinity to little */
 	set_cpus_allowed_ptr(sched_ctx.thread, &hmp_slow_cpu_mask);
 #endif

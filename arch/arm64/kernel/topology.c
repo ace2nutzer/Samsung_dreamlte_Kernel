@@ -388,7 +388,7 @@ static void update_siblings_masks(unsigned int cpuid)
 	}
 }
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 					struct cpumask *slow)
 {
@@ -416,12 +416,12 @@ void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 	 */
 	cn = of_find_node_by_path("/cpus/hmp");
 	if (!cn) {
-		pr_err("/cpus/hmp node is omitted\n");
+		pr_err("hmp: /cpus/hmp node is omitted\n");
 		return;
 	}
 
 	if (of_property_read_u32(cn, "little-id", &little_id)) {
-		pr_err("hmp missing little-id property\n");
+		pr_err("hmp: missing little-id property\n");
 		return;
 	}
 
@@ -445,6 +445,7 @@ void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 	 * fast as this will keep the system running, with all cores being
 	 * treated equal.
 	 */
+	pr_err("hmp: didn't find both big and little cores so let's call all cores fast.\n");
 	cpumask_setall(fast);
 	cpumask_clear(slow);
 }
@@ -476,6 +477,8 @@ void __init arch_get_hmp_domains(struct list_head *hmp_domains_list)
 	cpumask_and(&domain->cpus, cpu_online_mask, &domain->possible_cpus);
 	list_add(&domain->hmp_domains, hmp_domains_list);
 }
+EXPORT_SYMBOL(hmp_slow_cpu_mask);
+EXPORT_SYMBOL(hmp_fast_cpu_mask);
 #endif /* CONFIG_SCHED_HMP */
 
 #ifdef CONFIG_DISABLE_CPU_SCHED_DOMAIN_BALANCE

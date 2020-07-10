@@ -203,7 +203,7 @@ static int do_cpu_hotplug(bool fast_hotplug)
 	if (fast_hotplug) {
 		struct cpumask temp;
 
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 		cpumask_and(&temp, &hmp_fast_cpu_mask, cpu_online_mask);
 #endif
 		cpumask_andnot(&temp, &temp, &disable_cpus);
