@@ -97,7 +97,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			return PTR_ERR(target_opp);
 		}
 
-		data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
+		//data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 

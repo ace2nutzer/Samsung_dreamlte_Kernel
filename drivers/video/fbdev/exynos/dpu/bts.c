@@ -290,20 +290,21 @@ void dpu_bts_update_bw(struct decon_device *decon, struct decon_reg_data *regs,
 	if (is_after) { /* after DECON h/w configuration */
 		if (decon->bts.total_bw <= decon->bts.prev_total_bw)
 			bts_update_bw(decon->bts.type, bw);
-
+/*
 		if (decon->bts.max_disp_freq <= decon->bts.prev_max_disp_freq)
 			pm_qos_update_request(&decon->bts.disp_qos,
 					decon->bts.max_disp_freq);
-
+*/
 		decon->bts.prev_total_bw = decon->bts.total_bw;
 		decon->bts.prev_max_disp_freq = decon->bts.max_disp_freq;
 	} else {
 		if (decon->bts.total_bw > decon->bts.prev_total_bw)
 			bts_update_bw(decon->bts.type, bw);
-
+/*
 		if (decon->bts.max_disp_freq > decon->bts.prev_max_disp_freq)
 			pm_qos_update_request(&decon->bts.disp_qos,
 					decon->bts.max_disp_freq);
+*/
 	}
 
 	DPU_DEBUG_BTS("%s -\n", __func__);
@@ -341,13 +342,13 @@ void dpu_bts_update_qos_disp(struct decon_device *decon, u32 disp_freq)
 {
 	if (decon->id != 2)
 		return;
-
+/*
 	if (pm_qos_request_active(&decon->bts.disp_qos)) {
 		decon->bts.disp_freq_minlock = disp_freq;
 		pm_qos_update_request(&decon->bts.disp_qos, disp_freq);
 	} else
 		decon_err("%s: error (%d)\n", __func__, decon->id);
-
+*/
 	DPU_INFO_BTS("%s: decon%d, freq(Khz): disp %u\n", __func__, decon->id, disp_freq);
 }
 
@@ -372,7 +373,7 @@ void dpu_bts_release_bw(struct decon_device *decon)
 
 	bts_update_bw(decon->bts.type, bw);
 	decon->bts.prev_total_bw = 0;
-	pm_qos_update_request(&decon->bts.disp_qos, 0);
+	//pm_qos_update_request(&decon->bts.disp_qos, 0);
 	decon->bts.prev_max_disp_freq = 0;
 
 	DPU_DEBUG_BTS("%s -\n", __func__);
@@ -424,7 +425,7 @@ void dpu_bts_init(struct decon_device *decon)
 
 	pm_qos_add_request(&decon->bts.mif_qos, PM_QOS_BUS_THROUGHPUT, 0);
 	pm_qos_add_request(&decon->bts.int_qos, PM_QOS_DEVICE_THROUGHPUT, 0);
-	pm_qos_add_request(&decon->bts.disp_qos, PM_QOS_DISPLAY_THROUGHPUT, 0);
+	//pm_qos_add_request(&decon->bts.disp_qos, PM_QOS_DISPLAY_THROUGHPUT, 0);
 	decon->bts.scen_updated = 0;
 	decon->bts.disp_freq_minlock = 0;
 }
@@ -432,7 +433,7 @@ void dpu_bts_init(struct decon_device *decon)
 void dpu_bts_deinit(struct decon_device *decon)
 {
 	DPU_DEBUG_BTS("%s +\n", __func__);
-	pm_qos_remove_request(&decon->bts.disp_qos);
+	//pm_qos_remove_request(&decon->bts.disp_qos);
 	pm_qos_remove_request(&decon->bts.int_qos);
 	pm_qos_remove_request(&decon->bts.mif_qos);
 	DPU_DEBUG_BTS("%s -\n", __func__);
