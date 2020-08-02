@@ -56,8 +56,11 @@ static bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
 static bool water_detect = true;
 #endif
+static bool batt_idle = false;
+static unsigned int batt_care = 101; /* disabled */
+static bool battery_idle = false;  /* for battery care */
 
-#define CHARGER_CONTROL_VERSION		"2.3"
+#define CHARGER_CONTROL_VERSION		"2.4"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -781,6 +784,54 @@ static int sec_bat_set_charge(
 	return 0;
 }
 
+#if defined(CONFIG_CALC_TIME_TO_FULL)
+static void sec_bat_calc_time_to_full(struct sec_battery_info * battery)
+{
+	if (delayed_work_pending(&battery->timetofull_work)) {
+		pr_info("%s: keep time_to_full(%5d sec)\n", __func__, battery->timetofull);
+	} else if ((battery->status != POWER_SUPPLY_STATUS_DISCHARGING) && (battery->capacity != 100) && (!batt_idle) && (!battery_idle)) {
+		union power_supply_propval value = {0, };
+
+		value.intval = charging_curr;
+		psy_do_property(battery->pdata->fuelgauge_name, get,
+				POWER_SUPPLY_PROP_TIME_TO_FULL_NOW, value);
+		dev_info(battery->dev, "%s: T: %5d sec, passed time: %5ld, current: %d\n",
+				__func__, value.intval, battery->charging_passed_time, charging_curr);
+		battery->timetofull = value.intval;
+	} else {
+		battery->timetofull = -1;
+	}
+}
+
+static void sec_bat_time_to_full_work(struct work_struct *work)
+{
+	struct sec_battery_info *battery = container_of(work,
+				struct sec_battery_info, timetofull_work.work);
+	union power_supply_propval value = {0, };
+
+	psy_do_property(battery->pdata->charger_name, get,
+		POWER_SUPPLY_PROP_CURRENT_MAX, value);
+	battery->current_max = value.intval;
+
+	value.intval = SEC_BATTERY_CURRENT_MA;
+	psy_do_property(battery->pdata->fuelgauge_name, get,
+		POWER_SUPPLY_PROP_CURRENT_NOW, value);
+	battery->current_now = value.intval;
+
+	value.intval = SEC_BATTERY_CURRENT_MA;
+	psy_do_property(battery->pdata->fuelgauge_name, get,
+		POWER_SUPPLY_PROP_CURRENT_AVG, value);
+	battery->current_avg = value.intval;
+
+	sec_bat_calc_time_to_full(battery);
+	dev_info(battery->dev, "%s: \n",__func__);
+	if (battery->voltage_now > 0)
+		battery->voltage_now--;
+
+	power_supply_changed(battery->psy_bat);
+}
+#endif
+
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
 	static bool afc_init = false;
@@ -976,6 +1027,20 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 			value);
 #endif
 	}
+
+	if (batt_idle) {
+		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+		charging_curr = 0;
+		pr_info("%s: Battery IDLE enabled by user\n", __func__);
+	}
+
+	if ((battery_idle) || (battery->capacity == batt_care)) {
+		battery_idle = true;
+		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+		charging_curr = 0;
+		pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
+	}
+
 	mutex_unlock(&battery->iolock);
 	return 0;
 }
@@ -1030,7 +1095,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "ac=%u", &ac)) {
 		if (ac < 200 || ac > max_curr) {
-			pr_err("[sec_battery] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
 			return -EINVAL;
 		}
 		ac_curr_max = ac;
@@ -1048,7 +1113,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usb2=%u", &usb2)) {
 		if (usb2 < 200 || usb2 > max_curr) {
-			pr_err("[sec_battery] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
 			return -EINVAL;
 		}
 		usb2_curr_max = usb2;
@@ -1057,7 +1122,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usb3=%u", &usb3)) {
 		if (usb3 < 200 || usb3 > max_curr) {
-			pr_err("[sec_battery] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
 			return -EINVAL;
 		}
 		usb3_curr_max = usb3;
@@ -1066,7 +1131,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usbpd=%u", &usbpd)) {
 		if (usbpd < 200 || usbpd > max_curr) {
-			pr_err("[sec_battery] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
 			return -EINVAL;
 		}
 		usbpd_curr_max = usbpd;
@@ -1084,7 +1149,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "wc=%u", &wc)) {
 		if (wc < 200 || wc > max_curr) {
-			pr_err("[sec_battery] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
 			return -EINVAL;
 		}
 		wc_curr_max = wc;
@@ -1103,12 +1168,17 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		goto out;
 	}
 
-	pr_err("[sec_battery] Invaild cmd\n");
+	pr_err("[sec_batt] Invaild cmd\n");
 	return -EINVAL;
 
 out:
-	_battery->aicl_current = 0; /* reset aicl current */
-	sec_bat_set_charging_current(_battery);
+	/* reset aicl current for just in case */
+	_battery->aicl_current = 0;
+
+	/* set charging current */
+	if (_battery->status != POWER_SUPPLY_STATUS_DISCHARGING)
+		sec_bat_set_charging_current(_battery);
+
 	return count;
 }
 SEC_BAT_ATTR_RW(curr_max);
@@ -1205,11 +1275,101 @@ static ssize_t water_detection_store(struct kobject *kobj,
 		return count;
 	}
 
-	pr_err("[sec_battery] Invaild cmd\n");
+	pr_err("[sec_batt] Invaild cmd\n");
 	return -EINVAL;
 }
 SEC_BAT_ATTR_RW(water_detection);
 #endif
+
+static ssize_t batt_idle_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%sBattery IDLE: \t%s \n\n", buf, batt_idle ? "ENABLED" : "DISABLED");
+
+	return strlen(buf);
+}
+
+static ssize_t batt_idle_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	if (!strncmp(buf, "true", 1)) {
+		batt_idle = true;
+		goto out;
+	}
+
+	if (sysfs_streq(buf, "1")) {
+		batt_idle = true;
+		goto out;
+	}
+
+	if (!strncmp(buf, "false", 2)) {
+		batt_idle = false;
+		goto out;
+	}
+
+	if (sysfs_streq(buf, "0")) {
+		batt_idle = false;
+		goto out;
+	}
+
+	pr_err("[sec_batt] Invaild cmd\n");
+	return -EINVAL;
+
+out:
+
+	if (batt_idle) {
+		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+		pr_info("[sec_batt] Battery IDLE enabled by user\n");
+	} else {
+		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+	}
+
+	return count;
+}
+SEC_BAT_ATTR_RW(batt_idle);
+
+static ssize_t batt_care_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf,   "%s[Battery Care]\n\n", buf);
+
+	sprintf(buf, "%s[enabled] \t[%s]\n\n", buf, batt_care < 100 ? "*" : " ");
+
+	if (batt_care < 100)
+		sprintf(buf, "%s[Battery Care Level] \t[%u %%]\n", buf, batt_care);
+
+	return strlen(buf);
+}
+
+static ssize_t batt_care_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u", &tmp)) {
+
+		if (tmp < 50 || tmp > 100) {
+			pr_err("[sec_batt] Invaild cmd\n");
+			return -EINVAL;
+		}
+
+		batt_care = tmp;
+
+		if (batt_care == 100) {
+			batt_care = 101;
+			battery_idle = false;
+			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+		}
+
+		return count;
+	}
+
+	pr_err("[sec_batt] Invaild cmd\n");
+	return -EINVAL;
+}
+SEC_BAT_ATTR_RW(batt_care);
 
 static struct attribute *sec_bat_attrs[] = {
 	&curr_max_attr.attr,
@@ -1223,6 +1383,8 @@ static struct attribute *sec_bat_attrs[] = {
 #if defined(CONFIG_CCIC_WATER_DETECT)
 	&water_detection_attr.attr,
 #endif
+	&batt_idle_attr.attr,
+	&batt_care_attr.attr,
 	NULL,
 };
 
@@ -3188,54 +3350,6 @@ static void sec_bat_swelling_fullcharged_check(struct sec_battery_info *battery)
 }
 #endif
 
-#if defined(CONFIG_CALC_TIME_TO_FULL)
-static void sec_bat_calc_time_to_full(struct sec_battery_info * battery)
-{
-	if (delayed_work_pending(&battery->timetofull_work)) {
-		pr_info("%s: keep time_to_full(%5d sec)\n", __func__, battery->timetofull);
-	} else if (battery->status != POWER_SUPPLY_STATUS_DISCHARGING && battery->capacity != 100) {
-		union power_supply_propval value = {0, };
-
-		value.intval = charging_curr;
-		psy_do_property(battery->pdata->fuelgauge_name, get,
-				POWER_SUPPLY_PROP_TIME_TO_FULL_NOW, value);
-		dev_info(battery->dev, "%s: T: %5d sec, passed time: %5ld, current: %d\n",
-				__func__, value.intval, battery->charging_passed_time, charging_curr);
-		battery->timetofull = value.intval;
-	} else {
-		battery->timetofull = -1;
-	}
-}
-
-static void sec_bat_time_to_full_work(struct work_struct *work)
-{
-	struct sec_battery_info *battery = container_of(work,
-				struct sec_battery_info, timetofull_work.work);
-	union power_supply_propval value = {0, };
-
-	psy_do_property(battery->pdata->charger_name, get,
-		POWER_SUPPLY_PROP_CURRENT_MAX, value);
-	battery->current_max = value.intval;
-
-	value.intval = SEC_BATTERY_CURRENT_MA;
-	psy_do_property(battery->pdata->fuelgauge_name, get,
-		POWER_SUPPLY_PROP_CURRENT_NOW, value);
-	battery->current_now = value.intval;
-
-	value.intval = SEC_BATTERY_CURRENT_MA;
-	psy_do_property(battery->pdata->fuelgauge_name, get,
-		POWER_SUPPLY_PROP_CURRENT_AVG, value);
-	battery->current_avg = value.intval;
-
-	sec_bat_calc_time_to_full(battery);
-	dev_info(battery->dev, "%s: \n",__func__);
-	if (battery->voltage_now > 0)
-		battery->voltage_now--;
-
-	power_supply_changed(battery->psy_bat);
-}
-#endif
-
 static void sec_bat_wc_cv_mode_check(struct sec_battery_info *battery)
 {
 	union power_supply_propval value = {0, };
@@ -3546,6 +3660,7 @@ static void sec_bat_monitor_work(
 		input_volt = 0;
 		battery->aicl_current = 0; /* reset aicl current */
 		water_detected = false;
+		battery_idle = false;
 	}
 
 	mutex_lock(&battery->wclock);
