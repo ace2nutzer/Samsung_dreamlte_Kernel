@@ -97,10 +97,14 @@ static unsigned int led_device_type = 0;
 static unsigned int brightness_ratio_r = 100;
 static unsigned int brightness_ratio_g = 100;
 static unsigned int brightness_ratio_b = 100;
-static unsigned int brightness_ratio_r_low = 20;
-static unsigned int brightness_ratio_g_low = 20;
-static unsigned int brightness_ratio_b_low = 20;
+static unsigned int brightness_ratio_r_low = 25;
+static unsigned int brightness_ratio_g_low = 25;
+static unsigned int brightness_ratio_b_low = 25;
 static u8 led_lowpower_mode = 0x0;
+
+/* battery care */
+extern bool battery_idle;
+extern bool batt_idle;
 
 extern int get_lcd_info(char *arg);
 static unsigned int octa_color = 0x0;
@@ -615,7 +619,10 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 	switch (mode) {
 
 	case CHARGING:
-		max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_ALWAYS_ON);
+		if (battery_idle || batt_idle)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_ALWAYS_ON);
 		break;
 	case CHARGING_ERR:
 		max77865_rgb_blink(dev, 500, 500);

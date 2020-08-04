@@ -56,9 +56,9 @@ static bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
 static bool water_detect = true;
 #endif
-static bool batt_idle = false;
+bool batt_idle = false;
 static unsigned int batt_care = 101; /* disabled */
-static bool battery_idle = false;  /* for battery care */
+bool battery_idle = false;  /* for battery care */
 
 #define CHARGER_CONTROL_VERSION		"2.4"
 
