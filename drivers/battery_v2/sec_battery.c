@@ -1357,11 +1357,12 @@ static ssize_t batt_care_store(struct kobject *kobj,
 
 		batt_care = tmp;
 
-		if (batt_care == 100) {
+		if (batt_care == 100)
 			batt_care = 101;
-			battery_idle = false;
-			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
-		}
+
+		/* reset */
+		battery_idle = false;
+		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
 
 		return count;
 	}
