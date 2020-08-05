@@ -40,6 +40,7 @@
 #include <linux/serial_core.h>
 #include <linux/serial.h>
 #include <linux/serial_s3c.h>
+#include <linux/notifier.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/suspend.h>
@@ -130,7 +131,111 @@ EXPORT_SYMBOL_GPL(s3c2410_serial_wake_peer);
 #define UART_LOOPBACK_MODE	(0x1 << 0)
 #define UART_DBG_MODE		(0x1 << 1)
 
-#define PAD_RETENTION_UART_BT_OPTION	(0x3188)
+
+static void s3c24xx_serial_rx_fifo_wait(struct s3c24xx_uart_port *ourport);
+
+unsigned char uart_log_buf[256] = {0, };
+
+/* Allocate 800KB of buffer for UART logging */
+#define LOG_BUFFER_SIZE		(0xC8000)
+struct s3c24xx_uart_port *panic_port;
+
+static int exynos_s3c24xx_panic_handler(struct notifier_block *nb,
+								unsigned long l, void *p)
+{
+
+	struct uart_port *port = &panic_port->port;
+
+	dev_err(panic_port->port.dev, " Register dump\n"
+		"ULCON	0x%08x	"
+		"UCON	0x%08x	"
+		"UFCON	0x%08x\n"
+		"UMCON	0x%08x	"
+		"UTRSTAT	0x%08x	"
+		"UERSTAT	0x%08x	"
+		"UMSTAT	0x%08x\n"
+		"UBRDIV	0x%08x	"
+		"UINTP	0x%08x	"
+		"UINTM	0x%08x\n"
+		, readl(port->membase + S3C2410_ULCON)
+		, readl(port->membase + S3C2410_UCON)
+		, readl(port->membase + S3C2410_UFCON)
+		, readl(port->membase + S3C2410_UMCON)
+		, readl(port->membase + S3C2410_UTRSTAT)
+		, readl(port->membase + S3C2410_UERSTAT)
+		, readl(port->membase + S3C2410_UMSTAT)
+		, readl(port->membase + S3C2410_UBRDIV)
+		, readl(port->membase + S3C64XX_UINTP)
+		, readl(port->membase + S3C64XX_UINTM)
+	);
+
+	return 0;
+}
+
+static struct notifier_block exynos_s3c24xx_panic_block = {
+	.notifier_call = exynos_s3c24xx_panic_handler,
+};
+
+static void uart_sfr_dump(struct s3c24xx_uart_port *ourport)
+{
+	struct uart_port *port = &ourport->port;
+
+	dev_err(ourport->port.dev, " Register dump\n"
+		"ULCON	0x%08x	"
+		"UCON	0x%08x	"
+		"UFCON	0x%08x	\n"
+		"UMCON	0x%08x	"
+		"UTRSTAT	0x%08x	"
+		"UERSTAT	0x%08x	"
+		"UMSTAT	0x%08x	\n"
+		"UBRDIV	0x%08x	"
+		"UINTP	0x%08x	"
+		"UINTM	0x%08x	\n"
+		, readl(port->membase + S3C2410_ULCON)
+		, readl(port->membase + S3C2410_UCON)
+		, readl(port->membase + S3C2410_UFCON)
+		, readl(port->membase + S3C2410_UMCON)
+		, readl(port->membase + S3C2410_UTRSTAT)
+		, readl(port->membase + S3C2410_UERSTAT)
+		, readl(port->membase + S3C2410_UMSTAT)
+		, readl(port->membase + S3C2410_UBRDIV)
+		, readl(port->membase + S3C64XX_UINTP)
+		, readl(port->membase + S3C64XX_UINTM)
+	);
+}
+
+#define PAD_RETENTION_UART_BT_OPTION   (0x3188)
+#define RTS_PINCTRL			(1)
+#define DEFAULT_PINCTRL		(0)
+
+static void change_uart_gpio(int value, struct s3c24xx_uart_port *ourport)
+{
+	int status = 0;
+
+	if (value) {
+		if (!IS_ERR(ourport->uart_pinctrl_tx_dat)) {
+			ourport->default_uart_pinctrl->state = NULL;
+			status = pinctrl_select_state(ourport->default_uart_pinctrl, ourport->uart_pinctrl_tx_dat);
+			if (status)
+				dev_err(ourport->port.dev, "Can't set TXD uart pins!!!\n");
+			else
+				udelay(10);
+		}
+		if (!IS_ERR(ourport->uart_pinctrl_rts)) {
+			ourport->default_uart_pinctrl->state = NULL;
+			status = pinctrl_select_state(ourport->default_uart_pinctrl, ourport->uart_pinctrl_rts);
+			if (status)
+				dev_err(ourport->port.dev, "Can't set RTS uart pins!!!\n");
+		}
+	} else {
+		if (!IS_ERR(ourport->uart_pinctrl_default)) {
+			ourport->default_uart_pinctrl->state = NULL;
+			status = pinctrl_select_state(ourport->default_uart_pinctrl, ourport->uart_pinctrl_default);
+			if (status)
+				dev_err(ourport->port.dev, "Can't set default uart pins!!!\n");
+		}
+	}
+}
 
 static void print_uart_mode(struct uart_port *port,
 		struct ktermios *termios, unsigned int baud)
@@ -269,17 +374,25 @@ static void uart_copy_to_local_buf(int dir, struct uart_local_buf *local_buf,
 			"[%5lu.%06lu] ",
 			(unsigned long)time, rem_nsec / NSEC_PER_USEC);
 
-	if (dir == 1)
+	if (dir == 2) {
 		local_buf->index += scnprintf(local_buf->buffer + local_buf->index,
-				local_buf->size - local_buf->index, "[RX] ");
-	else
-		local_buf->index += scnprintf(local_buf->buffer + local_buf->index,
-				local_buf->size - local_buf->index, "[TX] ");
-
-	for (i = 0; i < len; i++) {
+				local_buf->size - local_buf->index, "[reg] ");
 		local_buf->index += scnprintf(local_buf->buffer + local_buf->index,
 				local_buf->size - local_buf->index,
-				"%02X ", trace_buf[i]);
+				"%s", trace_buf);
+	} else {
+		if (dir == 1)
+			local_buf->index += snprintf(local_buf->buffer + local_buf->index,
+					local_buf->size - local_buf->index, "[RX] ");
+		else
+			local_buf->index += snprintf(local_buf->buffer + local_buf->index,
+					local_buf->size - local_buf->index, "[TX] ");
+
+		for (i = 0; i < len; i++) {
+			local_buf->index += snprintf(local_buf->buffer + local_buf->index,
+					local_buf->size - local_buf->index,
+					"%02X ", trace_buf[i]);
+		}
 	}
 
 	local_buf->index += scnprintf(local_buf->buffer + local_buf->index,
@@ -484,6 +597,9 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 
 	spin_lock_irqsave(&port->lock, flags);
 
+	__set_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
+	wr_regl(port, S3C64XX_UINTP, S3C64XX_UINTM_RXD_MSK);
+
 	while (max_count-- > 0) {
 		/*
 		 * Receive all characters known to be in FIFO
@@ -492,10 +608,8 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 		if (fifocnt == 0) {
 			ufstat = rd_regl(port, S3C2410_UFSTAT);
 			fifocnt = s3c24xx_serial_rx_fifocnt(ourport, ufstat);
-			if (fifocnt == 0) {
-				wr_regl(port, S3C64XX_UINTP, S3C64XX_UINTM_RXD_MSK);
+			if (fifocnt == 0)
 				break;
-			}
 		}
 		fifocnt--;
 
@@ -532,6 +646,8 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 		if (unlikely(uerstat & S3C2410_UERSTAT_ANY)) {
 			dbg("rxerr: port ch=0x%02x, rxs=0x%08x\n",
 			    ch, uerstat);
+
+			uart_sfr_dump(ourport);
 
 			/* check for break */
 			if (uerstat & S3C2410_UERSTAT_BREAK) {
@@ -581,12 +697,21 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 	if (ourport->uart_logging && trace_cnt)
 		uart_copy_to_local_buf(1, &ourport->uart_local_buf, trace_buf, trace_cnt);
 
+	__clear_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
+
 	spin_unlock_irqrestore(&port->lock, flags);
 	tty_insert_flip_string(&port->state->port, insert_buf, insert_cnt);
 	tty_flip_buffer_push(&port->state->port);
 	flush_workqueue(system_unbound_wq);
 
  out:
+	if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+		sprintf(uart_log_buf,"[0] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+				rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+				rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+		uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+	}
+
 	return IRQ_HANDLED;
 }
 
@@ -599,6 +724,13 @@ static irqreturn_t s3c24xx_serial_tx_chars(int irq, void *id)
 	int count = 256;
 	unsigned char trace_buf[256] = {0, };
 	int trace_cnt = 0;
+
+	if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+		sprintf(uart_log_buf,"[1] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+				rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+				rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+		uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+	}
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -727,6 +859,7 @@ static unsigned int s3c24xx_serial_get_mctrl(struct uart_port *port)
 static void s3c24xx_serial_set_mctrl(struct uart_port *port, unsigned int mctrl)
 {
 	unsigned int umcon = rd_regl(port, S3C2410_UMCON);
+	struct s3c24xx_uart_port *ourport = to_ourport(port);
 
 	if (mctrl & TIOCM_RTS)
 		umcon |= S3C2410_UMCOM_RTS_LOW;
@@ -734,6 +867,12 @@ static void s3c24xx_serial_set_mctrl(struct uart_port *port, unsigned int mctrl)
 		umcon &= ~S3C2410_UMCOM_RTS_LOW;
 
 	wr_regl(port, S3C2410_UMCON, umcon);
+	if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+		sprintf(uart_log_buf,"[2] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+				rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+				rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+		uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+	}
 }
 
 static void s3c24xx_serial_break_ctl(struct uart_port *port, int break_state)
@@ -834,6 +973,7 @@ err:
 static int s3c64xx_serial_startup(struct uart_port *port)
 {
 	struct s3c24xx_uart_port *ourport = to_ourport(port);
+	unsigned long flags;
 	int ret;
 
 	dbg("s3c64xx_serial_startup: port=%p (%08llx,%p)\n",
@@ -842,7 +982,9 @@ static int s3c64xx_serial_startup(struct uart_port *port)
 	ourport->cfg->wake_peer[port->line] =
 				s3c2410_serial_wake_peer[port->line];
 
+	spin_lock_irqsave(&port->lock, flags);
 	wr_regl(port, S3C64XX_UINTM, 0xf);
+	spin_unlock_irqrestore(&port->lock, flags);
 
 	if (ourport->use_default_irq == 1)
 		ret = devm_request_irq(port->dev, port->irq, s3c64xx_serial_handle_irq,
@@ -863,7 +1005,9 @@ static int s3c64xx_serial_startup(struct uart_port *port)
 	ourport->tx_claimed = 1;
 
 	/* Enable Rx Interrupt */
+	spin_lock_irqsave(&port->lock, flags);
 	__clear_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
+	spin_unlock_irqrestore(&port->lock, flags);
 	dbg("s3c64xx_serial_startup ok\n");
 	return ret;
 }
@@ -932,6 +1076,12 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 			umcon = rd_regl(port, S3C2410_UMCON);
 			umcon &= ~(S3C2410_UMCOM_AFC | S3C2410_UMCOM_RTS_LOW);
 			wr_regl(port, S3C2410_UMCON, umcon);
+			if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+				sprintf(uart_log_buf,"[3] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+						rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+						rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+				uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+			}
 		}
 
 		if (ourport->domain == DOMAIN_AUD)
@@ -946,6 +1096,12 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 		if (ourport->domain == DOMAIN_AUD)
 			aud_uart_gpio_cfg(&ourport->pdev->dev, level);
 
+		if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+			sprintf(uart_log_buf,"[4] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+					rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+					rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+			uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+		}
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_cfg(port));
 		break;
 	default:
@@ -1152,8 +1308,6 @@ static void s3c24xx_serial_set_termios(struct uart_port *port,
 	umcon = rd_regl(port, S3C2410_UMCON);
 	if (termios->c_cflag & CRTSCTS) {
 		umcon |= S3C2410_UMCOM_AFC;
-		/* Disable RTS when RX FIFO contains 63 bytes */
-		umcon &= ~S3C2412_UMCON_AFC_8;
 	} else {
 		umcon &= ~S3C2410_UMCOM_AFC;
 	}
@@ -1442,6 +1596,7 @@ static void s3c24xx_serial_resetport(struct uart_port *port,
 	struct s3c24xx_uart_info *info = s3c24xx_port_to_info(port);
 	struct s3c24xx_uart_port *ourport = to_ourport(port);
 	unsigned long ucon = rd_regl(port, S3C2410_UCON);
+	unsigned long umcon = rd_regl(port, S3C2410_UMCON);
 	unsigned int ucon_mask;
 
 	ucon_mask = info->clksel_mask;
@@ -1453,6 +1608,15 @@ static void s3c24xx_serial_resetport(struct uart_port *port,
 		dev_err(port->dev, "Change Loopback mode!\n");
 		ucon |= S3C2443_UCON_LOOPBACK;
 	}
+
+	/* Set rts trigger level */
+	umcon &= ~S5PV210_UMCON_RTSTRIG32;
+	if (ourport->rts_trig_level && info->rts_trig_shift)
+		umcon |= ourport->rts_trig_level << info->rts_trig_shift;
+	wr_regl(port, S3C2410_UMCON, umcon);
+
+	/* To prevent unexpected Interrupt before enabling the channel */
+	wr_regl(port, S3C64XX_UINTM, 0xf);
 
 	/* reset both fifos */
 	wr_regl(port, S3C2410_UFCON, cfg->ufcon | S3C2410_UFCON_RESETBOTH);
@@ -1630,6 +1794,38 @@ static inline struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(
 			platform_get_device_id(pdev)->driver_data;
 }
 
+static void s3c24xx_serial_rx_fifo_wait(struct s3c24xx_uart_port *ourport)
+{
+	struct uart_port *port = &ourport->port;
+	unsigned int fifo_stat;
+	unsigned long wait_time;
+	unsigned int fifo_count;
+	unsigned long flags;
+
+	fifo_count = 0;
+
+	spin_lock_irqsave(&port->lock, flags);
+
+	fifo_stat = rd_regl(port, S3C2410_UFSTAT);
+	fifo_count = s3c24xx_serial_rx_fifocnt(ourport, fifo_stat);
+	if (fifo_count) {
+		__clear_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
+		rx_enabled(port) = 1;
+
+		wait_time = jiffies + HZ;
+		do {
+			port = &ourport->port;
+			fifo_stat = rd_regl(port, S3C2410_UFSTAT);
+			cpu_relax();
+		} while (s3c24xx_serial_rx_fifocnt(ourport, fifo_stat) && time_before(jiffies, wait_time));
+	}
+
+	spin_unlock_irqrestore(&port->lock, flags);
+
+	if (rx_enabled(port))
+		s3c24xx_serial_stop_rx(port);
+}
+
 void s3c24xx_serial_fifo_wait(void)
 {
 	struct s3c24xx_uart_port *ourport;
@@ -1768,6 +1964,16 @@ static int s3c24xx_serial_notifier(struct notifier_block *self,
 			wr_regl(port, S3C2410_UMCON, umcon);
 
 			spin_unlock_irqrestore(&port->lock, flags);
+
+			if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+				sprintf(uart_log_buf,"[5] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+						rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+						rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+				uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+			}
+
+			if (ourport->rts_control)
+				change_uart_gpio(RTS_PINCTRL, ourport);
 		}
 
 		s3c24xx_serial_fifo_wait();
@@ -1795,6 +2001,16 @@ static int s3c24xx_serial_notifier(struct notifier_block *self,
 			wr_regl(port, S3C2410_UMCON, umcon);
 
 			spin_unlock_irqrestore(&port->lock, flags);
+
+			if (ourport->port.line == BLUETOOTH_UART_PORT_LINE) {
+				sprintf(uart_log_buf,"[6] UMCON:0x%08x UFSTAT:0x%08x UINTP:0x%08x UCON:0x%08x UMSTAT:0x%08x\n",
+						rd_regl(port, S3C2410_UMCON), rd_regl(port, S3C2410_UFSTAT), rd_regl(port, S3C2410_UINTP),
+						rd_regl(port, S3C2410_UCON), rd_regl(port, S3C2410_UMSTAT));
+				uart_copy_to_local_buf(2, &ourport->uart_local_buf, uart_log_buf, sizeof(uart_log_buf));
+			}
+
+			if (ourport->rts_control)
+				change_uart_gpio(DEFAULT_PINCTRL, ourport);
 		}
 		break;
 
@@ -1816,6 +2032,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	int index = probe_index;
 	int ret, fifo_size;
 	int port_index = probe_index;
+	int rts_trig_level;
 
 	dbg("s3c24xx_serial_probe(%p) %d\n", pdev, index);
 
@@ -1854,6 +2071,45 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	ourport->port.fifosize = (ourport->info->fifosize) ?
 		ourport->info->fifosize :
 		ourport->drv_data->fifosize[port_index];
+
+	if (of_get_property(pdev->dev.of_node, "samsung,uart-panic-log", NULL))
+		ourport->uart_panic_log = 1;
+	else
+		ourport->uart_panic_log = 0;
+
+	if (ourport->uart_panic_log) {
+		atomic_notifier_chain_register(&panic_notifier_list, &exynos_s3c24xx_panic_block);
+		panic_port = ourport;
+	}
+
+	if (of_get_property(pdev->dev.of_node, "samsung,usi-serial-v2", NULL))
+		ourport->usi_v2 = 1;
+	else
+		ourport->usi_v2 = 0;
+
+	if (of_get_property(pdev->dev.of_node, "samsung,rts-gpio-control", NULL)) {
+		ourport->rts_control = 1;
+		ourport->default_uart_pinctrl = devm_pinctrl_get(&pdev->dev);
+		if (IS_ERR(ourport->default_uart_pinctrl))
+			dev_err(&pdev->dev, "Can't get uart pinctrl!!!\n");
+		else {
+			ourport->uart_pinctrl_rts = pinctrl_lookup_state(ourport->default_uart_pinctrl,
+						"rts");
+			if (IS_ERR(ourport->uart_pinctrl_rts))
+				dev_err(&pdev->dev, "Can't get RTS pinstate!!!\n");
+			ourport->uart_pinctrl_tx_dat = pinctrl_lookup_state(ourport->default_uart_pinctrl,
+						"tx_dat");
+
+			ourport->uart_pinctrl_default = pinctrl_lookup_state(ourport->default_uart_pinctrl,
+						"default");
+			if (IS_ERR(ourport->uart_pinctrl_default))
+				dev_err(&pdev->dev, "Can't get Default pinstate!!!\n");
+		}
+	}
+	if (!of_property_read_u32(pdev->dev.of_node, "samsung,rts-trig-level",
+				 &rts_trig_level)) {
+		ourport->rts_trig_level = rts_trig_level;
+	}
 
 	if (!of_property_read_u32(pdev->dev.of_node, "samsung,fifo-size",
 				&fifo_size)) {
@@ -1984,14 +2240,16 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "AUD-UART : Audio block power enable.\n");
 #endif
 	}
+	if (ourport->uart_logging == 1) {
+		/* Allocate memory for UART logging */
+		ourport->uart_local_buf.buffer = kzalloc(LOG_BUFFER_SIZE, GFP_KERNEL);
 
-    if (port_index == BLUETOOTH_UART_PORT_LINE) {
-        struct pinctrl *bt_uart_pinctrl;
-        bt_uart_pinctrl = devm_pinctrl_get_select(&pdev->dev, "btdefault");
-        if (IS_ERR(bt_uart_pinctrl)) {
-			dev_err(&pdev->dev, "could not get bt uart pinctrl\n");
-		}
-    }
+		if (!ourport->uart_local_buf.buffer)
+			dev_err(&pdev->dev, "could not allocate buffer for UART logging\n");
+
+		ourport->uart_local_buf.size = LOG_BUFFER_SIZE;
+		ourport->uart_local_buf.index = 0;
+	}
 
 	dbg("%s: adding port\n", __func__);
 	uart_add_one_port(&s3c24xx_uart_drv, &ourport->port);
@@ -2021,6 +2279,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to create sysfs file.\n");
 
 	ourport->dbg_mode = 0;
+
 
 	return 0;
 }
@@ -2078,6 +2337,16 @@ static int s3c24xx_serial_suspend(struct device *dev)
 #endif
 
 	if (port) {
+		/*
+		 * If rts line must be protected while suspending
+		 * we change the gpio pad as output high
+		*/
+		if (ourport->rts_control)
+			change_uart_gpio(RTS_PINCTRL, ourport);
+
+		udelay(300);//dealy for sfr update
+		s3c24xx_serial_rx_fifo_wait(ourport);
+
 		uart_suspend_port(&s3c24xx_uart_drv, port);
 #ifdef CONFIG_SERIAL_SAMSUNG_HWACG
 		uart_clock_enable(ourport);
@@ -2126,6 +2395,9 @@ static int s3c24xx_serial_resume(struct device *dev)
 
 		if (ourport->port.line == BLUETOOTH_UART_PORT_LINE)
 			exynos_pmu_update(PAD_RETENTION_UART_BT_OPTION, 0x10000000, 0x10000000);
+
+		if (ourport->rts_control)
+			change_uart_gpio(DEFAULT_PINCTRL, ourport);
 
 		if (ourport->dbg_mode & UART_DBG_MODE)
 			dev_err(dev, "UART resume notification for tty framework.\n");
@@ -2563,6 +2835,7 @@ static struct s3c24xx_serial_drv_data s5pv210_serial_drv_data = {
 		.tx_fifofull	= S5PV210_UFSTAT_TXFULL,	\
 		.tx_fifomask	= S5PV210_UFSTAT_TXMASK,	\
 		.tx_fifoshift	= S5PV210_UFSTAT_TXSHIFT,	\
+		.rts_trig_shift = S5PV210_UMCON_RTSTRIG_SHIFT,	\
 		.def_clk_sel	= S3C2410_UCON_CLKSEL0,		\
 		.num_clks	= 1,				\
 		.clksel_mask	= 0,				\

@@ -1213,6 +1213,11 @@ static int max77865_chg_set_property(struct power_supply *psy,
 				check_charger_unlock_state(charger);
 			}
 			break;
+		case POWER_SUPPLY_EXT_PROP_PAD_VOLT_CTRL:
+			wake_unlock(&charger->wc_current_wake_lock);
+			cancel_delayed_work(&charger->wc_current_work);
+			max77865_set_input_current(charger, val->intval);
+			break;
 		default:
 			return -EINVAL;
 		}

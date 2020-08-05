@@ -279,6 +279,13 @@
 		/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
 		battery,age_data = <0 43500 4280 4250 93>;
 
+		battery,health_condition = <
+			/* CYCLE ASOC */
+			1200 75	/* GOOD */
+			1500 65 /* NORMAL */
+			1700 55 /* AGED */
+			>;
+
 		battery,max_input_voltage = <12000>; /* mV */
 		battery,max_input_current = <3000>;  /* mA */
 

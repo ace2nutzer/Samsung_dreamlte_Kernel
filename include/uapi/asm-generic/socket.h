@@ -88,8 +88,15 @@
 #define SO_DETACH_BPF		SO_DETACH_FILTER
 
 /* START_OF_KNOX_NPA */
+#if ANDROID_VERSION < 90000
 #define SO_SET_DOMAIN_NAME 55
-#define SO_SET_DNS_UID 56
+#define SO_SET_DNS_UID  56
+#define SO_SET_DNS_PID  58
+#else
+#define SO_SET_DOMAIN_NAME 1000
+#define SO_SET_DNS_UID  1001
+#define SO_SET_DNS_PID  1002
+#endif
 /* END_OF_KNOX_NPA */
 
 #endif /* __ASM_GENERIC_SOCKET_H */

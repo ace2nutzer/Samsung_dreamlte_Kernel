@@ -626,7 +626,7 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 				retval = usb_ep_queue(in, new_req, GFP_ATOMIC);
 				switch (retval) {
 				default:
-					printk(KERN_ERR"usb: dropped tx_complete_newreq(%p)\n",new_req);
+					printk(KERN_ERR"usb: dropped tx_complete_newreq(%pK)\n",new_req);
 					DBG(dev, "tx queue err %d\n", retval);
 #ifdef CONFIG_USB_RNDIS_MULTIPACKET
 					new_req->length = 0;
@@ -774,7 +774,7 @@ static enum hrtimer_restart tx_timeout(struct hrtimer *data)
 	retval = tx_task(dev, req);
 	switch (retval) {
 		default:
-			printk(KERN_ERR"usb: dropped tx_complete_req(%p)\n", req);
+			printk(KERN_ERR"usb: dropped tx_complete_req(%pK)\n", req);
 			DBG(dev, "tx queue err %d\n", retval);
 			break;
 
@@ -1216,8 +1216,8 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 		free_netdev(net);
 		dev = ERR_PTR(status);
 	} else {
-		INFO(dev, "MAC %pM\n", net->dev_addr);
-		INFO(dev, "HOST MAC %pM\n", dev->host_mac);
+		DBG(dev, "MAC %pM\n", net->dev_addr);
+		DBG(dev, "HOST MAC %pM\n", dev->host_mac);
 
 		/*
 		 * two kinds of host-initiated state changes:

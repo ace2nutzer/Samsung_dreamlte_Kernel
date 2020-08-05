@@ -1309,7 +1309,7 @@
 				0 2 2 0 /* IN1 */
 				2 2 0 0 /* IN2 */
 			>;
-			cirrus,out-mono = <0 0 0 1 0 0>;
+			cirrus,out-mono = <0 0 1 1 0 0>;
 			cirrus,auxpdm-falling-edge;
 
 			cirrus,gpio-defaults = <

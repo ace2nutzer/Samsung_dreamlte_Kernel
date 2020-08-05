@@ -68,6 +68,10 @@ enum power_supply_ext_property {
 	POWER_SUPPLY_EXT_PROP_HV_DISABLE,
 	POWER_SUPPLY_EXT_PROP_WC_CONTROL,
 	POWER_SUPPLY_EXT_PROP_CALL_EVENT,
+	POWER_SUPPLY_EXT_PROP_MONITOR_WORK,
+	POWER_SUPPLY_EXT_PROP_PAD_VOLT_CTRL,
+	POWER_SUPPLY_EXT_PROP_WPC_EN,
+	POWER_SUPPLY_EXT_PROP_WPC_EN_MST,
 };
 
 enum sec_battery_usb_conf {
@@ -84,7 +88,8 @@ enum sec_battery_rp_curr {
 
 enum power_supply_ext_health {
 	POWER_SUPPLY_HEALTH_VSYS_OVP = POWER_SUPPLY_HEALTH_MAX,
-	POWER_SUPPLY_HEALTH_VBAT_OVP,	
+	POWER_SUPPLY_HEALTH_VBAT_OVP,
+	POWER_SUPPLY_HEALTH_WPC_EN,
 };
 
 enum sec_battery_cable {
@@ -308,6 +313,14 @@ enum sec_battery_charging_mode {
 	SEC_BATTERY_CHARGING_2ND,
 	/* recharging */
 	SEC_BATTERY_CHARGING_RECHARGING,
+};
+
+enum sec_battery_wpc_en_ctrl {
+	WPC_EN_SYSFS = 0x1,
+	WPC_EN_CCIC = 0x2,
+	WPC_EN_CHARGING = 0x4,
+	WPC_EN_TX = 0x8,
+	WPC_EN_MST = 0x10,
 };
 
 struct sec_bat_adc_api {
@@ -592,6 +605,11 @@ struct sec_age_data {
 	struct sec_age_data
 #endif
 
+typedef struct {
+	unsigned int cycle;
+	unsigned int asoc;
+} battery_health_condition;
+
 struct sec_battery_platform_data {
 	/* NO NEED TO BE CHANGED */
 	/* callback functions */
@@ -874,6 +892,8 @@ struct sec_battery_platform_data {
 	int age_data_length;
 	sec_age_data_t* age_data;
 #endif
+	battery_health_condition* health_condition;
+
 	int siop_input_limit_current;
 	int siop_charging_limit_current;
 	int siop_hv_input_limit_current;
