@@ -3751,7 +3751,7 @@ CONFIG_ARGOS=y
 # Samsung TN Power Management Options
 #
 CONFIG_SEC_PM=y
-CONFIG_SEC_PM_DEBUG=y
+# CONFIG_SEC_PM_DEBUG is not set
 
 #
 # Samsung TN NAD Options
