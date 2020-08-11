@@ -489,10 +489,8 @@ static int abox_rdma_compr_open(struct snd_compr_stream *stream)
 	data->created = false;
 
 	pm_runtime_get_sync(rtd->codec->dev);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, platform_data->abox_data,
 			rtd->cpu_dai, 3);
-#endif
 
 	return 0;
 }
@@ -560,10 +558,9 @@ static int abox_rdma_compr_free(struct snd_compr_stream *stream)
 }
 #endif
 
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, platform_data->abox_data,
 			rtd->cpu_dai, 12);
-#endif
+
 	pm_runtime_put(rtd->codec->dev);
 
 	return ret;
@@ -1205,11 +1202,9 @@ static int abox_rdma_hw_params(struct snd_pcm_substream *substream,
 	pcmtask_msg->param.hw_params.channels = params_channels(params);
 	abox_rdma_request_ipc(dev, msg.ipcid, &msg, sizeof(msg), 0, 1);
 
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	if (params_rate(params) > 48000)
 		abox_request_cpu_gear_dai(dev, data->abox_data,
 				rtd->cpu_dai, 2);
-#endif
 
 	lit = data->pm_qos_lit[abox_get_rate_type(params_rate(params))];
 #ifndef CONFIG_SCHED_HMP_CUSTOM
@@ -1411,18 +1406,14 @@ static int abox_rdma_open(struct snd_pcm_substream *substream)
 	dev_dbg(dev, "%s[%d]\n", __func__, id);
 
 	if (data->type == PLATFORM_CALL) {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 		abox_request_cpu_gear_sync(dev, data->abox_data,
 				ABOX_CPU_GEAR_CALL_KERNEL, 1);
-#endif
 		result = abox_request_l2c_sync(dev, data->abox_data, dev, true);
 		if (IS_ERR_VALUE(result))
 			return result;
 	}
 	pm_runtime_get_sync(rtd->codec->dev);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 3);
-#endif
 	snd_soc_set_runtime_hwparams(substream, &abox_rdma_hardware);
 
 	data->substream = substream;
@@ -1468,16 +1459,12 @@ static int abox_rdma_close(struct snd_pcm_substream *substream)
 			dev_warn_ratelimited(dev, "disable timeout[%d]\n", id);
 		break;
 	}
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 12);
-#endif
 	pm_runtime_put(rtd->codec->dev);
 	if (data->type == PLATFORM_CALL) {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 		abox_request_cpu_gear_sync(dev, data->abox_data,
 				ABOX_CPU_GEAR_CALL_KERNEL,
 				ABOX_CPU_GEAR_LOWER_LIMIT);
-#endif
 		result = abox_request_l2c(dev, data->abox_data, dev, false);
 		if (IS_ERR_VALUE(result))
 			return result;
@@ -1498,12 +1485,10 @@ static int abox_rdma_mmap(struct snd_pcm_substream *substream,
 
 	dev_info(dev, "%s[%d]\n", __func__, id);
 
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	/* Increased cpu gear for sound camp.
 	 * Only sound camp uses mmap now.
 	 */
 	abox_request_cpu_gear_dai(dev, data->abox_data, rtd->cpu_dai, 2);
-#endif
 
 	return dma_mmap_writecombine(dev, vma,
 			runtime->dma_area,
