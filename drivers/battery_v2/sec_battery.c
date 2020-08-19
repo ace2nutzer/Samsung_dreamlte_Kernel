@@ -56,9 +56,12 @@ static bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
 static bool water_detect = true;
 #endif
-bool batt_idle = false;
+static bool is_charger = false;
+/* battery care & battery idle mode */
+static bool batt_idle = false;
 static unsigned int batt_care = 101; /* disabled */
-bool battery_idle = false;  /* for battery care */
+static bool battery_idle = false;
+extern void enable_blue_led(bool);
 
 #define CHARGER_CONTROL_VERSION		"2.4"
 
@@ -1059,6 +1062,7 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 	if (batt_idle) {
 		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
 		charging_curr = 0;
+		enable_blue_led(true);
 		pr_info("%s: Battery IDLE enabled by user\n", __func__);
 	}
 
@@ -1066,6 +1070,7 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		battery_idle = true;
 		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
 		charging_curr = 0;
+		enable_blue_led(true);
 		pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
 	}
 
@@ -1204,7 +1209,7 @@ out:
 	_battery->aicl_current = 0;
 
 	/* set charging current */
-	if (_battery->status != POWER_SUPPLY_STATUS_DISCHARGING)
+	if (is_charger)
 		sec_bat_set_charging_current(_battery);
 
 	return count;
@@ -1346,11 +1351,16 @@ static ssize_t batt_idle_store(struct kobject *kobj,
 
 out:
 
-	if (batt_idle) {
-		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
-		pr_info("[sec_batt] Battery IDLE enabled by user\n");
-	} else {
-		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+	if (is_charger) {
+		if (batt_idle) {
+			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+			charging_curr = 0;
+			enable_blue_led(true);
+			pr_info("[sec_batt] Battery IDLE enabled by user\n");
+		} else {
+			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+			enable_blue_led(false);
+		}
 	}
 
 	return count;
@@ -1390,7 +1400,10 @@ static ssize_t batt_care_store(struct kobject *kobj,
 
 		/* reset */
 		battery_idle = false;
-		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+		if (!batt_idle && is_charger) {
+			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+			enable_blue_led(false);
+		}
 
 		return count;
 	}
@@ -3735,11 +3748,14 @@ static void sec_bat_monitor_work(
 
 	// reset some flags
 	if (battery->cable_type == SEC_BATTERY_CABLE_NONE && battery->status == POWER_SUPPLY_STATUS_DISCHARGING) {
+		is_charger = false;
 		charging_curr = 0;
 		input_volt = 0;
 		battery->aicl_current = 0; /* reset aicl current */
 		water_detected = false;
-		battery_idle = false;
+		enable_blue_led(false);
+	} else {
+		is_charger = true;
 	}
 
 	mutex_lock(&battery->wclock);

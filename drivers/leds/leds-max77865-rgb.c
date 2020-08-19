@@ -97,19 +97,20 @@ static unsigned int led_device_type = 0;
 static unsigned int brightness_ratio_r = 100;
 static unsigned int brightness_ratio_g = 100;
 static unsigned int brightness_ratio_b = 100;
-static unsigned int brightness_ratio_r_low = 20;
-static unsigned int brightness_ratio_g_low = 20;
-static unsigned int brightness_ratio_b_low = 20;
+static unsigned int brightness_ratio_r_low = 30;
+static unsigned int brightness_ratio_g_low = 30;
+static unsigned int brightness_ratio_b_low = 30;
 static u8 led_lowpower_mode = 0x0;
 
-/* battery care */
-extern bool battery_idle;
-extern bool batt_idle;
+/* battery idle */
+static bool batt_idle = false;
+static bool is_led_blink = false;
+static bool batt_idle_reset = false;
 
 /* blink delays in ms */
 static unsigned int blink_on_delay = 500;
 static unsigned int blink_off_delay = 5000;
-static bool disable_low_pow_mode = false;
+static bool disable_lowpow_mode_b = false;
 
 extern int get_lcd_info(char *arg);
 static unsigned int octa_color = 0x0;
@@ -131,6 +132,7 @@ enum max77865_led_pattern {
 };
 
 static struct device *led_dev;
+static struct device *_dev;
 
 struct max77865_rgb {
 	struct led_classdev led[4];
@@ -228,19 +230,19 @@ static void max77865_rgb_set_state(struct led_classdev *led_cdev,
 		/* apply brightness ratio for optimize each led brightness*/
 		switch(n) {
 		case RED:
-			if ((led_lowpower_mode == 1) && (!disable_low_pow_mode))
+			if (led_lowpower_mode == 1)
 				brightness = brightness * brightness_ratio_r_low / 100;
 			else
 				brightness = brightness * brightness_ratio_r / 100;
 			break;
 		case GREEN:
-			if ((led_lowpower_mode == 1) && (!disable_low_pow_mode))
+			if (led_lowpower_mode == 1)
 				brightness = brightness * brightness_ratio_g_low / 100;
 			else
 				brightness = brightness * brightness_ratio_g / 100;
 			break;
 		case BLUE:
-			if ((led_lowpower_mode == 1) && (!disable_low_pow_mode))
+			if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_b))
 				brightness = brightness * brightness_ratio_b_low / 100;
 			else
 				brightness = brightness * brightness_ratio_b / 100;
@@ -547,10 +549,18 @@ static struct max77865_rgb_platform_data
 static void max77865_rgb_reset(struct device *dev)
 {
 	struct max77865_rgb *max77865_rgb = dev_get_drvdata(dev);
+
+	if (batt_idle && !is_led_blink && !batt_idle_reset)
+		return;
+
 	max77865_rgb_set_state(&max77865_rgb->led[RED], LED_OFF, LED_DISABLE);
 	max77865_rgb_set_state(&max77865_rgb->led[GREEN], LED_OFF, LED_DISABLE);
 	max77865_rgb_set_state(&max77865_rgb->led[BLUE], LED_OFF, LED_DISABLE);
 	max77865_rgb_ramp(dev, 0, 0);
+
+	is_led_blink = false;
+	batt_idle = false;
+	batt_idle_reset = false;
 }
 
 static ssize_t store_max77865_rgb_lowpower(struct device *dev,
@@ -616,7 +626,7 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		return count;
 
 	/* Set to low power consumption mode */
-	if ((led_lowpower_mode == 1) && (!disable_low_pow_mode))
+	if (led_lowpower_mode == 1)
 		led_dynamic_current = low_powermode_current;
 	else
 		led_dynamic_current = normal_powermode_current;
@@ -624,9 +634,7 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 	switch (mode) {
 
 	case CHARGING:
-		if (battery_idle || batt_idle)
-			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
-		else
+		if (!batt_idle)
 			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_ALWAYS_ON);
 		break;
 	case CHARGING_ERR:
@@ -635,7 +643,10 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		break;
 	case MISSED_NOTI:
 		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
-		max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_BLINK);
+		if (disable_lowpow_mode_b)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_BLINK);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_BLINK);
 		break;
 	case LOW_BATTERY:
 		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
@@ -647,7 +658,10 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 	case POWERING:
 		max77865_rgb_ramp(dev, 800, 800);
 		max77865_rgb_blink(dev, 200, 200);
-		max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
+		if (disable_lowpow_mode_b)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 		max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_BLINK);
 		break;
 	default:
@@ -679,13 +693,14 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 		return count;
 	}
 
+	/*Reset led*/
+	max77865_rgb_reset(dev);
+
 	/* Set to low power consumption mode */
-	if ((led_lowpower_mode == 1) && (!disable_low_pow_mode))
+	if (led_lowpower_mode == 1)
 		led_dynamic_current = low_powermode_current;
 	else
 		led_dynamic_current = normal_powermode_current;
-	/*Reset led*/
-	max77865_rgb_reset(dev);
 
 	led_r_brightness = (led_brightness & LED_R_MASK) >> 16;
 	led_g_brightness = (led_brightness & LED_G_MASK) >> 8;
@@ -703,7 +718,10 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 			led_g_brightness = 1;
 	}
 	if (led_b_brightness != 0) {
-		led_b_brightness = (led_b_brightness * led_dynamic_current) / LED_MAX_CURRENT;
+		if (disable_lowpow_mode_b)
+			led_b_brightness = (led_b_brightness * normal_powermode_current) / LED_MAX_CURRENT;
+		else
+			led_b_brightness = (led_b_brightness * led_dynamic_current) / LED_MAX_CURRENT;
 		if (led_b_brightness == 0)
 			led_b_brightness = 1;
 	}
@@ -750,6 +768,13 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 	}
 	if (led_b_brightness) {
 		max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_b_brightness, LED_BLINK);
+	}
+
+	if (!led_r_brightness && !led_g_brightness && !led_b_brightness) {
+		is_led_blink = false;
+		return count;
+	} else {
+		is_led_blink = true;
 	}
 
 	/*Set LED blink mode*/
@@ -959,6 +984,34 @@ static struct attribute_group sec_led_attr_group = {
 };
 #endif
 
+/* for battery idle mode */
+void enable_blue_led(bool enable)
+{
+	struct max77865_rgb *max77865_rgb = dev_get_drvdata(_dev);
+
+	if (!enable) {
+
+		if (!is_led_blink && batt_idle) {
+			batt_idle_reset = true;
+			max77865_rgb_reset(_dev);
+			return;
+		}
+
+	} else {
+
+		if (is_led_blink || batt_idle)
+			return;
+
+		batt_idle_reset = true;
+		max77865_rgb_reset(_dev);
+		if (disable_lowpow_mode_b)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
+		batt_idle = true;
+	}
+}
+
 #define LED_RGB_ATTR_RO(_name) \
 	static struct kobj_attribute _name##_attr = \
 		__ATTR(_name, 0444, _name##_show, NULL)
@@ -1014,37 +1067,37 @@ static ssize_t blink_delays_store(struct kobject *kobj,
 }
 LED_RGB_ATTR_RW(blink_delays);
 
-static ssize_t disable_low_pow_mode_show(struct kobject *kobj,
+static ssize_t disable_lowpow_mode_b_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf,   "%s[LED-RGB disable low power config]\n\n", buf);
+	sprintf(buf,   "%s[LED-RGB: disable lowpower mode Blue]\n\n", buf);
 
-	sprintf(buf, "%s[disabled]\t[%s]\n\n", buf, disable_low_pow_mode ? "*" : " ");
+	sprintf(buf, "%s[disabled]\t[%s]\n\n", buf, disable_lowpow_mode_b ? "*" : " ");
 
 	return strlen(buf);
 }
 
-static ssize_t disable_low_pow_mode_store(struct kobject *kobj,
+static ssize_t disable_lowpow_mode_b_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
 	if (!strncmp(buf, "true", 1)) {
-		disable_low_pow_mode = true;
+		disable_lowpow_mode_b = true;
 		return count;
 	}
 
 	if (!strncmp(buf, "false", 2)) {
-		disable_low_pow_mode = false;
+		disable_lowpow_mode_b = false;
 		return count;
 	}
 
 	if (sysfs_streq(buf, "1")) {
-		disable_low_pow_mode = true;
+		disable_lowpow_mode_b = true;
 		return count;
 	}
 
 	if (sysfs_streq(buf, "0")) {
-		disable_low_pow_mode = false;
+		disable_lowpow_mode_b = false;
 		return count;
 	}
 
@@ -1052,11 +1105,11 @@ static ssize_t disable_low_pow_mode_store(struct kobject *kobj,
 
 	return -EINVAL;
 }
-LED_RGB_ATTR_RW(disable_low_pow_mode);
+LED_RGB_ATTR_RW(disable_lowpow_mode_b);
 
 static struct attribute *led_rgb_attrs[] = {
 	&blink_delays_attr.attr,
-	&disable_low_pow_mode_attr.attr,
+	&disable_lowpow_mode_b_attr.attr,
 	NULL,
 };
 
@@ -1087,6 +1140,8 @@ static int max77865_rgb_probe(struct platform_device *pdev)
 #else
 	pdata = dev_get_platdata(dev);
 #endif
+
+	_dev = dev;
 
 	pr_info("leds-max77865-rgb: %s : octa_color=%x led_device_type=%x \n",
 		__func__, octa_color, led_device_type);
