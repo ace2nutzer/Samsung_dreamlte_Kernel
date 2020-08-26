@@ -185,24 +185,24 @@
 		battery,chg_polarity_full_check = <1>;
 
 		battery,chg_high_temp = <700>;
-		battery,chg_high_temp_recovery = <650>;
+		battery,chg_high_temp_recovery = <680>;
 		battery,chg_input_limit_current = <500>;
 		battery,chg_charging_limit_current = <500>;
 
 		/* TEMP_CONTROL_SOURCE_BAT_THM = WPC_THM */
 		battery,wpc_temp_control_source = <1>;
 		battery,wpc_high_temp = <450>;
-		battery,wpc_high_temp_recovery = <400>;
+		battery,wpc_high_temp_recovery = <430>;
 		battery,wpc_charging_limit_current = <500>;
 		battery,wpc_lcd_on_high_temp = <450>;
-		battery,wpc_lcd_on_high_temp_rec = <400>;
+		battery,wpc_lcd_on_high_temp_rec = <430>;
 		battery,wpc_lcd_on_charging_limit_current = <500>;
 
 		battery,wpc_store_high_temp = <450>;
-		battery,wpc_store_high_temp_recovery = <400>;
+		battery,wpc_store_high_temp_recovery = <430>;
 		battery,wpc_store_charging_limit_current = <500>;
 		battery,wpc_store_lcd_on_high_temp = <450>;
-		battery,wpc_store_lcd_on_high_temp_rec = <400>;
+		battery,wpc_store_lcd_on_high_temp_rec = <430>;
 
 		battery,sleep_mode_limit_current = <500>;
 		battery,wc_full_input_limit_current = <100>;
@@ -215,7 +215,7 @@
 
 		battery,mix_high_temp = <450>;
 		battery,mix_high_chg_temp = <700>;
-		battery,mix_high_temp_recovery = <400>;
+		battery,mix_high_temp_recovery = <430>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
@@ -239,8 +239,8 @@
 		battery,chg_float_voltage_conv = <10>;
 
 		battery,swelling_high_temp_block = <450>;
-		battery,swelling_high_temp_recov = <400>;
-		battery,swelling_wc_high_temp_recov = <400>;
+		battery,swelling_high_temp_recov = <430>;
+		battery,swelling_wc_high_temp_recov = <430>;
 		battery,swelling_low_temp_block_1st = <150>;
 		battery,swelling_low_temp_recov_1st = <200>;
 		battery,swelling_low_temp_block_2nd = <50>;
