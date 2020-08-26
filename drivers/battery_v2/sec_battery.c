@@ -3753,6 +3753,7 @@ static void sec_bat_monitor_work(
 		input_volt = 0;
 		battery->aicl_current = 0; /* reset aicl current */
 		water_detected = false;
+		battery_idle = false;
 		enable_blue_led(false);
 	} else {
 		is_charger = true;
