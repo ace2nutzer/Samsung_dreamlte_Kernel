@@ -184,25 +184,25 @@
 		battery,chg_gpio_full_check = <0>;
 		battery,chg_polarity_full_check = <1>;
 
-		battery,chg_high_temp = <700>;
-		battery,chg_high_temp_recovery = <680>;
+		battery,chg_high_temp = <810>;
+		battery,chg_high_temp_recovery = <800>;
 		battery,chg_input_limit_current = <500>;
 		battery,chg_charging_limit_current = <500>;
 
 		/* TEMP_CONTROL_SOURCE_BAT_THM = WPC_THM */
 		battery,wpc_temp_control_source = <1>;
-		battery,wpc_high_temp = <450>;
-		battery,wpc_high_temp_recovery = <430>;
+		battery,wpc_high_temp = <460>;
+		battery,wpc_high_temp_recovery = <450>;
 		battery,wpc_charging_limit_current = <500>;
-		battery,wpc_lcd_on_high_temp = <450>;
-		battery,wpc_lcd_on_high_temp_rec = <430>;
+		battery,wpc_lcd_on_high_temp = <460>;
+		battery,wpc_lcd_on_high_temp_rec = <450>;
 		battery,wpc_lcd_on_charging_limit_current = <500>;
 
-		battery,wpc_store_high_temp = <450>;
-		battery,wpc_store_high_temp_recovery = <430>;
+		battery,wpc_store_high_temp = <460>;
+		battery,wpc_store_high_temp_recovery = <450>;
 		battery,wpc_store_charging_limit_current = <500>;
-		battery,wpc_store_lcd_on_high_temp = <450>;
-		battery,wpc_store_lcd_on_high_temp_rec = <430>;
+		battery,wpc_store_lcd_on_high_temp = <460>;
+		battery,wpc_store_lcd_on_high_temp_rec = <450>;
 
 		battery,sleep_mode_limit_current = <500>;
 		battery,wc_full_input_limit_current = <100>;
@@ -213,9 +213,9 @@
 		battery,wc_hero_stand_cv_current = <0>;
 		battery,wc_hero_stand_hv_cv_current = <0>;
 
-		battery,mix_high_temp = <450>;
-		battery,mix_high_chg_temp = <700>;
-		battery,mix_high_temp_recovery = <430>;
+		battery,mix_high_temp = <460>;
+		battery,mix_high_chg_temp = <810>;
+		battery,mix_high_temp_recovery = <450>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
@@ -238,9 +238,9 @@
 		battery,chg_float_voltage = <43500>;
 		battery,chg_float_voltage_conv = <10>;
 
-		battery,swelling_high_temp_block = <450>;
-		battery,swelling_high_temp_recov = <430>;
-		battery,swelling_wc_high_temp_recov = <430>;
+		battery,swelling_high_temp_block = <460>;
+		battery,swelling_high_temp_recov = <450>;
+		battery,swelling_wc_high_temp_recov = <450>;
 		battery,swelling_low_temp_block_1st = <150>;
 		battery,swelling_low_temp_recov_1st = <200>;
 		battery,swelling_low_temp_block_2nd = <50>;
