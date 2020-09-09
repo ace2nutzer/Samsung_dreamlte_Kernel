@@ -25,6 +25,11 @@
 
 #include "exynos-acme.h"
 
+static unsigned int cpu0_min_freq = 455000;
+static unsigned int cpu0_max_freq = 1690000;
+static unsigned int cpu4_min_freq = 741000;
+static unsigned int cpu4_max_freq = 2314000;
+
 /*
  * list head of cpufreq domain
  */
@@ -1191,6 +1196,12 @@ static int init_dm(struct exynos_cpufreq_domain *domain,
 	return register_exynos_dm_freq_scaler(domain->dm_type, dm_scaler);
 }
 
+static void set_orig_freq(void)
+{
+	cpufreq_update_freq(0, cpu0_min_freq, cpu0_max_freq);
+	cpufreq_update_freq(4, cpu4_min_freq, cpu4_max_freq);
+}
+
 static __init int init_domain(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
@@ -1445,6 +1456,8 @@ static int __init exynos_cpufreq_init(void)
 		pr_err("failed to register cpufreq driver\n");
 		return ret;
 	}
+
+	set_orig_freq();
 
 	init_sysfs();
 
