@@ -69,10 +69,9 @@ int gpu_control_power_policy_set(struct kbase_device *kbdev, const char *buf);
 int gpu_asv_calibration_start(void);
 #endif
 
-int gpu_regulator_init(struct exynos_context *platform);
-
 int gpu_control_module_init(struct kbase_device *kbdev);
 void gpu_control_module_term(struct kbase_device *kbdev);
 
 int gpu_device_specific_init(struct kbase_device *kbdev);
+
 #endif /* _GPU_CONTROL_H_ */

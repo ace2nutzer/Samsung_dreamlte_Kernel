@@ -1452,6 +1452,27 @@ static ssize_t show_kernel_sysfs_gpu_info(struct kobject *kobj, struct kobj_attr
 	return ret;
 }
 
+static ssize_t show_kernel_sysfs_gpu_asv_table(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	if (!platform)
+		return -ENODEV;
+
+	ret += gpu_get_asv_table(platform, buf+ret, (size_t)PAGE_SIZE-ret);
+
+	if (ret < PAGE_SIZE - 1) {
+		ret += snprintf(buf+ret, PAGE_SIZE-ret, "\n");
+	} else {
+		buf[PAGE_SIZE-2] = '\n';
+		buf[PAGE_SIZE-1] = '\0';
+		ret = PAGE_SIZE-1;
+	}
+
+	return ret;
+}
+
 static ssize_t show_kernel_sysfs_max_lock_dvfs(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
@@ -1677,6 +1698,53 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 	}
 
 	return count;
+}
+
+static ssize_t show_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	if (!platform)
+		return -ENODEV;
+
+	ret += snprintf(buf+ret, PAGE_SIZE-ret, "%d", gpu_get_cur_voltage(platform));
+
+	if (ret < PAGE_SIZE - 1) {
+		ret += snprintf(buf+ret, PAGE_SIZE-ret, "\n");
+	} else {
+		buf[PAGE_SIZE-2] = '\n';
+		buf[PAGE_SIZE-1] = '\0';
+		ret = PAGE_SIZE-1;
+	}
+
+	return ret;
+}
+
+static ssize_t show_kernel_sysfs_gpu_time_in_state(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
+	if (!platform)
+		return -ENODEV;
+
+	gpu_dvfs_update_time_in_state(gpu_control_is_power_on(pkbdev) * platform->cur_clock);
+
+	for (i = gpu_dvfs_get_level(platform->gpu_min_clock); i >= gpu_dvfs_get_level(platform->gpu_max_clock_limit); i--) {
+		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%d %llu\n",
+				platform->table[i].clock,
+				platform->table[i].time);
+	}
+
+	if (ret >= PAGE_SIZE - 1) {
+		buf[PAGE_SIZE-2] = '\n';
+		buf[PAGE_SIZE-1] = '\0';
+		ret = PAGE_SIZE-1;
+	}
+
+	return ret;
 }
 #endif /* #ifdef CONFIG_MALI_DVFS */
 
@@ -1928,6 +1996,9 @@ static struct kobj_attribute gpu_temp_attribute =
 static struct kobj_attribute gpu_info_attribute =
 	__ATTR(gpu_info, S_IRUGO, show_kernel_sysfs_gpu_info, NULL);
 
+static struct kobj_attribute gpu_asv_table_attribute =
+	__ATTR(gpu_asv_table, S_IRUGO, show_kernel_sysfs_gpu_asv_table, NULL);
+
 static struct kobj_attribute gpu_max_lock_attribute =
 	__ATTR(gpu_max_clock, S_IRUGO|S_IWUSR, show_kernel_sysfs_max_lock_dvfs, set_kernel_sysfs_max_lock_dvfs);
 
@@ -1950,6 +2021,9 @@ static struct kobj_attribute gpu_clock_attribute =
 static struct kobj_attribute gpu_freq_table_attribute =
 	__ATTR(gpu_freq_table, S_IRUGO, show_kernel_sysfs_freq_table, NULL);
 
+static struct kobj_attribute gpu_time_in_state_attribute =
+	__ATTR(gpu_time_in_state, S_IRUGO, show_kernel_sysfs_gpu_time_in_state, NULL);
+
 #ifdef CONFIG_MALI_DVFS
 static struct kobj_attribute gpu_governor_attribute =
 	__ATTR(gpu_governor, S_IRUGO|S_IWUSR, show_kernel_sysfs_governor, set_kernel_sysfs_governor);
@@ -1961,6 +2035,9 @@ static struct kobj_attribute gpu_available_governor_attribute =
 static struct kobj_attribute gpu_model_attribute =
 	__ATTR(gpu_model, S_IRUGO, show_kernel_sysfs_gpu_model, NULL);
 
+static struct kobj_attribute gpu_volt_attribute =
+	__ATTR(gpu_volt, S_IRUGO, show_kernel_sysfs_gpu_volt, NULL);
+
 
 static struct attribute *attrs[] = {
 #ifdef CONFIG_MALI_DVFS
@@ -1968,6 +2045,7 @@ static struct attribute *attrs[] = {
 	&gpu_temp_attribute.attr,
 #endif
 	&gpu_info_attribute.attr,
+	&gpu_asv_table_attribute.attr,
 	&gpu_max_lock_attribute.attr,
 	&gpu_min_lock_attribute.attr,
 	&user_max_clock_attribute.attr,
@@ -1981,6 +2059,8 @@ static struct attribute *attrs[] = {
 	&gpu_available_governor_attribute.attr,
 #endif /* #ifdef CONFIG_MALI_DVFS */
 	&gpu_model_attribute.attr,
+	&gpu_volt_attribute.attr,
+	&gpu_time_in_state_attribute.attr,
 	NULL,
 };
 
