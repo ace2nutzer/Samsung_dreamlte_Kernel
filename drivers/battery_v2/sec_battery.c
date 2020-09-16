@@ -30,7 +30,6 @@ static unsigned int ac_in_curr_12v = 0;
 static unsigned int ac_in_curr_9v = 0;
 static unsigned int usbpd_in_curr_12v = 0;
 static unsigned int usbpd_in_curr_9v = 0;
-static unsigned int wc_curr_max = 900;
 static unsigned int wc_in_curr_12v = 0;
 static unsigned int wc_in_curr_10v = 0;
 static unsigned int wc_in_curr_9v = 0;
@@ -42,11 +41,11 @@ static unsigned int ac_in_curr_12v = 0;
 static unsigned int ac_in_curr_9v = 0;
 static unsigned int usbpd_in_curr_12v = 0;
 static unsigned int usbpd_in_curr_9v = 0;
-static unsigned int wc_curr_max = 800;
 static unsigned int wc_in_curr_12v = 0;
 static unsigned int wc_in_curr_10v = 0;
 static unsigned int wc_in_curr_9v = 0;
 #endif
+static unsigned int wc_curr_max = 900;
 static unsigned int usb3_curr_max = 900;
 static unsigned int usb2_curr_max = 500;
 static unsigned int input_volt = 0;
@@ -61,9 +60,10 @@ static bool is_charger = false;
 static bool batt_idle = false;
 static unsigned int batt_care = 101; /* disabled */
 static bool battery_idle = false;
+static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
 
-#define CHARGER_CONTROL_VERSION		"2.4"
+#define CHARGER_CONTROL_VERSION		"2.5"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -865,7 +865,7 @@ void sec_bat_set_decrease_iout(struct sec_battery_info *battery)
 
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
-	static bool afc_init = false;
+	bool afc_init = false;
 	union power_supply_propval value = {0, };
 
 	int input_current = USB_CURRENT_UNCONFIGURED,
@@ -1063,6 +1063,10 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
 		charging_curr = 0;
 		enable_blue_led(true);
+		if (!batt_level)
+			batt_level = battery->capacity;
+		if (battery->capacity > batt_level)
+			battery->capacity = batt_level;
 		pr_info("%s: Battery IDLE enabled by user\n", __func__);
 	}
 
@@ -1071,6 +1075,8 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
 		charging_curr = 0;
 		enable_blue_led(true);
+		if (battery->capacity > batt_care)
+			battery->capacity = batt_care;
 		pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
 	}
 
@@ -1360,6 +1366,7 @@ out:
 		} else {
 			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
 			enable_blue_led(false);
+			batt_level = 0;
 		}
 	}
 
@@ -3755,6 +3762,7 @@ static void sec_bat_monitor_work(
 		water_detected = false;
 		battery_idle = false;
 		enable_blue_led(false);
+		batt_level = 0;
 	} else {
 		is_charger = true;
 	}
