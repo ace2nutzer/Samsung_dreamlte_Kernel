@@ -1059,25 +1059,29 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 #endif
 	}
 
-	if (batt_idle) {
-		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
-		charging_curr = 0;
-		enable_blue_led(true);
-		if (!batt_level)
-			batt_level = battery->capacity;
-		if (battery->capacity > batt_level)
-			battery->capacity = batt_level;
-		pr_info("%s: Battery IDLE enabled by user\n", __func__);
-	}
+	if (is_charger) {
+		if (batt_idle) {
+			sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+			charging_curr = 0;
+			enable_blue_led(true);
+			if (!batt_level)
+				batt_level = battery->capacity;
+			if (battery->capacity > batt_level)
+				battery->capacity = batt_level;
+			pr_info("%s: Battery IDLE enabled by user\n", __func__);
+		}
 
-	if ((battery_idle) || (battery->capacity == batt_care)) {
-		battery_idle = true;
-		sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
-		charging_curr = 0;
-		enable_blue_led(true);
-		if (battery->capacity > batt_care)
-			battery->capacity = batt_care;
-		pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
+		if ((battery_idle) || (battery->capacity >= batt_care && battery->capacity != 100)) {
+			battery_idle = true;
+			sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+			charging_curr = 0;
+			enable_blue_led(true);
+			if (!batt_level)
+				batt_level = battery->capacity;
+			if (battery->capacity > batt_level)
+				battery->capacity = batt_level;
+			pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
+		}
 	}
 
 	mutex_unlock(&battery->iolock);
@@ -1357,18 +1361,20 @@ static ssize_t batt_idle_store(struct kobject *kobj,
 
 out:
 
-	if (is_charger) {
-		if (batt_idle) {
-			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
-			charging_curr = 0;
-			enable_blue_led(true);
-			pr_info("[sec_batt] Battery IDLE enabled by user\n");
-		} else {
-			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
-			enable_blue_led(false);
-			batt_level = 0;
-		}
+	if (is_charger && batt_idle) {
+		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
+		charging_curr = 0;
+		enable_blue_led(true);
+		pr_info("[sec_batt] Battery IDLE enabled by user\n");
+	} else {
+		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
+		enable_blue_led(false);
+		batt_level = 0;
 	}
+
+	/* set charging current */
+	if (is_charger)
+		sec_bat_set_charging_current(_battery);
 
 	return count;
 }
@@ -1407,10 +1413,15 @@ static ssize_t batt_care_store(struct kobject *kobj,
 
 		/* reset */
 		battery_idle = false;
-		if (!batt_idle && is_charger) {
+		if (!batt_idle) {
 			sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING);
 			enable_blue_led(false);
+			batt_level = 0;
 		}
+
+		/* set charging current */
+		if (is_charger)
+			sec_bat_set_charging_current(_battery);
 
 		return count;
 	}
