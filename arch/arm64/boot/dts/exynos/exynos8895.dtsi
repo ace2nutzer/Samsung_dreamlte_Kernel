@@ -496,10 +496,10 @@
 						  1690000  1352000
 						  1456000  1014000
 						  1248000   845000
-						  1053000   676000
-						   949000   546000
-						   832000   421000
-						   715000   421000
+						  1053000   845000
+						   949000   845000
+						   832000   845000
+						   715000   845000
 						   598000   421000
 						   455000   421000
 						   >;
@@ -538,23 +538,23 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 2808000  1794000
-						  2704000  1794000
-						  2652000  1794000
-						  2574000  1794000
-						  2496000  1794000
-						  2314000  1794000
-						  2158000  1794000
-						  2002000  1794000
-						  1937000  1794000
-						  1807000  1794000
-						  1703000  1794000
-						  1469000  1794000
+					table = < 2808000  2093000
+						  2704000  2093000
+						  2652000  2093000
+						  2574000  2093000
+						  2496000  2093000
+						  2314000  2093000
+						  2158000  2093000
+						  2002000  2093000
+						  1937000  2093000
+						  1807000  2093000
+						  1703000  2093000
+						  1469000  2002000
 						  1261000  1794000
-						  1170000  1794000
-						  1066000  1794000
-						   962000  1540000
-						   858000  1352000
+						  1170000  1540000
+						  1066000  1352000
+						   962000  1014000
+						   858000   845000
 						   741000   421000 >;
 				};
 				mif-skew {
@@ -768,24 +768,24 @@
 		g3d_genpd_name = "pd-g3d"; /*KC: pg-g3d, LT,MK: pd-embedded_g3d*/
 		#cooling-cells = <2>; /* min followed by max */
 		governor = "default";
-		interactive_info = <572000 45 0>;
+		interactive_info = <0 75 0>;
 		gpu_dvfs_table_size = <9 7>; /*<row col>*/
 		gpu_dvfs_table = <
-		                    839000    16   45   1  1794000   0   0
-		                    764000    15   45   1  1794000   0   0
-		                    683000    13   45   1  1794000   0   0
-		                    572000    18   45   1  1794000   0   0
-		                    546000    12   45   1  1794000   0   0
-		                    455000    13   45   1  1794000   0   0
-		                    385000    15   45   1  1794000   0   0
-		                    338000    10   45   1  1540000   0   0
-		                    260000    10   45   1  1352000   0   0 >;
+		                    839000    43   75   1  2093000   0   0
+		                    764000    42   75   1  2093000   0   0
+		                    683000    38   75   1  2093000   0   0
+		                    572000    47   75   1  2093000   0   0
+		                    546000    37   75   1  2093000   0   0
+		                    455000    38   75   1  2093000   0   0
+		                    385000    41   75   1  2093000   0   0
+		                    338000    33   75   1  1352000   0   0
+		                    260000    33   75   1  1014000   0   0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
 		gpu_pmu_status_local_pwr_mask = <0xF>; /*0xF << 0*/
 		gpu_max_clock = <546000>;
-		gpu_max_clock_limit = <572000>;
+		gpu_max_clock_limit = <839000>;
 		gpu_min_clock = <260000>;
 		gpu_dvfs_start_clock = <260000>;
 		gpu_dvfs_bl_config_clock = <260000>;
@@ -796,7 +796,7 @@
 		gpu_temp_throttling_level_num = <6>;
 		gpu_temp_throttling = <546000 455000 385000 338000 260000 260000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <10>; /*1 tick : 10ms if HZ=100*/
+		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
@@ -817,7 +817,7 @@
 		gpu_vk_boost_max_lock = <0>;
 		gpu_vk_boost_mif_min_lock = <0>;
 		gpu_bts_support = <1>;
-		gpu_asv_cali_lock_val = <572000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
+		gpu_asv_cali_lock_val = <839000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
 		gpu_set_pmu_duration_val = <0xfffff363>; /* only for KC for now*/
 	};
@@ -852,7 +852,7 @@
 			"UFS_EMBD";
 
 		/* PM QoS for INT power domain */
-		ufs-pm-qos-int = <400000>;
+		ufs-pm-qos-int = <667000>;
 
 		/* DMA coherent callback, should be coupled with 'ufs-sys' */
 		dma-coherent;
@@ -2473,11 +2473,11 @@
 		use_delay_time = "false";
 		delay_time_list = "20";
 
-		freq_info = <1794000 421000 421000 421000 1794000 1794000>;
+		freq_info = <2093000 421000 421000 421000 2093000 2093000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
-		boot_info = <40 1794000>;
+		boot_info = <40 2093000>;
 		/* boot_qos_timeout, boot_freq */
 
 		use_get_dev = "false";
@@ -2536,7 +2536,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <690000 640000 690000 640000 690000 690000>;
+		freq_info = <690000 640000 640000 640000 690000 640000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -2566,11 +2566,11 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <630000 134000 630000 134000 630000 630000>;
+		freq_info = <630000 134000 134000 134000 630000 134000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
-		boot_info = <40 630000>;
+		boot_info = <40 134000>;
 		/* boot_qos_timeout, boot_freq */
 
 		/* default dev profile */
@@ -2596,7 +2596,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <690000 630000 690000 630000 690000 690000>;
+		freq_info = <690000 630000 630000 630000 690000 630000>;
 		/* <initial, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -2675,11 +2675,11 @@
 		iommus = <&sysmmu_g2d_0>, <&sysmmu_g2d_1>;
 		hw_ppc = <2800>, <2400>, <3800>;
 						/* cluster1 cluster0 mif */
-		skia_qos_table = <0 0 1014000
-						0 0 1014000
-						0 0 845000
-						0 0 845000
-						0 0 676000
+		skia_qos_table = <0 0 0
+						0 0 0
+						0 0 0
+						0 0 0
+						0 0 0
 						0 0 0
 						>;
 	};
@@ -3426,7 +3426,7 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3437,7 +3437,7 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3448,7 +3448,7 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3765,7 +3765,7 @@
 				thrd_mb = <0>;
 				freq_mfc = <178000>;
 				freq_int = <178000>;
-				freq_mif = <421000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3776,7 +3776,7 @@
 				thrd_mb = <259787>;
 				freq_mfc = <267000>;
 				freq_int = <267000>;
-				freq_mif = <421000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3785,9 +3785,9 @@
 			};
 			mfc_qos_variant_2 {
 				thrd_mb = <535550>;
-				freq_mfc = <400000>;
-				freq_int = <400000>;
-				freq_mif = <845000>;
+				freq_mfc = <333000>;
+				freq_int = <333000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3798,7 +3798,7 @@
 				thrd_mb = <1153791>;
 				freq_mfc = <400000>;
 				freq_int = <400000>;
-				freq_mif = <1352000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3807,9 +3807,9 @@
 			};
 			mfc_qos_variant_4 {
 				thrd_mb = <1884284>;
-				freq_mfc = <667000>;
+				freq_mfc = <533000>;
 				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3819,8 +3819,8 @@
 			mfc_qos_variant_5 {
 				thrd_mb = <2713968>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
-				freq_mif = <1014000>;
+				freq_int = <667000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3830,8 +3830,8 @@
 			mfc_qos_variant_6 {
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_int = <667000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3841,8 +3841,8 @@
 			mfc_qos_variant_7 {
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
-				freq_mif = <1794000>;
+				freq_int = <667000>;
+				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -4622,17 +4622,17 @@
 					type = "active";
 				};
 				mngs_alert0: mngs-alert0 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <2000>; /* millicelsius */
 					type = "active";
 				};
 				mngs_alert1: mngs-alert1 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <95000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "passive";
 				};
 				mngs_hot: mngs-hot {
-					temperature = <100000>; /* millicelsius */
+					temperature = <99000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "hot";
 				};
@@ -4663,27 +4663,27 @@
 					type = "active";
 				};
 				apo_alert1: apo-alert1 {
-					temperature = <85000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
-				};
-				apo_alert2: apo-alert2 {
 					temperature = <90000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
-				apo_alert3: apo-alert3 {
+				apo_alert2: apo-alert2 {
 					temperature = <91000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
-				apo_alert4: apo-alert4 {
+				apo_alert3: apo-alert3 {
 					temperature = <92000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
-				apo_alert5: apo-alert5 {
+				apo_alert4: apo-alert4 {
 					temperature = <93000>; /* millicelsius */
+					hysteresis = <5000>; /* millicelsius */
+					type = "active";
+				};
+				apo_alert5: apo-alert5 {
+					temperature = <94000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
@@ -4693,7 +4693,7 @@
 					type = "active";
 				};
 				apo_hot: apo-hot {
-					temperature = <100000>; /* millicelsius */
+					temperature = <99000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "hot";
 				};
@@ -4763,17 +4763,17 @@
 					type = "active";
 				};
 				gpu_alert0: gpu-alert0 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <2000>; /* millicelsius */
 					type = "active";
 				};
 				gpu_alert1: gpu-alert1 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <95000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "passive";
 				};
 				gpu_hot: gpu-hot {
-					temperature = <100000>; /* millicelsius */
+					temperature = <99000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "hot";
 				};
@@ -4804,12 +4804,12 @@
 					type = "active";
 				};
 				isp_alert1: isp-alert1 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				isp_alert2: isp-alert2 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <93000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
@@ -4819,7 +4819,7 @@
 					type = "active";
 				};
 				isp_hot: isp-hot {
-					temperature = <100000>; /* millicelsius */
+					temperature = <99000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "hot";
 				};
@@ -5073,21 +5073,6 @@
 			shared-cpus = "0-3";
 
 			user-default-qos = <455000>;
-
-			min-limit {
-				ctrl-type = <PM_QOS_MIN_LIMIT>;
-				execution-mode = <AARCH64_MODE>;
-					/* big	    lit */
-				table = < 2808000 2002000 >;
-			};
-
-			max-limit {
-				ctrl-type = <PM_QOS_MAX_LIMIT>;
-				execution-mode = <AARCH64_MODE>;
-					/* big	    lit */
-				table = < 2808000 2002000 >;
-			};
-
 		};
 
 		domain@1 {
@@ -5095,21 +5080,8 @@
 			shared-cpus = "4-7";
 
 			user-default-qos = <741000>;
-
-			min-limit {
-				ctrl-type = <PM_QOS_MIN_LIMIT>;
-				execution-mode = <AARCH64_MODE>;
-					/* big	    lit */
-				table = < 2808000 2002000 >;
-			};
-
-			max-limit {
-				ctrl-type = <PM_QOS_MAX_LIMIT>;
-				execution-mode = <AARCH64_MODE>;
-					/* big	    lit */
-				table = < 2808000 2002000 >;
-			};
-
 		};
+
 	};
+
 };

@@ -899,7 +899,7 @@
 		card-detect-delay = <200>;
 		data-timeout = <200>;
 		hto-timeout = <80>;
-		qos-int-level = <400000>;
+		qos-int-level = <667000>;
 		clock-frequency = <800000000>;
 		samsung,dw-mshc-sdr-timing = <3 0 2 0>;
 		samsung,dw-mshc-ddr-timing = <3 0 2 1>;
@@ -3297,8 +3297,8 @@
 				mif {
 					qos,label="MIF";
 					qos,delay_time=<10>;
-					qos,table_size=<6>;
-					qos,table=<1794000 1540000 1352000 1014000 845000 676000>;
+					qos,table_size=<8>;
+					qos,table=<1794000 1540000 1352000 1014000 845000 676000 546000 421000>;
 				};
 			};
 	};
