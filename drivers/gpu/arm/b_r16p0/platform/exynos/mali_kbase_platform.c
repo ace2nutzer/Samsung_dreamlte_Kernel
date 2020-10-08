@@ -258,9 +258,9 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	if (!strncmp("interactive", of_string, strlen("interactive"))) {
 		platform->governor_type = G3D_DVFS_GOVERNOR_INTERACTIVE;
 		gpu_update_config_data_int_array(np, "interactive_info", of_data_int_array, 3);
-		platform->interactive.highspeed_clock = of_data_int_array[0] == 0 ? 500 : (u32) of_data_int_array[0];
-		platform->interactive.highspeed_load  = of_data_int_array[1] == 0 ? 100 : (u32) of_data_int_array[1];
-		platform->interactive.highspeed_delay = of_data_int_array[2] == 0 ? 0 : (u32) of_data_int_array[2];
+		platform->interactive.highspeed_clock = of_data_int_array[0];
+		platform->interactive.highspeed_load  = of_data_int_array[1];
+		platform->interactive.highspeed_delay = of_data_int_array[2];
 	} else if (!strncmp("static", of_string, strlen("static"))) {
 		platform->governor_type = G3D_DVFS_GOVERNOR_STATIC;
 	} else if (!strncmp("booster", of_string, strlen("booster"))) {

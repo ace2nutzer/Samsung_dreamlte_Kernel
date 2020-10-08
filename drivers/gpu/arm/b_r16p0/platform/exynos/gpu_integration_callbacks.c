@@ -107,7 +107,7 @@ void gpu_destroy_context(void *ctx)
 #if MALI_SEC_PROBE_TEST != 1
 	struct kbase_context *kctx;
 	struct kbase_device *kbdev;
-#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP) || defined(CONFIG_MALI_VK_BOOST)
+#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP) || defined(CONFIG_MALI_VK_BOOST) || defined(CONFIG_MALI_SEC_CL_BOOST)
 	struct exynos_context *platform;
 #endif
 
@@ -160,6 +160,7 @@ void gpu_destroy_context(void *ctx)
 	mutex_unlock(&platform->gpu_vk_boost_lock);
 #endif
 #ifdef CONFIG_MALI_SEC_CL_BOOST
+	platform = (struct exynos_context *) kbdev->platform_context;
 	platform->cl_boost_disable = false;
 #endif
 #endif /* MALI_SEC_PROBE_TEST */

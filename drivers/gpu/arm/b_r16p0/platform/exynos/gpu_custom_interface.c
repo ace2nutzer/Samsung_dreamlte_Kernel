@@ -38,6 +38,8 @@
 
 extern struct kbase_device *pkbdev;
 
+static unsigned int cool_freq;
+
 int gpu_pmqos_dvfs_min_lock(int level)
 {
 #ifdef CONFIG_MALI_DVFS
@@ -550,6 +552,10 @@ static ssize_t set_max_lock_dvfs(struct device *dev, struct device_attribute *at
 			return -ENOENT;
 		}
 
+		/* HACK: force user cool_freq */
+		if (cool_freq)
+			clock = cool_freq;
+
 		platform->user_max_lock_input = clock;
 
 		clock = gpu_dvfs_get_level_clock(clock);
@@ -731,6 +737,7 @@ static ssize_t set_down_staycount(struct device *dev, struct device_attribute *a
 	return count;
 }
 
+#if 0
 static ssize_t show_highspeed_clock(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
@@ -789,6 +796,7 @@ static ssize_t set_highspeed_clock(struct device *dev, struct device_attribute *
 
 	return count;
 }
+#endif
 
 static ssize_t show_highspeed_load(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -845,6 +853,7 @@ static ssize_t set_highspeed_load(struct device *dev, struct device_attribute *a
 	return count;
 }
 
+#if 0
 static ssize_t show_highspeed_delay(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
@@ -899,6 +908,7 @@ static ssize_t set_highspeed_delay(struct device *dev, struct device_attribute *
 
 	return count;
 }
+#endif
 
 static ssize_t show_wakeup_lock(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -1385,9 +1395,9 @@ DEVICE_ATTR(dvfs_min_lock_status, S_IRUGO, show_min_lock_status, NULL);
 DEVICE_ATTR(dvfs_max_lock, S_IRUGO|S_IWUSR, show_max_lock_dvfs, set_max_lock_dvfs);
 DEVICE_ATTR(dvfs_min_lock, S_IRUGO|S_IWUSR, show_min_lock_dvfs, set_min_lock_dvfs);
 DEVICE_ATTR(down_staycount, S_IRUGO|S_IWUSR, show_down_staycount, set_down_staycount);
-DEVICE_ATTR(highspeed_clock, S_IRUGO|S_IWUSR, show_highspeed_clock, set_highspeed_clock);
+//DEVICE_ATTR(highspeed_clock, S_IRUGO|S_IWUSR, show_highspeed_clock, set_highspeed_clock);
 DEVICE_ATTR(highspeed_load, S_IRUGO|S_IWUSR, show_highspeed_load, set_highspeed_load);
-DEVICE_ATTR(highspeed_delay, S_IRUGO|S_IWUSR, show_highspeed_delay, set_highspeed_delay);
+//DEVICE_ATTR(highspeed_delay, S_IRUGO|S_IWUSR, show_highspeed_delay, set_highspeed_delay);
 DEVICE_ATTR(wakeup_lock, S_IRUGO|S_IWUSR, show_wakeup_lock, set_wakeup_lock);
 DEVICE_ATTR(polling_speed, S_IRUGO|S_IWUSR, show_polling_speed, set_polling_speed);
 DEVICE_ATTR(tmu, S_IRUGO|S_IWUSR, show_tmu, set_tmu_control);
@@ -1988,6 +1998,31 @@ static ssize_t show_kernel_sysfs_gpu_temp(struct kobject *kobj, struct kobj_attr
 	return ret;
 }
 
+static ssize_t show_kernel_sysfs_cool_freq(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u", cool_freq);
+}
+
+static ssize_t set_kernel_sysfs_cool_freq(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	unsigned int clock = 0;
+
+	if (sscanf(buf, "%u", &clock)) {
+
+		if (clock == 260000 || clock == 338000 || clock == 385000 || clock == 455000 || clock == 546000
+				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000 || clock == 0) {
+
+			cool_freq = clock;
+		} else {
+			pr_warning("[GPU:] Invaild input\n");
+			return -EINVAL;
+		}
+
+	}
+
+	return count;
+}
+
 static struct kobj_attribute gpu_temp_attribute =
 	__ATTR(gpu_tmu, S_IRUGO, show_kernel_sysfs_gpu_temp, NULL);
 #endif
@@ -2010,6 +2045,9 @@ static struct kobj_attribute user_max_clock_attribute =
 
 static struct kobj_attribute user_min_clock_attribute =
 	__ATTR(user_min_clock, S_IRUGO|S_IWUSR, show_kernel_sysfs_user_min_clock, set_kernel_sysfs_user_min_clock);
+
+static struct kobj_attribute cool_freq_attribute =
+	__ATTR(cool_freq, S_IRUGO|S_IWUSR, show_kernel_sysfs_cool_freq, set_kernel_sysfs_cool_freq);
 #endif /* #ifdef CONFIG_MALI_DVFS */
 
 static struct kobj_attribute gpu_busy_attribute =
@@ -2050,6 +2088,7 @@ static struct attribute *attrs[] = {
 	&gpu_min_lock_attribute.attr,
 	&user_max_clock_attribute.attr,
 	&user_min_clock_attribute.attr,
+	&cool_freq_attribute.attr,
 #endif /* #ifdef CONFIG_MALI_DVFS */
 	&gpu_busy_attribute.attr,
 	&gpu_clock_attribute.attr,
@@ -2150,22 +2189,22 @@ int gpu_create_sysfs_file(struct device *dev)
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "couldn't create sysfs file [down_staycount]\n");
 		goto out;
 	}
-
+/*
 	if (device_create_file(dev, &dev_attr_highspeed_clock)) {
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "couldn't create sysfs file [highspeed_clock]\n");
 		goto out;
 	}
-
+*/
 	if (device_create_file(dev, &dev_attr_highspeed_load)) {
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "couldn't create sysfs file [highspeed_load]\n");
 		goto out;
 	}
-
+/*
 	if (device_create_file(dev, &dev_attr_highspeed_delay)) {
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "couldn't create sysfs file [highspeed_delay]\n");
 		goto out;
 	}
-
+*/
 	if (device_create_file(dev, &dev_attr_wakeup_lock)) {
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "couldn't create sysfs file [wakeup_lock]\n");
 		goto out;
@@ -2278,9 +2317,9 @@ void gpu_remove_sysfs_file(struct device *dev)
 	device_remove_file(dev, &dev_attr_dvfs_max_lock);
 	device_remove_file(dev, &dev_attr_dvfs_min_lock);
 	device_remove_file(dev, &dev_attr_down_staycount);
-	device_remove_file(dev, &dev_attr_highspeed_clock);
+	//device_remove_file(dev, &dev_attr_highspeed_clock);
 	device_remove_file(dev, &dev_attr_highspeed_load);
-	device_remove_file(dev, &dev_attr_highspeed_delay);
+	//device_remove_file(dev, &dev_attr_highspeed_delay);
 	device_remove_file(dev, &dev_attr_wakeup_lock);
 	device_remove_file(dev, &dev_attr_polling_speed);
 	device_remove_file(dev, &dev_attr_tmu);
