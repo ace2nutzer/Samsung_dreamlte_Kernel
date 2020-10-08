@@ -482,7 +482,7 @@
 			user-default-qos = <455000>;
 
 			/* auto calibration value */
-			auto-cal-freq = <1053000>;
+			auto-cal-freq = <1690000>;
 			auto-cal-duration = <400>;	/* ms */
 
 			dm-constraints {
@@ -530,7 +530,7 @@
 			user-default-qos = <741000>;
 
 			/* auto calibration value */
-			auto-cal-freq = <1703000>;
+			auto-cal-freq = <2314000>;
 			auto-cal-duration = <400>;	/* ms */
 
 			dm-constraints {
