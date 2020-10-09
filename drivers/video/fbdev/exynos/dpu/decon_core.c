@@ -31,9 +31,6 @@
 #include <linux/debugfs.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/reboot.h>
-#ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-#include <linux/cpufreq.h>
-#endif
 #include <video/mipi_display.h>
 #include <media/v4l2-subdev.h>
 #include <soc/samsung/cal-if.h>
@@ -49,7 +46,11 @@
 #include "dpp.h"
 #include "displayport.h"
 
-int decon_log_level = 6;
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+extern void set_suspend_freqs(bool);
+#endif
+
+int decon_log_level = 4;
 module_param(decon_log_level, int, 0644);
 unsigned long afbc_buf_data[DPU_FRM_CNT][2][BUF_DUMP_SIZE];
 struct decon_device *decon_drvdata[MAX_DECON_CNT];
@@ -624,44 +625,12 @@ int cmu_dpu_dump(void)
 	return 0;
 }
 
-#ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-/* suspend min/max cpu freq tunable */
-extern unsigned int cpu0_suspend_min_freq;
-extern unsigned int cpu0_suspend_max_freq;
-
-extern unsigned int cpu4_suspend_min_freq;
-extern unsigned int cpu4_suspend_max_freq;
-
-static unsigned int cpu0_tmp_min_freq = 0;
-static unsigned int cpu0_tmp_max_freq = 0;
-
-static unsigned int cpu4_tmp_min_freq = 0;
-static unsigned int cpu4_tmp_max_freq = 0;
-
-static unsigned int cpu0_set_suspend_min_freq = 0;
-static unsigned int cpu0_set_suspend_max_freq = 0;
-
-static unsigned int cpu4_set_suspend_min_freq = 0;
-static unsigned int cpu4_set_suspend_max_freq = 0;
-
-extern bool enable_suspend_freqs;
-
-static bool update_freqs = false;
-#endif
 /* ---------- FB_BLANK INTERFACE ----------- */
 static int decon_enable(struct decon_device *decon)
 {
 	int ret = 0;
 	struct decon_param p;
 	struct decon_mode_info psr;
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-	if (update_freqs) {
-		/* restore previous min/max cpu freq */
-		cpufreq_update_freq(0, cpu0_tmp_min_freq, cpu0_tmp_max_freq);
-		cpufreq_update_freq(4, cpu4_tmp_min_freq, cpu4_tmp_max_freq);
-	}
-#endif
 
 	decon_info("+ %s : %d\n", __func__, decon->id);
 
@@ -783,10 +752,6 @@ err:
 static int decon_disable(struct decon_device *decon)
 {
 	struct decon_mode_info psr;
-#ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-	struct cpufreq_policy *policy0 = cpufreq_cpu_get(0);
-	struct cpufreq_policy *policy4 = cpufreq_cpu_get(4);
-#endif
 	int ret = 0;
 
 	decon_info("+ %s : %d\n", __func__, decon->id);
@@ -893,47 +858,6 @@ static int decon_disable(struct decon_device *decon)
 #endif
 
 	decon->state = DECON_STATE_OFF;
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND_LIMIT
-	if (enable_suspend_freqs) {
-		/* save current min/max cpu0 freq */
-		cpu0_tmp_min_freq = policy0->min;
-		cpu0_tmp_max_freq = policy0->max;
-
-		if (!cpu0_suspend_min_freq)
-			cpu0_set_suspend_min_freq = cpu0_tmp_min_freq;
-		else
-			cpu0_set_suspend_min_freq = cpu0_suspend_min_freq;
-
-		if (!cpu0_suspend_max_freq)
-			cpu0_set_suspend_max_freq = cpu0_tmp_max_freq;
-		else
-			cpu0_set_suspend_max_freq = cpu0_suspend_max_freq;
-
-		/* set min/max cpu0 freq for suspend */
-		cpufreq_update_freq(0, cpu0_set_suspend_min_freq, cpu0_set_suspend_max_freq);
-
-		/* save current min/max cpu4 freq */
-		cpu4_tmp_min_freq = policy4->min;
-		cpu4_tmp_max_freq = policy4->max;
-
-		if (!cpu4_suspend_min_freq)
-			cpu4_set_suspend_min_freq = cpu4_tmp_min_freq;
-		else
-			cpu4_set_suspend_min_freq = cpu4_suspend_min_freq;
-
-		if (!cpu4_suspend_max_freq)
-			cpu4_set_suspend_max_freq = cpu4_tmp_max_freq;
-		else
-			cpu4_set_suspend_max_freq = cpu4_suspend_max_freq;
-
-		/* set min/max cpu4 freq for suspend */
-		cpufreq_update_freq(4, cpu4_set_suspend_min_freq, cpu4_set_suspend_max_freq);
-
-		update_freqs = true;
-	}
-#endif
-
 err:
 	mutex_unlock(&decon->lock);
 
@@ -1038,6 +962,14 @@ static int decon_blank(int blank_mode, struct fb_info *info)
 blank_exit:
 	decon_hiber_unblock(decon);
 	decon_info("%s -\n", __func__);
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+	if (blank_mode == FB_BLANK_UNBLANK)
+		set_suspend_freqs(false);
+	else
+		set_suspend_freqs(true);
+#endif
+
 	return ret;
 }
 
