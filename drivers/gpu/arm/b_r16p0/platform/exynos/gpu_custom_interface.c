@@ -38,7 +38,7 @@
 
 extern struct kbase_device *pkbdev;
 
-static unsigned int cool_freq;
+static unsigned int cool_freq = 0;
 
 int gpu_pmqos_dvfs_min_lock(int level)
 {
@@ -561,15 +561,17 @@ static ssize_t set_max_lock_dvfs(struct device *dev, struct device_attribute *at
 		clock = gpu_dvfs_get_level_clock(clock);
 
 		ret = gpu_dvfs_get_level(clock);
-		if ((ret < gpu_dvfs_get_level(platform->gpu_max_clock)) || (ret > gpu_dvfs_get_level(platform->gpu_min_clock))) {
+		if ((ret > gpu_dvfs_get_level(platform->gpu_max_clock_limit)) || (ret < gpu_dvfs_get_level(platform->gpu_min_clock))) {
 			GPU_LOG(DVFS_WARNING, DUMMY, 0u, 0u, "%s: invalid clock value (%d)\n", __func__, clock);
 			return -ENOENT;
 		}
 
-		if (clock == platform->gpu_max_clock)
+		if (clock >= platform->gpu_max_clock) {
+			platform->user_max_lock_input = 0;
 			gpu_dvfs_clock_lock(GPU_DVFS_MAX_UNLOCK, SYSFS_LOCK, 0);
-		else
+		} else {
 			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, clock);
+		}
 	}
 
 	return count;
@@ -2000,7 +2002,7 @@ static ssize_t show_kernel_sysfs_gpu_temp(struct kobject *kobj, struct kobj_attr
 
 static ssize_t show_kernel_sysfs_cool_freq(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%u", cool_freq);
+	return sprintf(buf, "%u\n", cool_freq);
 }
 
 static ssize_t set_kernel_sysfs_cool_freq(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
