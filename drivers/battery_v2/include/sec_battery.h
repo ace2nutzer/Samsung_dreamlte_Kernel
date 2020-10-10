@@ -418,9 +418,7 @@ struct sec_battery_info {
 	struct delayed_work timetofull_work;
 #endif
 	struct delayed_work slowcharging_work;
-#if defined(CONFIG_BATTERY_AGE_FORECAST)
 	int batt_cycle;
-#endif
 	int batt_asoc;
 #if defined(CONFIG_STEP_CHARGING)
 	unsigned int step_charging_type;
