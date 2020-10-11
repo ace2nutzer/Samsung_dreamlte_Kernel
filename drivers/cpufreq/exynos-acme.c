@@ -444,7 +444,7 @@ static struct cpufreq_driver exynos_driver = {
 };
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-/* suspend min/max cpu freq tunable */
+/* suspend min/max cpufreq tunable */
 static bool enable_suspend_freqs = false;
 module_param(enable_suspend_freqs, bool, 0644);
 
@@ -458,64 +458,39 @@ static unsigned int cpu4_suspend_max_freq = 0;
 module_param(cpu4_suspend_min_freq, uint, 0644);
 module_param(cpu4_suspend_max_freq, uint, 0644);
 
-void set_suspend_freqs(bool suspend)
+static unsigned int cpu0_min_freq = 0;
+static unsigned int cpu0_max_freq = 0;
+module_param(cpu0_min_freq, uint, 0644);
+module_param(cpu0_max_freq, uint, 0644);
+
+static unsigned int cpu4_min_freq = 0;
+static unsigned int cpu4_max_freq = 0;
+module_param(cpu4_min_freq, uint, 0644);
+module_param(cpu4_max_freq, uint, 0644);
+
+static bool update_freqs = false;
+
+void set_suspend_cpufreq(bool suspend)
 {
-	struct cpufreq_policy *policy0 = cpufreq_cpu_get(0);
-	struct cpufreq_policy *policy4 = cpufreq_cpu_get(4);
-
-	unsigned int cpu0_tmp_min_freq, cpu0_tmp_max_freq;
-	unsigned int cpu4_tmp_min_freq, cpu4_tmp_max_freq;
-	unsigned int cpu0_set_suspend_min_freq, cpu0_set_suspend_max_freq;
-	unsigned int cpu4_set_suspend_min_freq, cpu4_set_suspend_max_freq;
-	bool update_freqs;
-
 	if (!enable_suspend_freqs)
 		return;
 
 	if (suspend) {
-		/* save current min/max cpu0 freq */
-		cpu0_tmp_min_freq = policy0->min;
-		cpu0_tmp_max_freq = policy0->max;
-
-		/* save current min/max cpu4 freq */
-		cpu4_tmp_min_freq = policy4->min;
-		cpu4_tmp_max_freq = policy4->max;
-
-		if (!cpu0_suspend_min_freq && !cpu0_suspend_max_freq)
+		if (!cpu0_suspend_min_freq || !cpu0_suspend_max_freq)
 			goto cpu4;
 
-		if (!cpu0_suspend_min_freq)
-			cpu0_set_suspend_min_freq = cpu0_tmp_min_freq;
-		else
-			cpu0_set_suspend_min_freq = cpu0_suspend_min_freq;
-
-		if (!cpu0_suspend_max_freq)
-			cpu0_set_suspend_max_freq = cpu0_tmp_max_freq;
-		else
-			cpu0_set_suspend_max_freq = cpu0_suspend_max_freq;
-
 		/* set min/max cpu0 freq for suspend */
-		cpufreq_update_freq(0, cpu0_set_suspend_min_freq, cpu0_set_suspend_max_freq);
+		cpufreq_update_freq(0, cpu0_suspend_min_freq, cpu0_suspend_max_freq);
 
 cpu4:
-		if (!cpu4_suspend_min_freq && !cpu4_suspend_max_freq)
+		if (!cpu4_suspend_min_freq || !cpu4_suspend_max_freq)
 			goto out;
 
-		if (!cpu4_suspend_min_freq)
-			cpu4_set_suspend_min_freq = cpu4_tmp_min_freq;
-		else
-			cpu4_set_suspend_min_freq = cpu4_suspend_min_freq;
-
-		if (!cpu4_suspend_max_freq)
-			cpu4_set_suspend_max_freq = cpu4_tmp_max_freq;
-		else
-			cpu4_set_suspend_max_freq = cpu4_suspend_max_freq;
-
 		/* set min/max cpu4 freq for suspend */
-		cpufreq_update_freq(4, cpu4_set_suspend_min_freq, cpu4_set_suspend_max_freq);
+		cpufreq_update_freq(4, cpu4_suspend_min_freq, cpu4_suspend_max_freq);
 
 out:
-		if (!cpu0_suspend_min_freq && !cpu0_suspend_max_freq && !cpu4_suspend_min_freq && !cpu4_suspend_max_freq)
+		if ((!cpu0_suspend_min_freq || !cpu0_suspend_max_freq) && (!cpu4_suspend_min_freq || !cpu4_suspend_max_freq))
 			update_freqs = false;
 		else
 			update_freqs = true;
@@ -523,9 +498,9 @@ out:
 	} else {
 		/* resume */
 		if (update_freqs) {
-			/* restore previous min/max cpu freq */
-			cpufreq_update_freq(0, cpu0_tmp_min_freq, cpu0_tmp_max_freq);
-			cpufreq_update_freq(4, cpu4_tmp_min_freq, cpu4_tmp_max_freq);
+			/* restore previous min/max cpufreq */
+			cpufreq_update_freq(0, cpu0_min_freq, cpu0_max_freq);
+			cpufreq_update_freq(4, cpu4_min_freq, cpu4_max_freq);
 			update_freqs = false;
 		}
 	}

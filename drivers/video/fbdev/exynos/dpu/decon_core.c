@@ -47,7 +47,7 @@
 #include "displayport.h"
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-extern void set_suspend_freqs(bool);
+extern void set_suspend_cpufreq(bool);
 #endif
 
 bool is_suspend = false;
@@ -968,12 +968,12 @@ blank_exit:
 	if (blank_mode == FB_BLANK_UNBLANK) {
 		is_suspend = false;
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-		set_suspend_freqs(false);
+		set_suspend_cpufreq(false);
 #endif
 	} else {
 		is_suspend = true;
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-		set_suspend_freqs(true);
+		set_suspend_cpufreq(true);
 #endif
 	}
 
