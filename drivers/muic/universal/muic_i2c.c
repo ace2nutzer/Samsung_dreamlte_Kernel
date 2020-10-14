@@ -63,7 +63,7 @@ int muic_i2c_read_byte(const struct i2c_client *client, u8 command)
 		ret = i2c_smbus_read_byte_data(client, command);
 		retry ++;
 	}
-#ifdef DEBUG_MUIC
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_reg_log(command, ret, retry << 1| READ);
 #endif
 	return ret;
@@ -90,7 +90,7 @@ int muic_i2c_write_byte(const struct i2c_client *client,
 		ret = i2c_smbus_write_byte_data(client, command, value);
 		retry ++;
 	}
-#ifdef DEBUG_MUIC
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_reg_log(command, value, retry << 1| WRITE);
 #endif
 	return ret;

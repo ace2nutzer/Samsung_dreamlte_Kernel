@@ -126,12 +126,13 @@ bool sec_bat_cisd_check(struct sec_battery_info *battery)
 			battery->cisd.data[CISD_DATA_USB_OVERHEAT_CHARGING_PER_DAY]++;
 			battery->usb_overheat_check = true;
 		}
-
+/*
 		dev_info(battery->dev, "%s: [CISD] iavg: %d, incur: %d, chgcur: %d,\n"
 			"cc_T: %ld, lcd_off_T: %ld, passed_T: %ld, full_T: %ld, chg_end_T: %ld, cisd: 0x%x\n", __func__,
 			battery->current_avg, incur_val.intval, chgcur_val.intval,
 			pcisd->cc_start_time, pcisd->lcd_off_start_time, battery->charging_passed_time,
 			battery->charging_fullcharged_time, pcisd->charging_end_time, pcisd->state);
+*/
 	} else  {
 		/* discharging */
 		if (battery->status == POWER_SUPPLY_STATUS_NOT_CHARGING) {

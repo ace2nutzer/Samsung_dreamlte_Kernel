@@ -2240,11 +2240,11 @@ int muic_afc_set_voltage(int vol)
 
 void max77865_hv_muic_charger_init(void)
 {
-	pr_info("%s:%s\n", MUIC_HV_DEV_NAME, __func__);
+	//pr_info("%s:%s\n", MUIC_HV_DEV_NAME, __func__);
 
 	if(afc_init_data.phv) {
 		if (afc_init_data.phv->is_charger_ready) {
-			pr_info("%s:%s charger is already ready.\n", MUIC_HV_DEV_NAME, __func__);
+			//pr_info("%s:%s charger is already ready.\n", MUIC_HV_DEV_NAME, __func__);
 			return;
 		}
 		afc_init_data.phv->is_charger_ready = true;

@@ -35,6 +35,13 @@ config MUIC_UNIVERSAL
 	help
 	  If you say yes here you will get support for various MUIC chips.
 
+config MUIC_UNIVERSAL_DEBUG
+	bool "UNIVERSAL MUIC DEBUG"
+	depends on MUIC_UNIVERSAL
+	default n
+	help
+	  If you say yes here you will get debug info for various MUIC chips.
+
 config MUIC_UNIVERSAL_MAX77854
 	bool "MAX77854 MUIC"
 	depends on MUIC_UNIVERSAL

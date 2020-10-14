@@ -146,13 +146,16 @@ static int muic_irq_handler(muic_data_t *pmuic, int irq)
 		if (ctrl == 0x1F)
 		{
 			/* CONTROL register is reset to 1F */
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 			muic_print_reg_log();
 			muic_print_reg_dump(pmuic);
+#endif
 			pr_err("%s: err muic could have been reseted. Initilize!!\n",
 				__func__);
 			muic_reg_init(pmuic);
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 			muic_print_reg_dump(pmuic);
-
+#endif
 			/* MUIC Interrupt On */
 			set_int_mask(pmuic, false);
 		}
@@ -575,7 +578,7 @@ static int muic_probe(struct platform_device *pdev)
 		max77854_hv_muic_init_detect(pmuic->phv);
 #endif
 
-#ifdef DEBUG_MUIC
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	INIT_DELAYED_WORK(&pmuic->usb_work, muic_show_debug_info);
 	schedule_delayed_work(&pmuic->usb_work, msecs_to_jiffies(10000));
 #endif
@@ -623,7 +626,9 @@ static int muic_remove(struct platform_device *pdev)
 		max77854_hv_muic_remove(pmuic->phv);
 #endif
 		cancel_delayed_work(&pmuic->init_work);
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 		cancel_delayed_work(&pmuic->usb_work);
+#endif
 		disable_irq_wake(pmuic->i2c->irq);
 		free_irq(pmuic->i2c->irq, pmuic);
 
@@ -671,11 +676,12 @@ static void muic_shutdown(struct device *dev)
 	max77854_hv_muic_remove(pmuic->phv);
 #endif
 
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	if (cancel_delayed_work(&pmuic->usb_work))
 		pr_info("%s: usb_work canceled.\n", __func__);
 	else
 		pr_info("%s: usb_work is not pending.\n", __func__);
-
+#endif
 
 	if (cancel_delayed_work(&pmuic->init_work))
 		pr_info("%s: init_work canceled.\n", __func__);
@@ -702,18 +708,22 @@ static void muic_shutdown(struct device *dev)
 #if defined(CONFIG_PM)
 static int muic_suspend(struct device *dev)
 {
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_data_t *pmuic = dev_get_drvdata(dev);
 
 	cancel_delayed_work(&pmuic->usb_work);
+#endif
 
 	return 0;
 }
 
 static int muic_resume(struct device *dev)
 {
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_data_t *pmuic = dev_get_drvdata(dev);
 
 	schedule_delayed_work(&pmuic->usb_work, msecs_to_jiffies(1000));
+#endif
 
 	return 0;
 }

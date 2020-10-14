@@ -2594,7 +2594,9 @@ int security_fs_use(struct super_block *sb)
 	int rc = 0;
 	struct ocontext *c;
 // [ SEC_SELINUX_PORTING_COMMON
+#ifdef SEC_SELINUX_DEBUG
 	u32 tmpsid;
+#endif
 // ] SEC_SELINUX_PORTING_COMMON
 
 	struct superblock_security_struct *sbsec = sb->s_security;
@@ -2613,9 +2615,11 @@ int security_fs_use(struct super_block *sb)
 		sbsec->behavior = c->v.behavior;
 		if (!c->sid[0]) {
 // [ SEC_SELINUX_PORTING_COMMON
+#ifdef SEC_SELINUX_DEBUG
 			rc = sidtab_context_to_sid(&sidtab, &c->context[0],
 						   &tmpsid);
 			c->sid[0] = tmpsid;
+#endif
 // ] SEC_SELINUX_PORTING_COMMON
 			if (rc)
 				goto out;
@@ -2623,9 +2627,11 @@ int security_fs_use(struct super_block *sb)
 		sbsec->sid = c->sid[0];
 	} else {
 // [ SEC_SELINUX_PORTING_COMMON
+#ifdef SEC_SELINUX_DEBUG
 		rc = __security_genfs_sid(fstype, "/", SECCLASS_DIR,
 					  &tmpsid);
 		sbsec->sid = tmpsid;
+#endif
 // ] SEC_SELINUX_PORTING_COMMON
 		if (rc) {
 			sbsec->behavior = SECURITY_FS_USE_NONE;

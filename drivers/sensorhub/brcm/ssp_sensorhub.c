@@ -23,6 +23,9 @@ void ssp_sensorhub_log(const char *func_name,
 	int log_size;
 	int i;
 
+	/* disable */
+	return;
+
 	if (likely(length <= BIG_DATA_SIZE))
 		log_size = length;
 	else

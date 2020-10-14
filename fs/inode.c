@@ -1479,7 +1479,7 @@ static void iput_final(struct inode *inode)
 		drop = generic_drop_inode(inode);
 
 #if defined(CONFIG_FMP_ECRYPT_FS)
-	if (!drop && (sb->s_flags & MS_ACTIVE) && !inode->i_mapping->private_enc_mode) {
+	if (!drop && (sb->s_flags & MS_ACTIVE) && !inode->i_mapping->use_fmp) {
 #else
 	if (!drop && (sb->s_flags & MS_ACTIVE)) {
 #endif

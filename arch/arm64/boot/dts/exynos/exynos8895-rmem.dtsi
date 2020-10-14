@@ -16,7 +16,7 @@
 		#address-cells = <2>;
 		#size-cells = <1>;
 		ranges;
-
+/*
 		dram_test {
 			compatible = "exynos8895,dram_test";
 			reg = <0x0 0x80002000 0x2000>;
@@ -31,7 +31,7 @@
 			compatible = "exynos8895,seclog";
 			reg = <0x0 0xC0000000 0x10000>;
 		};
-
+*/
 		camera {
 			compatible = "exynos8890-ion,camera";
 			ion,recyclable;
@@ -45,12 +45,12 @@
 			reg = <0x0 0xD0000000 0x1400000>;
 			id = <11>;
 		};
-
+/*
 		abox_rmem: abox_rmem@0xEA800000 {
 			compatible = "exynos,abox_rmem";
 			reg = <0x0 0xEA800000 0x400000>;
 		};
-
+*/
 		video_stream {
 			compatible = "exynos8890-ion,vstream";
 			ion,secure;
@@ -61,7 +61,7 @@
 		};
 
 		tui {
-			/* ALIGN(ALIGN(1440*2990*4, 256KB) * 3, 4MB) */
+			// ALIGN(ALIGN(1440*2990*4, 256KB) * 3, 4MB)
 			compatible = "exynos8890-ion,tui";
 			ion,reusable;
 			reg = <0x0 0xE7400000 0x3400000>;
@@ -79,7 +79,7 @@
 			compatible = "exynos,modem_if";
 			reg = <0x0 0xF4C00000 0x9000000>;
 		};
-
+/*
 		cp_ram_logging {
 			compatible = "exynos,cp_ram_logging";
 			reg = <0x0 0xFDC00000 0x2000000>;
@@ -89,5 +89,6 @@
 			compatible = "exynos,gnss_if";
 			reg = <0x0 0xFFC00000 0x400000>;
 		};
+*/
 	};
 };

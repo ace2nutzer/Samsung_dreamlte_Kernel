@@ -23,6 +23,13 @@ config TRUSTONIC_TEE_DEBUG
     ---help---
       Enable the debug mode in the Trustonic TEE Driver.
 
+config TRUSTONIC_TEE_LOG
+    bool "Trustonic TEE driver logging"
+    depends on TRUSTONIC_TEE
+    default n
+    ---help---
+      Enables logging in the Trustonic TEE Driver.
+
 config TRUSTONIC_TRUSTED_UI
     tristate "Trustonic Trusted UI"
     depends on TRUSTONIC_TEE

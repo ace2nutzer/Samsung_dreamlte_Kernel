@@ -749,7 +749,7 @@ static void sec_ts_check_rawdata(struct work_struct *work)
 
 static void dump_tsp_log(void)
 {
-	pr_info("%s: %s %s: start\n", SEC_TS_I2C_NAME, SECLOG, __func__);
+	//pr_info("%s: %s %s: start\n", SEC_TS_I2C_NAME, SECLOG, __func__);
 
 #ifdef CONFIG_BATTERY_SAMSUNG
 	if (lpcharge == 1) {

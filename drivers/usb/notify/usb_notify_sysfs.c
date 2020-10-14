@@ -334,7 +334,7 @@ static ssize_t usb_hw_param_show(struct device *dev,
 		ret += sprintf(buf + ret, "%llu\n", *p_param);
 	else
 		ret += sprintf(buf + ret, "0\n");
-	pr_info("%s - ret : %d\n", __func__, ret);
+	//pr_info("%s - ret : %d\n", __func__, ret);
 
 	return ret;
 }

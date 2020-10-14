@@ -19,8 +19,10 @@
 
 #include <crypto/fmp.h>
 
+#if defined(CONFIG_UFS_FMP_ECRYPT_FS) || defined(CONFIG_UFS_FMP_EXT4CRYPT_FS)
 #include <linux/pagemap.h>
 #include "fmp_derive_iv.h"
+#endif
 
 #if defined(CONFIG_FIPS_FMP)
 #include "fmpdev_info.h"

@@ -242,7 +242,6 @@ int s2mps17_update_reg(struct i2c_client *i2c, u8 reg, u8 val, u8 mask)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(s2mps17_update_reg);
-
 #endif
 
 #if defined(CONFIG_OF)

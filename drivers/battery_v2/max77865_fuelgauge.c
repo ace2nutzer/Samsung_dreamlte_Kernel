@@ -109,6 +109,7 @@ static void max77865_fg_periodic_read(struct max77865_fuelgauge_data *fuelgauge)
 				return;
 			}
 		}
+/*
 		sprintf(str+strlen(str),
 			"%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,",
 			data[0x00], data[0x01], data[0x02], data[0x03],
@@ -117,12 +118,13 @@ static void max77865_fg_periodic_read(struct max77865_fuelgauge_data *fuelgauge)
 			"%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,%04xh,",
 			data[0x08], data[0x09], data[0x0a], data[0x0b],
 			data[0x0c], data[0x0d], data[0x0e], data[0x0f]);
+*/
 		if (!fuelgauge->initial_update_of_soc) {
 			msleep(1);
 		}
 	}
 
-	pr_info("[FG] %s\n", str);
+	//pr_info("[FG] %s\n", str);
 
 	max77865_fg_adaptation_wa(fuelgauge);
 
@@ -154,8 +156,10 @@ static int max77865_fg_read_vcell(struct max77865_fuelgauge_data *fuelgauge)
 
 	if (!(fuelgauge->info.pr_cnt++ % PRINT_COUNT)) {
 		fuelgauge->info.pr_cnt = 1;
+/*
 		pr_info("%s: VCELL(%d), data(0x%04x)\n",
 			__func__, vcell, (data[1]<<8) | data[0]);
+*/
 	}
 
 	if ((fuelgauge->vempty_mode == VEMPTY_MODE_SW_VALERT) && 
@@ -163,11 +167,11 @@ static int max77865_fg_read_vcell(struct max77865_fuelgauge_data *fuelgauge)
 		fuelgauge->vempty_mode = VEMPTY_MODE_SW_RECOVERY;
 		max77865_fg_fuelalert_init(fuelgauge,
 					   fuelgauge->pdata->fuel_alert_soc);
-		pr_info("%s : Recoverd from SW V EMPTY Activation\n", __func__);
+		//pr_info("%s : Recoverd from SW V EMPTY Activation\n", __func__);
 	}
 #if defined(CONFIG_BATTERY_CISD)
 	if (vcell >= 3100 && fuelgauge->valert_count_flag) {
-		pr_info("%s : Vcell(%d) release CISD VALERT COUNT check\n", __func__, vcell);
+		//pr_info("%s : Vcell(%d) release CISD VALERT COUNT check\n", __func__, vcell);
 		fuelgauge->valert_count_flag = false;
 	}
 #endif
@@ -305,10 +309,10 @@ static int max77865_fg_write_temp(struct max77865_fuelgauge_data *fuelgauge,
 	data[0] = (temperature%10) * 1000 / 39;
 	data[1] = temperature / 10;
 	max77865_bulk_write(fuelgauge->i2c, TEMPERATURE_REG, 2, data);
-
+/*
 	pr_debug("%s: temperature to (%d, 0x%02x%02x)\n",
 		__func__, temperature, data[1], data[0]);
-
+*/
 	fuelgauge->temperature = temperature;
 	if (!fuelgauge->vempty_init_flag)
 		fuelgauge->vempty_init_flag = true;
@@ -608,7 +612,7 @@ static int max77865_fg_read_current(struct max77865_fuelgauge_data *fuelgauge, i
 	if (sign)
 		i_current *= -1;
 
-	pr_debug("%s: current=%d\n", __func__, i_current);
+	//pr_debug("%s: current=%d\n", __func__, i_current);
 
 	return i_current;
 }
@@ -656,7 +660,7 @@ static int max77865_fg_read_avg_current(struct max77865_fuelgauge_data *fuelgaug
 		cnt++;
 	}
 
-	pr_debug("%s: avg_current=%d\n", __func__, avg_current);
+	//pr_debug("%s: avg_current=%d\n", __func__, avg_current);
 
 	return avg_current;
 }
@@ -998,7 +1002,7 @@ static int max77865_get_fuelgauge_soc(struct max77865_fuelgauge_data *fuelgauge)
 
 	fuelgauge->info.soc = fg_soc;
 
-	pr_debug("%s: soc(%d)\n", __func__, fuelgauge->info.soc);
+	//pr_debug("%s: soc(%d)\n", __func__, fuelgauge->info.soc);
 
 	return fg_soc;
 }
@@ -1252,7 +1256,7 @@ static void max77865_fg_get_scaled_capacity(
 	else
 		current_standard = CAPACITY_SCALE_DEFAULT_CURRENT;
 
-	pr_info("%s : current_standard(%d)\n", __func__, current_standard);
+	//pr_info("%s : current_standard(%d)\n", __func__, current_standard);
 
 	if ((cable_val.intval != SEC_BATTERY_CABLE_NONE) &&
 #if defined(CONFIG_BATTERY_SWELLING)
@@ -1326,11 +1330,12 @@ static void max77865_fg_get_scaled_capacity(
 		max77865_write_word(fuelgauge->i2c, 0xD0, reg_data);
 	}
 #endif
-
+/*
 	pr_info("%s : CABLE TYPE(%d) INPUT CURRENT(%d) CHARGING MODE(%s)" \
 		"capacity_max (%d) scaled capacity(%d.%d), raw_soc(%d.%d)\n",
 		__func__, cable_val.intval, chg_val.intval, chg_val2.strval,
 		fuelgauge->capacity_max, val->intval/10, val->intval%10, raw_capacity/10, raw_capacity%10);
+*/
 }
 
 /* capacity is integer */
@@ -1338,10 +1343,10 @@ static void max77865_fg_get_atomic_capacity(
 	struct max77865_fuelgauge_data *fuelgauge,
 	union power_supply_propval *val)
 {
-
+/*
 	pr_debug("%s : NOW(%d), OLD(%d)\n",
 		__func__, val->intval, fuelgauge->capacity_old);
-
+*/
 	if (fuelgauge->pdata->capacity_calculation_type &
 		SEC_FUELGAUGE_CAPACITY_TYPE_ATOMIC) {
 	if (fuelgauge->capacity_old < val->intval)
@@ -1410,10 +1415,11 @@ static void max77865_fg_check_qrtable(struct max77865_fuelgauge_data *fuelgauge)
 			    fuelgauge->battery_data->QResidual30) <0)
 			pr_err("%s: Failed to write QRTABLE30\n", __func__);
 	}
-
+/*
 	pr_debug("%s: QRTABLE20_REG(0x%04x), QRTABLE30_REG(0x%04x)\n", __func__,
 		fuelgauge->battery_data->QResidual20,
 		fuelgauge->battery_data->QResidual30);
+*/
 }
 
 #if defined(CONFIG_EN_OOPS)
@@ -1471,20 +1477,20 @@ static int calc_ttf(struct max77865_fuelgauge_data *fuelgauge, union power_suppl
 		cv_time = cv_data[i].time;
 		cc_time = design_cap * (cv_data[i].soc - soc)\
 				/ val->intval * 3600 / 1000;
-		pr_debug("%s: cc_time: %d\n", __func__, cc_time);
+		//pr_debug("%s: cc_time: %d\n", __func__, cc_time);
 		if (cc_time < 0) {
 
 			cc_time = 0;
 		}
 	}
-
-        pr_debug("%s: cap: %d, soc: %4d, T: %6d, avg: %4d, cv soc: %4d, i: %4d, val: %d\n",
-         __func__, design_cap, soc, cv_time + cc_time, fuelgauge->current_avg, cv_data[i].soc, i, val->intval);
-
-        if (cv_time + cc_time >= 0)
-                return cv_time + cc_time + 60;
-        else
-                return 60; //minimum 1minutes
+/*
+	pr_debug("%s: cap: %d, soc: %4d, T: %6d, avg: %4d, cv soc: %4d, i: %4d, val: %d\n",
+		__func__, design_cap, soc, cv_time + cc_time, fuelgauge->current_avg, cv_data[i].soc, i, val->intval);
+*/
+	if (cv_time + cc_time >= 0)
+		return cv_time + cc_time + 60;
+	else
+		return 60; //minimum 1minutes
 }
 
 #if defined(CONFIG_BATTERY_SBM_DATA)
@@ -1763,7 +1769,7 @@ static int max77865_fg_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
 		val->intval = (fuelgauge->battery_data->Capacity * fuelgauge->fg_resistor / 2) * fuelgauge->raw_capacity;
-		pr_info("%s: Remaining Capacity=%d uAh\n", __func__, val->intval);
+		//pr_info("%s: Remaining Capacity=%d uAh\n", __func__, val->intval);
 		break;
 #if defined(CONFIG_BATTERY_SBM_DATA)
 	case POWER_SUPPLY_PROP_MAX ... POWER_SUPPLY_EXT_PROP_MAX:

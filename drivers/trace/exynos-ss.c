@@ -561,8 +561,8 @@ static struct exynos_ss_item ess_items[] = {
 	{"log_etm",	{SZ_8M,		0, 0, true, true, true}, NULL ,NULL, 0},
 #endif
 #else /* MINIMIZED MODE */
-	{"log_kevents",	{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
-	{"log_kernel",	{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kevents",	{SZ_8M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kernel",	{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 	{"log_platform",{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #endif
@@ -2085,6 +2085,7 @@ bool exynos_ss_dumper_one(void *v_dumper,
 		break;
 	}
 #endif
+#ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 	case ESS_FLAG_PRINTK:
 	{
 		char *log;
@@ -2138,6 +2139,7 @@ bool exynos_ss_dumper_one(void *v_dumper,
 						msg, val, callstack[0], callstack[1], callstack[2], callstack[3]);
 		break;
 	}
+#endif
 	default:
 		snprintf(line, size, "unsupported inforation to dump\n");
 		goto out;
@@ -3853,6 +3855,7 @@ static int exynos_ss_combine_pmsg(char *buffer, size_t count, unsigned int level
 	return 0;
 }
 
+#ifdef CONFIG_EXYNOS_SNAPSHOT_PSTORE
 int exynos_ss_hook_pmsg(char *buffer, size_t count)
 {
 	ess_android_log_header_t header;
@@ -3902,6 +3905,7 @@ int exynos_ss_hook_pmsg(char *buffer, size_t count)
 	return 0;
 }
 EXPORT_SYMBOL(exynos_ss_hook_pmsg);
+#endif
 
 /*
  *  To support pstore/pmsg/pstore_ram, following is implementation for exynos-snapshot

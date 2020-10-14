@@ -29,14 +29,14 @@
 #define mc_dev_err(fmt, ...) \
 	dev_err(g_ctx.mcd, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
 
-#define mc_dev_info(fmt, ...) \
-	dev_info(g_ctx.mcd, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
-
 #ifdef DEBUG
 #define mc_dev_devel(fmt, ...) \
 	dev_info(g_ctx.mcd, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
+#define mc_dev_info(fmt, ...) \
+	dev_info(g_ctx.mcd, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
 #else /* DEBUG */
 #define mc_dev_devel(...)		do {} while (0)
+#define mc_dev_info(...)		do {} while (0)
 #endif /* !DEBUG */
 
 #define TEEC_TT_LOGIN_KERNEL	0x80000000

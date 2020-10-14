@@ -78,7 +78,8 @@ config EVENT_TRACING
 	bool
 
 config GPU_TRACEPOINTS
-	bool
+	bool "GPU_TRACEPOINTS"
+	depends on MALI_MIDGARD
 
 config CONTEXT_SWITCH_TRACER
 	bool

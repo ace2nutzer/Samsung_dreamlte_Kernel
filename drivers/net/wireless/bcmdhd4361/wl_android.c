@@ -7048,7 +7048,7 @@ int wl_android_priv_cmd(struct net_device *net, struct ifreq *ifr)
 	}
 	command[priv_cmd.total_len] = '\0';
 
-	DHD_ERROR(("%s: Android private cmd \"%s\" on %s\n", __FUNCTION__, command, ifr->ifr_name));
+	//DHD_ERROR(("%s: Android private cmd \"%s\" on %s\n", __FUNCTION__, command, ifr->ifr_name));
 
 	bytes_written = wl_handle_private_cmd(net, command, priv_cmd.total_len);
 	if (bytes_written >= 0) {

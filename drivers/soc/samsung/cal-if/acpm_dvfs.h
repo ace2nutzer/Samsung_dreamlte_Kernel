@@ -44,14 +44,14 @@ static inline unsigned long exynos_acpm_get_rate(unsigned int id)
 
 static inline void exynos_acpm_set_device(void *dev)
 {
-	return ;
+	return;
 }
-static inline int exynos_acpm_set_volt_margin(unsigned int id, int volt);
+static inline int exynos_acpm_set_volt_margin(unsigned int id, int volt)
 {
 	return 0;
 }
 
-static inline int exynos_acpm_set_cold_temp(unsigned int id, bool is_cold_temp);
+static inline int exynos_acpm_set_cold_temp(unsigned int id, bool is_cold_temp)
 {
 	return 0;
 }

@@ -134,7 +134,7 @@ static int max77865_get_vbus_state(struct max77865_charger_data *charger)
 			__func__);
 		break;
 	case 0x03:
-		pr_info("%s: VBUS is valid. CHGIN < CHGIN_OVLO", __func__);
+		//pr_info("%s: VBUS is valid. CHGIN < CHGIN_OVLO", __func__);
 		break;
 	default:
 		break;
@@ -222,8 +222,8 @@ static int max77865_get_float_voltage(struct max77865_charger_data *charger)
 	max77865_read_reg(charger->i2c, MAX77865_CHG_REG_CNFG_04, &reg_data);
 	reg_data &= 0x3F;
 	float_voltage = reg_data * 125 + 40500;
-	pr_debug("%s: battery cv reg : 0x%x, float voltage val : %d\n",
-		__func__, reg_data, float_voltage);
+	//pr_debug("%s: battery cv reg : 0x%x, float voltage val : %d\n",
+		//__func__, reg_data, float_voltage);
 
 	return float_voltage;
 }
@@ -244,7 +244,7 @@ static int max77865_get_charging_health(struct max77865_charger_data *charger)
 			  MAX77865_CHG_REG_DETAILS_01, &reg_data);
 	reg_data = ((reg_data & MAX77865_BAT_DTLS) >> MAX77865_BAT_DTLS_SHIFT);
 
-	pr_info("%s: reg_data(0x%x)\n", __func__, reg_data);
+	//pr_info("%s: reg_data(0x%x)\n", __func__, reg_data);
 	switch (reg_data) {
 	case 0x00:
 		pr_info("%s: No battery and the charger is suspended\n",
@@ -291,7 +291,7 @@ static int max77865_get_charging_health(struct max77865_charger_data *charger)
 		max77865_set_charger_state(charger, ENABLE);
 	}
 
-	pr_info("%s: vbus_state : 0x%x, chg_dtls : 0x%x\n", __func__, vbus_state, chg_dtls);
+	//pr_info("%s: vbus_state : 0x%x, chg_dtls : 0x%x\n", __func__, vbus_state, chg_dtls);
 	/*  OVP is higher priority */
 	if (vbus_state == 0x02) { /*  CHGIN_OVLO */
 		pr_info("%s: vbus ovp\n", __func__);
@@ -442,7 +442,7 @@ static void max77865_set_buck(struct max77865_charger_data *charger,
 				0, CHG_CNFG_00_BUCK_MASK);
 	}
 	max77865_read_reg(charger->i2c, MAX77865_CHG_REG_CNFG_00, &reg_data);
-	pr_info("%s : CHG_CNFG_00(0x%02x)\n", __func__, reg_data);
+	//pr_info("%s : CHG_CNFG_00(0x%02x)\n", __func__, reg_data);
 }
 
 static void max77865_change_charge_path(struct max77865_charger_data *charger,
@@ -584,7 +584,7 @@ static void max77865_set_charger_state(struct max77865_charger_data *charger,
 	}
 	max77865_read_reg(charger->i2c, MAX77865_CHG_REG_CNFG_00, &cnfg_00);
 	max77865_read_reg(charger->i2c, MAX77865_CHG_REG_CNFG_12, &cnfg_12);
-	pr_info("%s : CHG_CNFG_00(0x%02x), CHG_CNFG_12(0x%02x)\n", __func__, cnfg_00, cnfg_12);
+	//pr_info("%s : CHG_CNFG_00(0x%02x), CHG_CNFG_12(0x%02x)\n", __func__, cnfg_00, cnfg_12);
 }
 
 static int max77865_check_wcin_before_otg_on(struct max77865_charger_data *charger)

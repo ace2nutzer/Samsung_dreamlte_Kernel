@@ -104,11 +104,13 @@
 @ingroup group_mem_link_device
 */
 
+#ifdef CONFIG_CP_RAM_LOGGING
 #define GROUP_MEM_LINK_DEBUG
 /**
 @defgroup group_mem_link_debug		Debugging
 @ingroup group_mem_link_device
 */
+#endif
 
 #define GROUP_MEM_LINK_IOSM_MESSAGE
 /**

@@ -78,6 +78,7 @@ static int sec_debug_reset_reason_store_lastkmsg_proc_show(struct seq_file *m, v
 	return 0;
 }
 
+#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 static int sec_debug_reset_reason_extra_show(struct seq_file *m, void *v) 
 {
 	ssize_t size = 0;
@@ -115,6 +116,7 @@ static const struct file_operations sec_debug_reset_reason_extra_proc_fops = {
 	.llseek = seq_lseek,
 	.release = single_release,
 };
+#endif
 
 static int sec_debug_reset_reason_store_lastkmsg_proc_open(struct inode *inode, struct file *file)
 {
@@ -139,10 +141,12 @@ static int __init sec_debug_reset_reason_init(void)
 	entry = proc_create("store_lastkmsg", 0222, NULL, &sec_debug_reset_reason_store_lastkmsg_proc_fops);
 	if (!entry)
 		return -ENOMEM;
-		
+
+#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 	entry = proc_create("extra", 0222, NULL, &sec_debug_reset_reason_extra_proc_fops);
 	if (!entry)
 		return -ENOMEM;
+#endif
 
 	return 0;
 }

@@ -3539,12 +3539,12 @@
 			reg-names = "reg";
 			abox = <&abox>;
 		};
-
+/*
 		abox_debug: abox_debug@0 {
 			compatible = "samsung,abox-debug";
 			memory-region = <&abox_rmem>;
 		};
-
+*/
 		abox_vss: abox_vss@0 {
 			compatible = "samsung,abox-vss";
 		};

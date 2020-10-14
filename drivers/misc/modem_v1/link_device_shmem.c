@@ -2858,7 +2858,8 @@ static int exynos_devfreq_parse_ect(struct mem_link_device *mld, char *dvfs_doma
 {
 	mif_err("ECT is not defined(%s)\n", __func__);
 
-	mld->cpu_table.num_of_table = 0;
+	mld->cl0_table.num_of_table = 0;
+	mld->cl1_table.num_of_table = 0;
 	mld->mif_table.num_of_table = 0;
 	mld->int_table.num_of_table = 0;
 
@@ -3442,11 +3443,13 @@ struct link_device *shmem_create_link_device(struct platform_device *pdev)
 		ld->security_req = shmem_security_request;
 	}
 
+#ifdef CONFIG_CP_RAM_LOGGING
 	ld->shmem_dump = save_shmem_dump;
 	ld->force_dump = shmem_force_dump;
 	ld->vss_dump = save_vss_dump;
 	ld->acpm_dump = save_acpm_dump;
 	ld->cplog_dump = save_cplog_dump;
+#endif
 
 	if (mld->attrs & LINK_ATTR(LINK_ATTR_MEM_DUMP))
 		ld->dump_start = shmem_start_upload;

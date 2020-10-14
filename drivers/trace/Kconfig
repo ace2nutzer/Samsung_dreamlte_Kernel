@@ -107,13 +107,13 @@ config EXYNOS_SNAPSHOT_PSTORE
 	depends on EXYNOS_SNAPSHOT
 	select PSTORE
 	select PSTORE_RAM
-	select PSTORE_PMSG
 	default y
 
 config EXYNOS_SNAPSHOT_HOOK_LOGGER
 	bool "Enable hooking android platform log for ramdump"
 	depends on EXYNOS_SNAPSHOT && EXYNOS_SNAPSHOT_PSTORE
-	default y
+	select PSTORE_PMSG
+	default n
 
 config EXYNOS_SNAPSHOT_PANIC_REBOOT
 	bool "Enable forced reboot after panic for ramdump"

@@ -2310,7 +2310,7 @@ int fts_irq_enable(struct fts_ts_info *info,
 struct fts_callbacks *fts_charger_callbacks;
 void tsp_charger_infom(bool en)
 {
-	pr_err("%s: %s %s: ta:%d\n", FTS_TS_DRV_NAME, SECLOG, __func__, en);
+	//pr_err("%s: %s %s: ta:%d\n", FTS_TS_DRV_NAME, SECLOG, __func__, en);
 
 	if (fts_charger_callbacks && fts_charger_callbacks->inform_charger)
 		fts_charger_callbacks->inform_charger(fts_charger_callbacks, en);
@@ -3485,7 +3485,7 @@ void tsp_dump(void)
 	if (!p_debug_work)
 		return;
 
-	pr_err("%s: %s %s: start\n", FTS_TS_DRV_NAME, SECLOG, __func__);
+	//pr_err("%s: %s %s: start\n", FTS_TS_DRV_NAME, SECLOG, __func__);
 	schedule_delayed_work(p_debug_work, msecs_to_jiffies(100));
 }
 

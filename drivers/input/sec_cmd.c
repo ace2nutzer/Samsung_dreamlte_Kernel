@@ -24,8 +24,10 @@ void sec_cmd_set_cmd_exit(struct sec_cmd_data *data)
 #ifdef USE_SEC_CMD_QUEUE
 	mutex_lock(&data->fifo_lock);
 	if (kfifo_len(&data->cmd_queue)) {
+/*
 		pr_info("%s %s: do next cmd, left cmd[%d]\n", SECLOG, __func__,
 			(int)(kfifo_len(&data->cmd_queue) / sizeof(struct command)));
+*/
 		mutex_unlock(&data->fifo_lock);
 
 		/* check lock	*/
@@ -121,7 +123,7 @@ static ssize_t sec_cmd_store(struct device *dev,
 	else
 		memcpy(buff, buf, len);
 
-	pr_debug("%s %s: COMMAND = %s\n", SECLOG, __func__, buff);
+	//pr_debug("%s %s: COMMAND = %s\n", SECLOG, __func__, buff);
 
 	/* find command */
 	list_for_each_entry(sec_cmd_ptr, &data->cmd_list_head, list) {
@@ -162,7 +164,7 @@ static ssize_t sec_cmd_store(struct device *dev,
 	}
 
 	if (cmd_found) {
-		pr_info("%s %s: cmd = %s", SECLOG, __func__, sec_cmd_ptr->cmd_name);
+		//pr_info("%s %s: cmd = %s", SECLOG, __func__, sec_cmd_ptr->cmd_name);
 		for (i = 0; i < param_cnt; i++) {
 			if (i == 0)
 				pr_cont(" param =");
@@ -170,7 +172,7 @@ static ssize_t sec_cmd_store(struct device *dev,
 		}
 		pr_cont("\n");
 	} else {
-		pr_info("%s %s: cmd = %s(%s)\n", SECLOG, __func__, buff, sec_cmd_ptr->cmd_name);
+		//pr_info("%s %s: cmd = %s(%s)\n", SECLOG, __func__, buff, sec_cmd_ptr->cmd_name);
 	}
 
 	sec_cmd_ptr->cmd_func(data);
@@ -233,7 +235,7 @@ static void sec_cmd_store_function(struct sec_cmd_data *data)
 	else
 		memcpy(buff, buf, len);
 
-	pr_debug("%s %s: COMMAND : %s\n", SECLOG, __func__, buff);
+	//pr_debug("%s %s: COMMAND : %s\n", SECLOG, __func__, buff);
 
 	/* find command */
 	list_for_each_entry(sec_cmd_ptr, &data->cmd_list_head, list) {
@@ -274,7 +276,7 @@ static void sec_cmd_store_function(struct sec_cmd_data *data)
 	}
 
 	if (cmd_found) {
-		pr_info("%s %s: cmd = %s", SECLOG, __func__, sec_cmd_ptr->cmd_name);
+		//pr_info("%s %s: cmd = %s", SECLOG, __func__, sec_cmd_ptr->cmd_name);
 		for (i = 0; i < param_cnt; i++) {
 			if (i == 0)
 				pr_cont(" param =");
@@ -282,7 +284,7 @@ static void sec_cmd_store_function(struct sec_cmd_data *data)
 		}
 		pr_cont("\n");
 	} else {
-		pr_info("%s %s: cmd = %s(%s)\n", SECLOG, __func__, buff, sec_cmd_ptr->cmd_name);
+		//pr_info("%s %s: cmd = %s(%s)\n", SECLOG, __func__, buff, sec_cmd_ptr->cmd_name);
 	}
 
 	sec_cmd_ptr->cmd_func(data);
@@ -320,7 +322,7 @@ static ssize_t sec_cmd_store(struct device *dev, struct device_attribute *devatt
 
 	if (kfifo_avail(&data->cmd_queue) && (queue_size < SEC_CMD_MAX_QUEUE)) {
 		kfifo_in(&data->cmd_queue, &cmd, sizeof(struct command));
-		pr_info("%s %s: push cmd: %s\n", SECLOG, __func__, cmd.cmd);
+		//pr_info("%s %s: push cmd: %s\n", SECLOG, __func__, cmd.cmd);
 	} else {
 		pr_err("%s %s: cmd_queue is full!!\n", SECLOG, __func__);
 
@@ -381,7 +383,7 @@ static ssize_t sec_cmd_show_status(struct device *dev,
 	else if (data->cmd_state == SEC_CMD_STATUS_NOT_APPLICABLE)
 		snprintf(buff, sizeof(buff), "NOT_APPLICABLE");
 
-	pr_debug("%s %s: %d, %s\n", SECLOG, __func__, data->cmd_state, buff);
+	//pr_debug("%s %s: %d, %s\n", SECLOG, __func__, data->cmd_state, buff);
 
 	return snprintf(buf, SEC_CMD_BUF_SIZE, "%s\n", buff);
 }
@@ -398,7 +400,7 @@ static ssize_t sec_cmd_show_result(struct device *dev,
 	}
 
 	data->cmd_state = SEC_CMD_STATUS_WAITING;
-	pr_info("%s %s: %s\n", SECLOG, __func__, data->cmd_result);
+	//pr_info("%s %s: %s\n", SECLOG, __func__, data->cmd_result);
 	size = snprintf(buf, SEC_CMD_RESULT_STR_LEN, "%s\n", data->cmd_result);
 
 	sec_cmd_set_cmd_exit(data);
@@ -536,7 +538,7 @@ void sec_cmd_exit(struct sec_cmd_data *data, int devt)
 	int ret;
 #endif
 
-	pr_info("%s %s", SECLOG, __func__);
+	//pr_info("%s %s", SECLOG, __func__);
 	sysfs_remove_group(&data->fac_dev->kobj, &sec_fac_attr_group);
 	dev_set_drvdata(data->fac_dev, NULL);
 #ifdef CONFIG_SEC_SYSFS
@@ -551,7 +553,7 @@ void sec_cmd_exit(struct sec_cmd_data *data, int devt)
 		if (!ret) {
 			pr_err("%s %s: kfifo_out failed, it seems empty, ret=%d\n", SECLOG, __func__, ret);
 		}
-		pr_info("%s %s: remove pending commands: %s", SECLOG, __func__, cmd.cmd);
+		//pr_info("%s %s: remove pending commands: %s", SECLOG, __func__, cmd.cmd);
 	}
 	mutex_unlock(&data->fifo_lock);
 	mutex_destroy(&data->fifo_lock);

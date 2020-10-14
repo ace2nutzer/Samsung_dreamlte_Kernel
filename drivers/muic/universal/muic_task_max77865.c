@@ -160,7 +160,9 @@ static void max77865_restore(muic_data_t *pmuic)
 	ccdet = muic_i2c_read_byte(i2c, MAX77865_REG_CCDET);
 
 	pr_info("%s:%s \n", MUIC_DEV_NAME, __func__);
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_print_reg_dump(pmuic);
+#endif
 	pr_info("CCDET[0x%02x]\n", ccdet);
 
 	pmuic->attached_dev = ATTACHED_DEV_NONE_MUIC;
@@ -533,7 +535,7 @@ static int muic_probe(struct platform_device *pdev)
 		max77865_hv_muic_init_detect(pmuic->phv);
 #endif
 
-#ifdef DEBUG_MUIC
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	INIT_DELAYED_WORK(&pmuic->usb_work, muic_show_debug_info);
 	schedule_delayed_work(&pmuic->usb_work, msecs_to_jiffies(10000));
 #endif
@@ -581,7 +583,9 @@ static int muic_remove(struct platform_device *pdev)
 		max77865_hv_muic_remove(pmuic->phv);
 #endif
 		cancel_delayed_work(&pmuic->init_work);
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 		cancel_delayed_work(&pmuic->usb_work);
+#endif
 		disable_irq_wake(pmuic->i2c->irq);
 		free_irq(pmuic->i2c->irq, pmuic);
 
@@ -629,11 +633,12 @@ static void muic_shutdown(struct platform_device *pdev)
 	max77865_hv_muic_remove(pmuic->phv);
 #endif
 
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	if (cancel_delayed_work(&pmuic->usb_work))
 		pr_info("%s: usb_work canceled.\n", __func__);
 	else
 		pr_info("%s: usb_work is not pending.\n", __func__);
-
+#endif
 
 	if (cancel_delayed_work(&pmuic->init_work))
 		pr_info("%s: init_work canceled.\n", __func__);
@@ -664,7 +669,9 @@ static int muic_suspend(struct device *dev)
 
 	pr_info("%s:%s \n", MUIC_DEV_NAME, __func__);
 
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	cancel_delayed_work(&pmuic->usb_work);
+#endif
 
 	if (device_may_wakeup(dev))
 		enable_irq_wake(pmuic->i2c->irq);
@@ -680,7 +687,9 @@ static int muic_resume(struct device *dev)
 
 	pr_info("%s:%s \n", MUIC_DEV_NAME, __func__);
 
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	schedule_delayed_work(&pmuic->usb_work, msecs_to_jiffies(1000));
+#endif
 
 	if (device_may_wakeup(dev))
 		disable_irq_wake(pmuic->i2c->irq);

@@ -773,9 +773,9 @@ static int muic_handle_ccic_notification(struct notifier_block *nb,
 	}
 
 	mdev_show_status(pmuic);
-
+#ifdef CONFIG_MUIC_UNIVERSAL_DEBUG
 	muic_print_reg_dump(pmuic);
-
+#endif
 	return NOTIFY_DONE;
 }
 

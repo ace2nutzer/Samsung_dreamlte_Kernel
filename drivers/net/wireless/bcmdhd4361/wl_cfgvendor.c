@@ -5642,7 +5642,7 @@ static int wl_cfgvendor_lstats_get_info(struct wiphy *wiphy,
 	int compat_task_state = is_compat_task();
 #endif /* CONFIG_COMPAT */
 
-	WL_INFORM_MEM(("%s: Enter \n", __func__));
+	//WL_INFORM_MEM(("%s: Enter \n", __func__));
 	RETURN_EIO_IF_NOT_UP(cfg);
 
 	/* Get the device rev info */

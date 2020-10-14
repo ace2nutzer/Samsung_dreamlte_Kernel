@@ -295,8 +295,10 @@ static int suspend_notifier(struct notifier_block *nb, unsigned long event,
 		mc_scheduler_suspend();
 		/* Make sure the TEE cannot run anymore */
 		mc_scheduler_stop();
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 		/* Flush log buffer */
 		mc_logging_run();
+#endif
 		break;
 	case PM_POST_HIBERNATION:
 		if (main_ctx.did_hibernate) {
@@ -328,11 +330,13 @@ static int mobicore_start(void)
 	if (main_ctx.start_ret != TEE_START_NOT_TRIGGERED)
 		goto got_ret;
 
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	ret = mc_logging_start();
 	if (ret) {
 		mc_dev_err("Log start failed");
 		goto err_log;
 	}
+#endif
 
 	ret = nq_start();
 	if (ret) {
@@ -483,7 +487,9 @@ err_iwp:
 err_mcp:
 	nq_stop();
 err_nq:
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	mc_logging_stop();
+#endif
 err_log:
 	main_ctx.start_ret = ret;
 got_ret:
@@ -500,7 +506,9 @@ static void mobicore_stop(void)
 #endif
 	mc_pm_stop();
 	mc_scheduler_stop();
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	mc_logging_stop();
+#endif
 	iwp_stop();
 	mcp_stop();
 	nq_stop();
@@ -690,11 +698,13 @@ static int mobicore_probe(struct platform_device *pdev)
 		goto err_iwp;
 	}
 
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	err = mc_logging_init();
 	if (err) {
 		mc_dev_err("Log init failed!");
 		goto err_log;
 	}
+#endif
 
 	err = mc_scheduler_init();
 	if (err) {
@@ -729,7 +739,9 @@ err_start:
 err_admin:
 	mc_scheduler_exit();
 err_sched:
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	mc_logging_exit();
+#endif
 err_log:
 	iwp_exit();
 err_iwp:
@@ -785,7 +797,9 @@ static void __exit mobicore_exit(void)
 #endif
 	device_admin_exit();
 	mc_scheduler_exit();
+#ifdef CONFIG_TRUSTONIC_TEE_LOG
 	mc_logging_exit();
+#endif
 	iwp_exit();
 	mcp_exit();
 	nq_exit();
