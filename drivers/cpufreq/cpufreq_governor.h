@@ -157,7 +157,6 @@ struct cs_cpu_dbs_info_s {
 	struct cpu_dbs_info cdbs;
 	struct cpufreq_policy *policy;
 	unsigned int down_skip;
-	unsigned int requested_freq;
 };
 
 /* Per policy Governors sysfs tunables */
