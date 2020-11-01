@@ -43,7 +43,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_interactive.h>
 
-//#define CONFIG_DYNAMIC_MODE_SUPPORT
+#define CONFIG_DYNAMIC_MODE_SUPPORT
 //#define CONFIG_DYNAMIC_MODE_SUPPORT_DEBUG
 
 struct cpufreq_interactive_cpuinfo {
@@ -78,10 +78,11 @@ static spinlock_t speedchange_cpumask_lock;
 static struct mutex gov_lock;
 
 /* Target load.  Lower values result in higher CPU speeds. */
-#define DEFAULT_TARGET_LOAD 95
+#define DEFAULT_TARGET_LOAD 90
 static unsigned int default_target_loads[] = {DEFAULT_TARGET_LOAD};
 
-#define DEFAULT_ABOVE_HISPEED_DELAY 0
+#define DEFAULT_TIMER_RATE (20 * USEC_PER_MSEC)
+#define DEFAULT_ABOVE_HISPEED_DELAY DEFAULT_TIMER_RATE
 static unsigned int default_above_hispeed_delay[] = {
 	DEFAULT_ABOVE_HISPEED_DELAY };
 
@@ -97,7 +98,7 @@ struct cpufreq_interactive_tunables {
 	/* Hi speed to bump to from lo speed when load burst (default max) */
 	unsigned int hispeed_freq;
 	/* Go to hi speed when CPU load at or above this value. */
-#define DEFAULT_GO_HISPEED_LOAD (DEFAULT_TARGET_LOAD)
+#define DEFAULT_GO_HISPEED_LOAD 99
 	unsigned long go_hispeed_load;
 	/* Target load. Lower values result in higher CPU speeds. */
 	spinlock_t target_loads_lock;
@@ -107,6 +108,7 @@ struct cpufreq_interactive_tunables {
 	 * The minimum amount of time to spend at a frequency before we can ramp
 	 * down.
 	 */
+#define DEFAULT_MIN_SAMPLE_TIME (80 * USEC_PER_MSEC)
 	unsigned long min_sample_time;
 	/*
 	 * The sample rate of the timer used to increase frequency
@@ -121,7 +123,7 @@ struct cpufreq_interactive_tunables {
 	int nabove_hispeed_delay;
 	/* Non-zero means indefinite speed boost active */
 	int boost_val;
-	/* Duration of a boost pulse in usecs */
+	/* Duration of a boot pulse in usecs */
 	int boostpulse_duration_val;
 	/* End time of boost pulse in ktime converted to usecs */
 	u64 boostpulse_endtime;
@@ -130,7 +132,7 @@ struct cpufreq_interactive_tunables {
 	 * Max additional time to wait in idle, beyond timer_rate, at speeds
 	 * above minimum before wakeup to reduce speed, or -1 if unnecessary.
 	 */
-#define DEFAULT_TIMER_SLACK -1
+#define DEFAULT_TIMER_SLACK (4 * DEFAULT_TIMER_RATE)
 	int timer_slack_val;
 	bool io_is_busy;
 
@@ -920,7 +922,7 @@ err:
 	return ERR_PTR(err);
 }
 
-static ssize_t show__target_loads(
+static ssize_t show_target_loads(
 	struct cpufreq_interactive_tunables *tunables,
 	char *buf)
 {
@@ -948,7 +950,7 @@ static ssize_t show__target_loads(
 	return ret;
 }
 
-static ssize_t store__target_loads(
+static ssize_t store_target_loads(
 	struct cpufreq_interactive_tunables *tunables,
 	const char *buf, size_t count)
 {
@@ -991,7 +993,7 @@ static ssize_t store__target_loads(
 	return count;
 }
 
-static ssize_t show__above_hispeed_delay(
+static ssize_t show_above_hispeed_delay(
 	struct cpufreq_interactive_tunables *tunables, char *buf)
 {
 	int i;
@@ -1019,7 +1021,7 @@ static ssize_t show__above_hispeed_delay(
 	return ret;
 }
 
-static ssize_t store__above_hispeed_delay(
+static ssize_t store_above_hispeed_delay(
 	struct cpufreq_interactive_tunables *tunables,
 	const char *buf, size_t count)
 {
@@ -1056,7 +1058,7 @@ static ssize_t store__above_hispeed_delay(
 
 }
 
-static ssize_t show__hispeed_freq(struct cpufreq_interactive_tunables *tunables,
+static ssize_t show_hispeed_freq(struct cpufreq_interactive_tunables *tunables,
 		char *buf)
 {
 #ifdef CONFIG_DYNAMIC_MODE_SUPPORT
@@ -1066,7 +1068,7 @@ static ssize_t show__hispeed_freq(struct cpufreq_interactive_tunables *tunables,
 #endif
 }
 
-static ssize_t store__hispeed_freq(struct cpufreq_interactive_tunables *tunables,
+static ssize_t store_hispeed_freq(struct cpufreq_interactive_tunables *tunables,
 		const char *buf, size_t count)
 {
 	int ret;
@@ -1096,7 +1098,7 @@ static ssize_t store__hispeed_freq(struct cpufreq_interactive_tunables *tunables
 	return count;
 }
 
-static ssize_t show__go_hispeed_load(struct cpufreq_interactive_tunables
+static ssize_t show_go_hispeed_load(struct cpufreq_interactive_tunables
 		*tunables, char *buf)
 {
 #ifdef CONFIG_DYNAMIC_MODE_SUPPORT
@@ -1106,7 +1108,7 @@ static ssize_t show__go_hispeed_load(struct cpufreq_interactive_tunables
 #endif
 }
 
-static ssize_t store__go_hispeed_load(struct cpufreq_interactive_tunables
+static ssize_t store_go_hispeed_load(struct cpufreq_interactive_tunables
 		*tunables, const char *buf, size_t count)
 {
 	int ret;
@@ -1157,13 +1159,13 @@ static ssize_t store_wd_boundary(struct cpufreq_interactive_tunables
 }
 #endif
 
-static ssize_t show__min_sample_time(struct cpufreq_interactive_tunables
+static ssize_t show_min_sample_time(struct cpufreq_interactive_tunables
 		*tunables, char *buf)
 {
 	return sprintf(buf, "%lu\n", tunables->min_sample_time);
 }
 
-static ssize_t store__min_sample_time(struct cpufreq_interactive_tunables
+static ssize_t store_min_sample_time(struct cpufreq_interactive_tunables
 		*tunables, const char *buf, size_t count)
 {
 	int ret;
@@ -1176,13 +1178,13 @@ static ssize_t store__min_sample_time(struct cpufreq_interactive_tunables
 	return count;
 }
 
-static ssize_t show__timer_rate(struct cpufreq_interactive_tunables *tunables,
+static ssize_t show_timer_rate(struct cpufreq_interactive_tunables *tunables,
 		char *buf)
 {
 	return sprintf(buf, "%lu\n", tunables->timer_rate);
 }
 
-static ssize_t store__timer_rate(struct cpufreq_interactive_tunables *tunables,
+static ssize_t store_timer_rate(struct cpufreq_interactive_tunables *tunables,
 		const char *buf, size_t count)
 {
 	int ret;
@@ -1201,13 +1203,13 @@ static ssize_t store__timer_rate(struct cpufreq_interactive_tunables *tunables,
 	return count;
 }
 
-static ssize_t show__timer_slack(struct cpufreq_interactive_tunables *tunables,
+static ssize_t show_timer_slack(struct cpufreq_interactive_tunables *tunables,
 		char *buf)
 {
 	return sprintf(buf, "%d\n", tunables->timer_slack_val);
 }
 
-static ssize_t store__timer_slack(struct cpufreq_interactive_tunables *tunables,
+static ssize_t store_timer_slack(struct cpufreq_interactive_tunables *tunables,
 		const char *buf, size_t count)
 {
 	int ret;
@@ -1221,13 +1223,13 @@ static ssize_t store__timer_slack(struct cpufreq_interactive_tunables *tunables,
 	return count;
 }
 
-static ssize_t show__boost(struct cpufreq_interactive_tunables *tunables,
+static ssize_t show_boost(struct cpufreq_interactive_tunables *tunables,
 			  char *buf)
 {
 	return sprintf(buf, "%d\n", tunables->boost_val);
 }
 
-static ssize_t store__boost(struct cpufreq_interactive_tunables *tunables,
+static ssize_t store_boost(struct cpufreq_interactive_tunables *tunables,
 			   const char *buf, size_t count)
 {
 	int ret;
@@ -1269,13 +1271,13 @@ static ssize_t store_boostpulse(struct cpufreq_interactive_tunables *tunables,
 	return count;
 }
 
-static ssize_t show__boostpulse_duration(struct cpufreq_interactive_tunables
+static ssize_t show_boostpulse_duration(struct cpufreq_interactive_tunables
 		*tunables, char *buf)
 {
 	return sprintf(buf, "%d\n", tunables->boostpulse_duration_val);
 }
 
-static ssize_t store__boostpulse_duration(struct cpufreq_interactive_tunables
+static ssize_t store_boostpulse_duration(struct cpufreq_interactive_tunables
 		*tunables, const char *buf, size_t count)
 {
 	int ret;
@@ -1289,13 +1291,13 @@ static ssize_t store__boostpulse_duration(struct cpufreq_interactive_tunables
 	return count;
 }
 
-static ssize_t show__io_is_busy(struct cpufreq_interactive_tunables *tunables,
+static ssize_t show_io_is_busy(struct cpufreq_interactive_tunables *tunables,
 		char *buf)
 {
 	return sprintf(buf, "%u\n", tunables->io_is_busy);
 }
 
-static ssize_t store__io_is_busy(struct cpufreq_interactive_tunables *tunables,
+static ssize_t store_io_is_busy(struct cpufreq_interactive_tunables *tunables,
 		const char *buf, size_t count)
 {
 	int ret;
@@ -1397,17 +1399,17 @@ static ssize_t store_##file_name##_gov_pol				\
 show_gov_pol_sys(file_name);						\
 store_gov_pol_sys(file_name)
 
-show_store_gov_pol_sys(_target_loads);
-show_store_gov_pol_sys(_above_hispeed_delay);
-show_store_gov_pol_sys(_hispeed_freq);
-show_store_gov_pol_sys(_go_hispeed_load);
-show_store_gov_pol_sys(_min_sample_time);
-show_store_gov_pol_sys(_timer_rate);
-show_store_gov_pol_sys(_timer_slack);
-show_store_gov_pol_sys(_boost);
+show_store_gov_pol_sys(target_loads);
+show_store_gov_pol_sys(above_hispeed_delay);
+show_store_gov_pol_sys(hispeed_freq);
+show_store_gov_pol_sys(go_hispeed_load);
+show_store_gov_pol_sys(min_sample_time);
+show_store_gov_pol_sys(timer_rate);
+show_store_gov_pol_sys(timer_slack);
+show_store_gov_pol_sys(boost);
 store_gov_pol_sys(boostpulse);
-show_store_gov_pol_sys(_boostpulse_duration);
-show_store_gov_pol_sys(_io_is_busy);
+show_store_gov_pol_sys(boostpulse_duration);
+show_store_gov_pol_sys(io_is_busy);
 #ifdef CONFIG_EXYNOS_WD_DVFS
 show_store_gov_pol_sys(wd_boundary);
 #endif
@@ -1428,16 +1430,16 @@ __ATTR(_name, 0644, show_##_name##_gov_pol, store_##_name##_gov_pol)
 	gov_sys_attr_rw(_name);						\
 	gov_pol_attr_rw(_name)
 
-gov_sys_pol_attr_rw(_target_loads);
-gov_sys_pol_attr_rw(_above_hispeed_delay);
-gov_sys_pol_attr_rw(_hispeed_freq);
-gov_sys_pol_attr_rw(_go_hispeed_load);
-gov_sys_pol_attr_rw(_min_sample_time);
-gov_sys_pol_attr_rw(_timer_rate);
-gov_sys_pol_attr_rw(_timer_slack);
-gov_sys_pol_attr_rw(_boost);
-gov_sys_pol_attr_rw(_boostpulse_duration);
-gov_sys_pol_attr_rw(_io_is_busy);
+gov_sys_pol_attr_rw(target_loads);
+gov_sys_pol_attr_rw(above_hispeed_delay);
+gov_sys_pol_attr_rw(hispeed_freq);
+gov_sys_pol_attr_rw(go_hispeed_load);
+gov_sys_pol_attr_rw(min_sample_time);
+gov_sys_pol_attr_rw(timer_rate);
+gov_sys_pol_attr_rw(timer_slack);
+gov_sys_pol_attr_rw(boost);
+gov_sys_pol_attr_rw(boostpulse_duration);
+gov_sys_pol_attr_rw(io_is_busy);
 #ifdef CONFIG_EXYNOS_WD_DVFS
 gov_sys_pol_attr_rw(wd_boundary);
 #endif
@@ -1454,17 +1456,17 @@ static struct freq_attr boostpulse_gov_pol =
 
 /* One Governor instance for entire system */
 static struct attribute *interactive_attributes_gov_sys[] = {
-	&_target_loads_gov_sys.attr,
-	&_above_hispeed_delay_gov_sys.attr,
-	&_hispeed_freq_gov_sys.attr,
-	&_go_hispeed_load_gov_sys.attr,
-	&_min_sample_time_gov_sys.attr,
-	&_timer_rate_gov_sys.attr,
-	&_timer_slack_gov_sys.attr,
-	&_boost_gov_sys.attr,
+	&target_loads_gov_sys.attr,
+	&above_hispeed_delay_gov_sys.attr,
+	&hispeed_freq_gov_sys.attr,
+	&go_hispeed_load_gov_sys.attr,
+	&min_sample_time_gov_sys.attr,
+	&timer_rate_gov_sys.attr,
+	&timer_slack_gov_sys.attr,
+	&boost_gov_sys.attr,
 	&boostpulse_gov_sys.attr,
-	&_boostpulse_duration_gov_sys.attr,
-	&_io_is_busy_gov_sys.attr,
+	&boostpulse_duration_gov_sys.attr,
+	&io_is_busy_gov_sys.attr,
 #ifdef CONFIG_EXYNOS_WD_DVFS
 	&wd_boundary_gov_sys.attr,
 #endif
@@ -1482,17 +1484,17 @@ static struct attribute_group interactive_attr_group_gov_sys = {
 
 /* Per policy governor instance */
 static struct attribute *interactive_attributes_gov_pol[] = {
-	&_target_loads_gov_pol.attr,
-	&_above_hispeed_delay_gov_pol.attr,
-	&_hispeed_freq_gov_pol.attr,
-	&_go_hispeed_load_gov_pol.attr,
-	&_min_sample_time_gov_pol.attr,
-	&_timer_rate_gov_pol.attr,
-	&_timer_slack_gov_pol.attr,
-	&_boost_gov_pol.attr,
+	&target_loads_gov_pol.attr,
+	&above_hispeed_delay_gov_pol.attr,
+	&hispeed_freq_gov_pol.attr,
+	&go_hispeed_load_gov_pol.attr,
+	&min_sample_time_gov_pol.attr,
+	&timer_rate_gov_pol.attr,
+	&timer_slack_gov_pol.attr,
+	&boost_gov_pol.attr,
 	&boostpulse_gov_pol.attr,
-	&_boostpulse_duration_gov_pol.attr,
-	&_io_is_busy_gov_pol.attr,
+	&boostpulse_duration_gov_pol.attr,
+	&io_is_busy_gov_pol.attr,
 #ifdef CONFIG_EXYNOS_WD_DVFS
 	&wd_boundary_gov_pol.attr,
 #endif
@@ -1619,9 +1621,9 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 			tunables->go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
 			tunables->target_loads = default_target_loads;
 			tunables->ntarget_loads = ARRAY_SIZE(default_target_loads);
-			tunables->timer_rate = jiffies_to_usecs(10);
-			tunables->min_sample_time = tunables->timer_rate;
-			tunables->boostpulse_duration_val = tunables->min_sample_time;
+			tunables->min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
+			tunables->timer_rate = DEFAULT_TIMER_RATE;
+			tunables->boostpulse_duration_val = DEFAULT_MIN_SAMPLE_TIME;
 			tunables->timer_slack_val = DEFAULT_TIMER_SLACK;
 #ifdef CONFIG_EXYNOS_WD_DVFS
 			tunables->wd_boundary = DEFAULT_WD_BOUNDARY;
