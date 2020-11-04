@@ -478,7 +478,7 @@ void cpufreq_freq_transition_begin(struct cpufreq_policy *policy,
 		struct cpufreq_freqs *freqs)
 {
 #if defined(CONFIG_SMP) && defined(CONFIG_DEFAULT_USE_ENERGY_AWARE)
-	int cpu;
+	//int cpu;
 #endif
 
 	/*
@@ -509,8 +509,10 @@ wait:
 #ifdef CONFIG_DEFAULT_USE_ENERGY_AWARE
 	scale_freq_capacity(policy, freqs);
 #ifdef CONFIG_SMP
+/*
 	for_each_cpu(cpu, policy->cpus)
-		//trace_cpu_capacity(capacity_curr_of(cpu), cpu);
+		trace_cpu_capacity(capacity_curr_of(cpu), cpu);
+*/
 #endif
 #endif
 	cpufreq_notify_transition(policy, freqs, CPUFREQ_PRECHANGE);

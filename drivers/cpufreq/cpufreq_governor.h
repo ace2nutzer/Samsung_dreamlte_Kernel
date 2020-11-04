@@ -165,8 +165,8 @@ struct od_dbs_tuners {
 	unsigned int sampling_rate;
 	unsigned int sampling_down_factor;
 	unsigned int up_threshold;
-	unsigned int powersave_bias;
 	unsigned int io_is_busy;
+	bool boost;
 };
 
 struct cs_dbs_tuners {
@@ -219,14 +219,6 @@ struct dbs_data {
 	void *tuners;
 };
 
-/* Governor specific ops, will be passed to dbs_data->gov_ops */
-struct od_ops {
-	void (*powersave_bias_init_cpu)(int cpu);
-	unsigned int (*powersave_bias_target)(struct cpufreq_policy *policy,
-			unsigned int freq_next, unsigned int relation);
-	void (*freq_increase)(struct cpufreq_policy *policy, unsigned int freq);
-};
-
 static inline int delay_for_sampling_rate(unsigned int sampling_rate)
 {
 	int delay = usecs_to_jiffies(sampling_rate);
@@ -260,8 +252,4 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		struct common_dbs_data *cdata, unsigned int event);
 void gov_queue_work(struct dbs_data *dbs_data, struct cpufreq_policy *policy,
 		unsigned int delay, bool all_cpus);
-void od_register_powersave_bias_handler(unsigned int (*f)
-		(struct cpufreq_policy *, unsigned int, unsigned int),
-		unsigned int powersave_bias);
-void od_unregister_powersave_bias_handler(void);
 #endif /* _CPUFREQ_GOVERNOR_H */

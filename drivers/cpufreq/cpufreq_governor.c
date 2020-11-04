@@ -472,12 +472,10 @@ static int cpufreq_governor_start(struct cpufreq_policy *policy,
 
 		cs_dbs_info->down_skip = 0;
 	} else {
-		struct od_ops *od_ops = cdata->gov_ops;
 		struct od_cpu_dbs_info_s *od_dbs_info = cdata->get_cpu_dbs_info_s(cpu);
 
 		od_dbs_info->rate_mult = 1;
 		od_dbs_info->sample_type = OD_NORMAL_SAMPLE;
-		od_ops->powersave_bias_init_cpu(cpu);
 	}
 
 	gov_queue_work(dbs_data, policy, delay_for_sampling_rate(sampling_rate),

@@ -20,133 +20,56 @@
 #include <linux/pm_qos.h>
 
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(80)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#define DEF_FREQUENCY_UP_THRESHOLD		(75)
+#define DOWN_THRESHOLD_MARGIN			(25)
+#define DEF_SAMPLING_DOWN_FACTOR		(10)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
-#define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
-#define MIN_FREQUENCY_UP_THRESHOLD		(11)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
+#define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
+#define DEF_BOOST				(1)
+
+/* Cluster 0 little cpu */
+#define DEF_FREQUENCY_STEP_CL0_0               (455000)
+#define DEF_FREQUENCY_STEP_CL0_1               (598000)
+#define DEF_FREQUENCY_STEP_CL0_2               (715000)
+#define DEF_FREQUENCY_STEP_CL0_3               (832000)
+#define DEF_FREQUENCY_STEP_CL0_4               (949000)
+#define DEF_FREQUENCY_STEP_CL0_5               (1053000)
+#define DEF_FREQUENCY_STEP_CL0_6               (1248000)
+#define DEF_FREQUENCY_STEP_CL0_7               (1456000)
+#define DEF_FREQUENCY_STEP_CL0_8               (1690000)
+#define DEF_FREQUENCY_STEP_CL0_9               (1794000)
+#define DEF_FREQUENCY_STEP_CL0_10              (1898000)
+#define DEF_FREQUENCY_STEP_CL0_11              (2002000)
+
+/* Cluster 1 big cpu */
+#define DEF_FREQUENCY_STEP_CL1_0               (741000)
+#define DEF_FREQUENCY_STEP_CL1_1               (858000)
+#define DEF_FREQUENCY_STEP_CL1_2               (962000)
+#define DEF_FREQUENCY_STEP_CL1_3               (1066000)
+#define DEF_FREQUENCY_STEP_CL1_4               (1170000)
+#define DEF_FREQUENCY_STEP_CL1_5               (1261000)
+#define DEF_FREQUENCY_STEP_CL1_6               (1469000)
+#define DEF_FREQUENCY_STEP_CL1_7               (1703000)
+#define DEF_FREQUENCY_STEP_CL1_8               (1807000)
+#define DEF_FREQUENCY_STEP_CL1_9               (1937000)
+#define DEF_FREQUENCY_STEP_CL1_10              (2002000)
+#define DEF_FREQUENCY_STEP_CL1_11              (2158000)
+#define DEF_FREQUENCY_STEP_CL1_12              (2314000)
+#define DEF_FREQUENCY_STEP_CL1_13              (2496000)
+#define DEF_FREQUENCY_STEP_CL1_14              (2574000)
+#define DEF_FREQUENCY_STEP_CL1_15              (2652000)
+#define DEF_FREQUENCY_STEP_CL1_16              (2704000)
+#define DEF_FREQUENCY_STEP_CL1_17              (2808000)
+
+static unsigned int down_threshold = 0;
 
 static DEFINE_PER_CPU(struct od_cpu_dbs_info_s, od_cpu_dbs_info);
-
-static struct od_ops od_ops;
 
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND
 static struct cpufreq_governor cpufreq_gov_ondemand;
 #endif
-
-static unsigned int default_powersave_bias;
-
-static void ondemand_powersave_bias_init_cpu(int cpu)
-{
-	struct od_cpu_dbs_info_s *dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
-
-	dbs_info->freq_table = cpufreq_frequency_get_table(cpu);
-	dbs_info->freq_lo = 0;
-}
-
-/*
- * Not all CPUs want IO time to be accounted as busy; this depends on how
- * efficient idling at a higher frequency/voltage is.
- * Pavel Machek says this is not so for various generations of AMD and old
- * Intel systems.
- * Mike Chan (android.com) claims this is also not true for ARM.
- * Because of this, whitelist specific known (series) of CPUs by default, and
- * leave all others up to the user.
- */
-static int should_io_be_busy(void)
-{
-#if defined(CONFIG_X86)
-	/*
-	 * For Intel, Core 2 (model 15) and later have an efficient idle.
-	 */
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL &&
-			boot_cpu_data.x86 == 6 &&
-			boot_cpu_data.x86_model >= 15)
-		return 1;
-#endif
-	return 0;
-}
-
-/*
- * Find right freq to be set now with powersave_bias on.
- * Returns the freq_hi to be used right now and will set freq_hi_jiffies,
- * freq_lo, and freq_lo_jiffies in percpu area for averaging freqs.
- */
-static unsigned int generic_powersave_bias_target(struct cpufreq_policy *policy,
-		unsigned int freq_next, unsigned int relation)
-{
-	unsigned int freq_req, freq_reduc, freq_avg;
-	unsigned int freq_hi, freq_lo;
-	unsigned int index = 0;
-	unsigned int jiffies_total, jiffies_hi, jiffies_lo;
-	struct od_cpu_dbs_info_s *dbs_info = &per_cpu(od_cpu_dbs_info,
-						   policy->cpu);
-	struct dbs_data *dbs_data = policy->governor_data;
-	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
-
-	if (!dbs_info->freq_table) {
-		dbs_info->freq_lo = 0;
-		dbs_info->freq_lo_jiffies = 0;
-		return freq_next;
-	}
-
-	cpufreq_frequency_table_target(policy, dbs_info->freq_table, freq_next,
-			relation, &index);
-	freq_req = dbs_info->freq_table[index].frequency;
-	freq_reduc = freq_req * od_tuners->powersave_bias / 1000;
-	freq_avg = freq_req - freq_reduc;
-
-	/* Find freq bounds for freq_avg in freq_table */
-	index = 0;
-	cpufreq_frequency_table_target(policy, dbs_info->freq_table, freq_avg,
-			CPUFREQ_RELATION_H, &index);
-	freq_lo = dbs_info->freq_table[index].frequency;
-	index = 0;
-	cpufreq_frequency_table_target(policy, dbs_info->freq_table, freq_avg,
-			CPUFREQ_RELATION_L, &index);
-	freq_hi = dbs_info->freq_table[index].frequency;
-
-	/* Find out how long we have to be in hi and lo freqs */
-	if (freq_hi == freq_lo) {
-		dbs_info->freq_lo = 0;
-		dbs_info->freq_lo_jiffies = 0;
-		return freq_lo;
-	}
-	jiffies_total = usecs_to_jiffies(od_tuners->sampling_rate);
-	jiffies_hi = (freq_avg - freq_lo) * jiffies_total;
-	jiffies_hi += ((freq_hi - freq_lo) / 2);
-	jiffies_hi /= (freq_hi - freq_lo);
-	jiffies_lo = jiffies_total - jiffies_hi;
-	dbs_info->freq_lo = freq_lo;
-	dbs_info->freq_lo_jiffies = jiffies_lo;
-	dbs_info->freq_hi_jiffies = jiffies_hi;
-	return freq_hi;
-}
-
-static void ondemand_powersave_bias_init(void)
-{
-	int i;
-	for_each_online_cpu(i) {
-		ondemand_powersave_bias_init_cpu(i);
-	}
-}
-
-static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
-{
-	struct dbs_data *dbs_data = policy->governor_data;
-	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
-
-	if (od_tuners->powersave_bias)
-		freq = od_ops.powersave_bias_target(policy, freq,
-				CPUFREQ_RELATION_H);
-	else if (policy->cur == policy->max)
-		return;
-
-	__cpufreq_driver_target(policy, freq, od_tuners->powersave_bias ?
-			CPUFREQ_RELATION_L : CPUFREQ_RELATION_H);
-}
 
 /*
  * Every sampling_rate, we check, if current idle time is less than 20%
@@ -159,36 +82,196 @@ static void od_check_cpu(int cpu, unsigned int load)
 	struct cpufreq_policy *policy = dbs_info->cdbs.shared->policy;
 	struct dbs_data *dbs_data = policy->governor_data;
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
-
-	dbs_info->freq_lo = 0;
+	unsigned int requested_freq = 0;
 
 	/* Check for frequency increase */
-	if (load > od_tuners->up_threshold) {
-		/* If switching to max speed, apply sampling_down_factor */
-		if (policy->cur < policy->max)
-			dbs_info->rate_mult =
-				od_tuners->sampling_down_factor;
-		dbs_freq_increase(policy, policy->max);
-	} else {
-		/* Calculate the next frequency proportional to load */
-		unsigned int freq_next, min_f, max_f;
+	if (load >= od_tuners->up_threshold) {
 
-		min_f = policy->cpuinfo.min_freq;
-		max_f = policy->cpuinfo.max_freq;
-		freq_next = min_f + load * (max_f - min_f) / 100;
-
-		/* No longer fully busy, reset rate_mult */
-		dbs_info->rate_mult = 1;
-
-		if (!od_tuners->powersave_bias) {
-			__cpufreq_driver_target(policy, freq_next,
-					CPUFREQ_RELATION_C);
+		/* if we are already at full speed then break out early */
+		if (policy->cur == policy->max)
 			return;
+
+		if (!od_tuners->boost) {
+			/* Little cpu 0 */
+			if (cpu == 0) {
+				if (policy->cur == DEF_FREQUENCY_STEP_CL0_0)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_1;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_1)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_2;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_3;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_3)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_4;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_4)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_5;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_6;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_8;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_9;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_10;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_11;
+				else
+					return;
+			/* Big cpu 4 */
+			} else {
+				if (policy->cur == DEF_FREQUENCY_STEP_CL1_0)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_1;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_1)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_2;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_3;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_3)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_4;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_4)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_5;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_5)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_6;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_6)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_7;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_7)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_8;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_8)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_9;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_10;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_11;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_12;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_13;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_14;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_15;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_16;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
+					requested_freq = DEF_FREQUENCY_STEP_CL1_17;
+				else
+					return;
+			}
+
+			if (requested_freq > policy->max)
+				requested_freq = policy->max;
+
+		} else {
+			/* Boost */
+			/* Little cpu 0 */
+			if (cpu == 0) {
+				if (policy->cur == DEF_FREQUENCY_STEP_CL0_0) {
+					requested_freq = DEF_FREQUENCY_STEP_CL0_1;
+
+					if (requested_freq > policy->max)
+						requested_freq = policy->max;
+
+				} else {
+					requested_freq = policy->max;
+				}
+			/* Big cpu 4 */
+			} else {
+				requested_freq = policy->max;
+			}
 		}
 
-		freq_next = od_ops.powersave_bias_target(policy, freq_next,
-					CPUFREQ_RELATION_L);
-		__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
+		/* If switching to max speed, apply sampling_down_factor */
+		if (requested_freq == policy->max)
+			dbs_info->rate_mult =
+				od_tuners->sampling_down_factor;
+
+		__cpufreq_driver_target(policy, requested_freq,
+			CPUFREQ_RELATION_H);
+		return;
+	}
+
+	/*
+	 * if we cannot reduce the frequency anymore, break out early
+	 */
+	if (policy->cur == policy->min)
+		return;
+
+	/* No longer fully busy, reset rate_mult */
+	dbs_info->rate_mult = 1;
+
+	/* Check for frequency decrease */
+	if (load <= down_threshold) {
+		/* Little cpu 0 */
+		if (cpu == 0) {
+			if (policy->cur == DEF_FREQUENCY_STEP_CL0_11)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_10;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_9;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_8;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_7;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_6;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_5;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_4;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_4)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_3;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_3)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_2;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_1;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_1)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_0;
+			else
+				return;
+		/* Big cpu 4 */
+		} else {
+			if (policy->cur == DEF_FREQUENCY_STEP_CL1_17)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_16;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_15;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_14;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_13;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_12;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_11;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_10;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_9;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_8;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_8)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_7;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_7)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_6;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_6)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_5;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_5)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_4;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_4)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_3;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_3)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_2;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_1;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_1)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_0;
+			else
+				return;
+		}
+
+		if (requested_freq < policy->min)
+			requested_freq = policy->min;
+
+		__cpufreq_driver_target(policy, requested_freq,
+				CPUFREQ_RELATION_L);
 	}
 }
 
@@ -226,6 +309,11 @@ max_delay:
 				* dbs_info->rate_mult);
 
 	return delay;
+}
+
+static void update_down_threshold(struct od_dbs_tuners *od_tuners)
+{
+	down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
 }
 
 /************************** sysfs interface ************************/
@@ -334,6 +422,10 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	}
 
 	od_tuners->up_threshold = input;
+
+	/* update down_threshold */
+	update_down_threshold(od_tuners);
+
 	return count;
 }
 
@@ -393,22 +485,21 @@ static ssize_t store_ignore_nice_load(struct dbs_data *dbs_data,
 	return count;
 }
 
-static ssize_t store_powersave_bias(struct dbs_data *dbs_data, const char *buf,
+static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 		size_t count)
 {
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	unsigned int input;
 	int ret;
-	ret = sscanf(buf, "%u", &input);
 
+	ret = sscanf(buf, "%u", &input);
 	if (ret != 1)
 		return -EINVAL;
 
-	if (input > 1000)
-		input = 1000;
+	if (input > 1)
+		input = 1;
 
-	od_tuners->powersave_bias = input;
-	ondemand_powersave_bias_init();
+	od_tuners->boost = input;
 	return count;
 }
 
@@ -417,16 +508,16 @@ show_store_one(od, io_is_busy);
 show_store_one(od, up_threshold);
 show_store_one(od, sampling_down_factor);
 show_store_one(od, ignore_nice_load);
-show_store_one(od, powersave_bias);
 declare_show_sampling_rate_min(od);
+show_store_one(od, boost);
 
 gov_sys_pol_attr_rw(sampling_rate);
 gov_sys_pol_attr_rw(io_is_busy);
 gov_sys_pol_attr_rw(up_threshold);
 gov_sys_pol_attr_rw(sampling_down_factor);
 gov_sys_pol_attr_rw(ignore_nice_load);
-gov_sys_pol_attr_rw(powersave_bias);
 gov_sys_pol_attr_ro(sampling_rate_min);
+gov_sys_pol_attr_rw(boost);
 
 static struct attribute *dbs_attributes_gov_sys[] = {
 	&sampling_rate_min_gov_sys.attr,
@@ -434,8 +525,8 @@ static struct attribute *dbs_attributes_gov_sys[] = {
 	&up_threshold_gov_sys.attr,
 	&sampling_down_factor_gov_sys.attr,
 	&ignore_nice_load_gov_sys.attr,
-	&powersave_bias_gov_sys.attr,
 	&io_is_busy_gov_sys.attr,
+	&boost_gov_sys.attr,
 	NULL
 };
 
@@ -450,8 +541,8 @@ static struct attribute *dbs_attributes_gov_pol[] = {
 	&up_threshold_gov_pol.attr,
 	&sampling_down_factor_gov_pol.attr,
 	&ignore_nice_load_gov_pol.attr,
-	&powersave_bias_gov_pol.attr,
 	&io_is_busy_gov_pol.attr,
+	&boost_gov_pol.attr,
 	NULL
 };
 
@@ -485,7 +576,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		 * not depending on HZ, but fixed (very low). The deferred
 		 * timer might skip some samples if idle/sleeping as needed.
 		*/
-		dbs_data->min_sampling_rate = MICRO_FREQUENCY_MIN_SAMPLE_RATE;
+		dbs_data->min_sampling_rate = jiffies_to_usecs(2);
 	} else {
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
 
@@ -496,10 +587,13 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
-	tuners->powersave_bias = default_powersave_bias;
-	tuners->io_is_busy = should_io_be_busy();
+	tuners->io_is_busy = 0;
+	tuners->boost = DEF_BOOST;
 
 	dbs_data->tuners = tuners;
+
+	update_down_threshold(tuners);
+
 	return 0;
 }
 
@@ -510,12 +604,6 @@ static void od_exit(struct dbs_data *dbs_data, bool notify)
 
 define_get_cpu_dbs_routines(od_cpu_dbs_info);
 
-static struct od_ops od_ops = {
-	.powersave_bias_init_cpu = ondemand_powersave_bias_init_cpu,
-	.powersave_bias_target = generic_powersave_bias_target,
-	.freq_increase = dbs_freq_increase,
-};
-
 static struct common_dbs_data od_dbs_cdata = {
 	.governor = GOV_ONDEMAND,
 	.attr_group_gov_sys = &od_attr_group_gov_sys,
@@ -524,62 +612,10 @@ static struct common_dbs_data od_dbs_cdata = {
 	.get_cpu_dbs_info_s = get_cpu_dbs_info_s,
 	.gov_dbs_timer = od_dbs_timer,
 	.gov_check_cpu = od_check_cpu,
-	.gov_ops = &od_ops,
 	.init = od_init,
 	.exit = od_exit,
 	.mutex = __MUTEX_INITIALIZER(od_dbs_cdata.mutex),
 };
-
-static void od_set_powersave_bias(unsigned int powersave_bias)
-{
-	struct cpufreq_policy *policy;
-	struct dbs_data *dbs_data;
-	struct od_dbs_tuners *od_tuners;
-	unsigned int cpu;
-	cpumask_t done;
-
-	default_powersave_bias = powersave_bias;
-	cpumask_clear(&done);
-
-	get_online_cpus();
-	for_each_online_cpu(cpu) {
-		struct cpu_common_dbs_info *shared;
-
-		if (cpumask_test_cpu(cpu, &done))
-			continue;
-
-		shared = per_cpu(od_cpu_dbs_info, cpu).cdbs.shared;
-		if (!shared)
-			continue;
-
-		policy = shared->policy;
-		cpumask_or(&done, &done, policy->cpus);
-
-		if (policy->governor != &cpufreq_gov_ondemand)
-			continue;
-
-		dbs_data = policy->governor_data;
-		od_tuners = dbs_data->tuners;
-		od_tuners->powersave_bias = default_powersave_bias;
-	}
-	put_online_cpus();
-}
-
-void od_register_powersave_bias_handler(unsigned int (*f)
-		(struct cpufreq_policy *, unsigned int, unsigned int),
-		unsigned int powersave_bias)
-{
-	od_ops.powersave_bias_target = f;
-	od_set_powersave_bias(powersave_bias);
-}
-EXPORT_SYMBOL_GPL(od_register_powersave_bias_handler);
-
-void od_unregister_powersave_bias_handler(void)
-{
-	od_ops.powersave_bias_target = generic_powersave_bias_target;
-	od_set_powersave_bias(0);
-}
-EXPORT_SYMBOL_GPL(od_unregister_powersave_bias_handler);
 
 static int od_cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		unsigned int event)
