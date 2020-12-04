@@ -494,14 +494,14 @@
 						  1898000  1352000
 						  1794000  1352000
 						  1690000  1352000
-						  1456000  1014000
-						  1248000   845000
-						  1053000   845000
-						   949000   845000
-						   832000   845000
-						   715000   676000
-						   598000   546000
-						   455000   421000
+						  1456000        0
+						  1248000        0
+						  1053000        0
+						   949000        0
+						   832000        0
+						   715000        0
+						   598000        0
+						   455000        0
 						   >;
 				};
 				mif-skew {
@@ -549,13 +549,13 @@
 						  1937000  2093000
 						  1807000  2093000
 						  1703000  2093000
-						  1469000  2002000
-						  1261000  1794000
-						  1170000  1540000
-						  1066000  1352000
-						   962000  1014000
-						   858000   845000
-						   741000   421000 >;
+						  1469000  2093000
+						  1261000  2093000
+						  1170000  2093000
+						  1066000  2093000
+						   962000  2093000
+						   858000  2093000
+						   741000  1014000 >;
 				};
 				mif-skew {
 					guidance;
@@ -778,8 +778,8 @@
 		                    546000    37   75   1  2093000   0   0
 		                    455000    38   75   1  2093000   0   0
 		                    385000    41   75   1  2093000   0   0
-		                    338000    33   75   1  1352000   0   0
-		                    260000    33   75   1  1014000   0   0 >;
+		                    338000    33   75   1  2093000   0   0
+		                    260000    33   75   1  1352000   0   0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
@@ -796,7 +796,7 @@
 		gpu_temp_throttling_level_num = <6>;
 		gpu_temp_throttling = <546000 455000 385000 338000 260000 260000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
+		gpu_dvfs_time_interval = <1>; /* ticks */
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
@@ -2473,7 +2473,7 @@
 		use_delay_time = "false";
 		delay_time_list = "20";
 
-		freq_info = <2093000 421000 421000 421000 2093000 2093000>;
+		freq_info = <2093000 1014000 1014000 1014000 2093000 2093000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
@@ -3426,7 +3426,7 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3437,7 +3437,7 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3448,7 +3448,7 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -4663,32 +4663,32 @@
 					type = "active";
 				};
 				apo_alert1: apo-alert1 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <85000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				apo_alert2: apo-alert2 {
-					temperature = <91000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				apo_alert3: apo-alert3 {
-					temperature = <92000>; /* millicelsius */
+					temperature = <91000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				apo_alert4: apo-alert4 {
-					temperature = <93000>; /* millicelsius */
+					temperature = <92000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				apo_alert5: apo-alert5 {
-					temperature = <94000>; /* millicelsius */
+					temperature = <93000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				apo_alert6: apo-alert6 {
-					temperature = <95000>; /* millicelsius */
+					temperature = <94000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
@@ -4763,12 +4763,12 @@
 					type = "active";
 				};
 				gpu_alert0: gpu-alert0 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <85000>; /* millicelsius */
 					hysteresis = <2000>; /* millicelsius */
 					type = "active";
 				};
 				gpu_alert1: gpu-alert1 {
-					temperature = <95000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "passive";
 				};
@@ -4804,12 +4804,12 @@
 					type = "active";
 				};
 				isp_alert1: isp-alert1 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <85000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				isp_alert2: isp-alert2 {
-					temperature = <93000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
