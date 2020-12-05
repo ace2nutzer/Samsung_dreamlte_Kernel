@@ -24,30 +24,23 @@ bool sleep_mode = false;
 /* Charger Control */
 #ifdef CONFIG_CAMERA_DREAM2
 static bool is_s8_plus = true;
-static unsigned int ac_curr_max = 2600;
-static unsigned int usbpd_curr_max = 2600;
-static unsigned int ac_in_curr_12v = 0;
-static unsigned int ac_in_curr_9v = 0;
-static unsigned int usbpd_in_curr_12v = 0;
-static unsigned int usbpd_in_curr_9v = 0;
-static unsigned int wc_in_curr_12v = 0;
-static unsigned int wc_in_curr_10v = 0;
-static unsigned int wc_in_curr_9v = 0;
+static unsigned int ac_curr_max = 2300;
+static unsigned int usbpd_curr_max = 2300;
 #else
 static bool is_s8_plus = false;
-static unsigned int ac_curr_max = 2200;
-static unsigned int usbpd_curr_max = 2200;
-static unsigned int ac_in_curr_12v = 0;
-static unsigned int ac_in_curr_9v = 0;
-static unsigned int usbpd_in_curr_12v = 0;
-static unsigned int usbpd_in_curr_9v = 0;
-static unsigned int wc_in_curr_12v = 0;
-static unsigned int wc_in_curr_10v = 0;
-static unsigned int wc_in_curr_9v = 0;
+static unsigned int ac_curr_max = 2000;
+static unsigned int usbpd_curr_max = 2000;
 #endif
 static unsigned int wc_curr_max = 1200;
 static unsigned int usb3_curr_max = 900;
 static unsigned int usb2_curr_max = 500;
+static unsigned int ac_in_curr_12v = 0;
+static unsigned int ac_in_curr_9v = 0;
+static unsigned int usbpd_in_curr_12v = 0;
+static unsigned int usbpd_in_curr_9v = 0;
+static unsigned int wc_in_curr_12v = 0;
+static unsigned int wc_in_curr_10v = 0;
+static unsigned int wc_in_curr_9v = 0;
 static unsigned int input_volt = 0;
 static int charging_curr = 0;
 static int batt_temp = 0;
@@ -56,14 +49,17 @@ static bool water_detected = false;
 static bool water_detect = true;
 #endif
 static bool is_charger = false;
+static bool afc_init = false;
+
 /* battery care & battery idle mode */
 static bool batt_idle = false;
 static unsigned int batt_care = 101; /* disabled */
 static bool battery_idle = false;
 static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
+static unsigned int batt_max_temp = 40; /* °C */
 
-#define CHARGER_CONTROL_VERSION		"2.6"
+#define CHARGER_CONTROL_VERSION		"2.7"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -870,7 +866,6 @@ void sec_bat_set_decrease_iout(struct sec_battery_info *battery)
 
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
-	bool afc_init = false;
 	union power_supply_propval value = {0, };
 
 	int input_current = USB_CURRENT_UNCONFIGURED,
@@ -1444,6 +1439,67 @@ static ssize_t cycle_show(struct kobject *kobj,
 }
 SEC_BAT_ATTR_RO(cycle);
 
+static ssize_t batt_volt_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%sBattery Voltage: \t%d mV\n", buf, _battery->voltage_now);
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(batt_volt);
+
+static ssize_t batt_max_temp_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf,   "%s[Battery temperature control]\n\n", buf);
+
+	sprintf(buf, "%s[max_temp] \t[%u °C]\n", buf, batt_max_temp);
+
+	return strlen(buf);
+}
+
+static ssize_t batt_max_temp_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u", &tmp)) {
+
+		if (tmp < 35 || tmp > 45) {
+			pr_err("[sec_batt] Invaild cmd\n");
+			return -EINVAL;
+		}
+
+		batt_max_temp = tmp;
+
+		/* update */
+		tmp = tmp * 10;
+		_battery->pdata->wpc_high_temp = tmp + 1;
+		_battery->pdata->wpc_high_temp_recovery = tmp;
+
+		_battery->pdata->wpc_lcd_on_high_temp = tmp + 1;
+		_battery->pdata->wpc_lcd_on_high_temp_rec = tmp;
+
+		_battery->pdata->wpc_high_temp = tmp + 1;
+		_battery->pdata->wpc_high_temp_recovery = tmp;
+
+		_battery->pdata->wpc_lcd_on_high_temp = tmp + 1;
+		_battery->pdata->wpc_lcd_on_high_temp_rec = tmp;
+
+		_battery->pdata->mix_high_temp = tmp + 1;
+
+		_battery->pdata->swelling_high_temp_block = tmp + 1;
+		_battery->pdata->swelling_high_temp_recov = tmp;
+
+		return count;
+	}
+
+	pr_err("[sec_batt] Invaild cmd\n");
+	return -EINVAL;
+}
+SEC_BAT_ATTR_RW(batt_max_temp);
+
 static struct attribute *sec_bat_attrs[] = {
 	&curr_max_attr.attr,
 	&input_volt_attr.attr,
@@ -1459,6 +1515,8 @@ static struct attribute *sec_bat_attrs[] = {
 	&batt_idle_attr.attr,
 	&batt_care_attr.attr,
 	&cycle_attr.attr,
+	&batt_volt_attr.attr,
+	&batt_max_temp_attr.attr,
 	NULL,
 };
 
@@ -3791,6 +3849,7 @@ static void sec_bat_monitor_work(
 		battery_idle = false;
 		enable_blue_led(false);
 		batt_level = 0;
+		afc_init = false;
 	} else {
 		is_charger = true;
 	}
