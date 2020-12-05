@@ -22,7 +22,7 @@
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(75)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(10)
+#define DEF_SAMPLING_DOWN_FACTOR		(25)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(75)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
@@ -576,7 +576,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		 * not depending on HZ, but fixed (very low). The deferred
 		 * timer might skip some samples if idle/sleeping as needed.
 		*/
-		dbs_data->min_sampling_rate = jiffies_to_usecs(2);
+		dbs_data->min_sampling_rate = jiffies_to_usecs(1);
 	} else {
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
 
