@@ -767,7 +767,7 @@
 		samsung,power-domain = <&pd_g3d>;
 		g3d_genpd_name = "pd-g3d"; /*KC: pg-g3d, LT,MK: pd-embedded_g3d*/
 		#cooling-cells = <2>; /* min followed by max */
-		governor = "default";
+		governor = "ondemand";
 		interactive_info = <0 75 0>;
 		gpu_dvfs_table_size = <9 7>; /*<row col>*/
 		gpu_dvfs_table = <

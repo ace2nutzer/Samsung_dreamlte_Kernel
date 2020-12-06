@@ -28,11 +28,18 @@
 typedef int (*GET_NEXT_LEVEL)(struct exynos_context *platform, int utilization);
 GET_NEXT_LEVEL gpu_dvfs_get_next_level;
 
+/* for ondemand gov */
+extern unsigned int gpu_up_threshold;
+extern bool gpu_boost;
+extern unsigned int gpu_down_threshold;
+extern void calc_gpu_down_threshold(void);
+
 static int gpu_dvfs_governor_default(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_interactive(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_static(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_booster(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utilization);
+static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization);
 
 static gpu_dvfs_governor_info governor_info[G3D_MAX_GOVERNOR_NUM] = {
 	{
@@ -63,6 +70,12 @@ static gpu_dvfs_governor_info governor_info[G3D_MAX_GOVERNOR_NUM] = {
 		G3D_DVFS_GOVERNOR_DYNAMIC,
 		"dynamic",
 		gpu_dvfs_governor_dynamic,
+		NULL
+	},
+	{
+		G3D_DVFS_GOVERNOR_ONDEMAND,
+		"ondemand",
+		gpu_dvfs_governor_ondemand,
 		NULL
 	},
 };
@@ -276,6 +289,44 @@ static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utiliz
 	return 0;
 }
 
+static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization)
+{
+	int max_clock_lev = gpu_dvfs_get_level(platform->gpu_max_clock);
+	int min_clock_lev = gpu_dvfs_get_level(platform->gpu_min_clock);
+
+	DVFS_ASSERT(platform);
+
+	/* Check for frequency increase */
+	if (utilization >= gpu_up_threshold) {
+
+		/* if we are already at full speed then break out early */
+		if (platform->step == max_clock_lev)
+			return 0;
+
+		if (!gpu_boost)
+			platform->step--;
+		else
+			platform->step = max_clock_lev;
+
+		return 0;
+	}
+
+	/*
+	 * if we cannot reduce the frequency anymore, break out early
+	 */
+	if (platform->step == min_clock_lev)
+		return 0;
+
+	/* Check for frequency decrease */
+	if (utilization <= gpu_down_threshold)
+		platform->step++;
+
+	DVFS_ASSERT((platform->step >= gpu_dvfs_get_level(platform->gpu_max_clock))
+					&& (platform->step <= gpu_dvfs_get_level(platform->gpu_min_clock)));
+
+	return 0;
+}
+
 static int gpu_dvfs_decide_next_governor(struct exynos_context *platform)
 {
 	return 0;
@@ -357,6 +408,9 @@ int gpu_dvfs_governor_init(struct kbase_device *kbdev)
 	struct exynos_context *platform = (struct exynos_context *) kbdev->platform_context;
 
 	DVFS_ASSERT(platform);
+
+	/* init gpu_down_threshold */
+	calc_gpu_down_threshold();
 
 #ifdef CONFIG_MALI_DVFS
 	governor_type = platform->governor_type;

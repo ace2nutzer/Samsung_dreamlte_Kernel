@@ -37,8 +37,17 @@
 #endif
 
 extern struct kbase_device *pkbdev;
-
 static unsigned int cool_freq = 0;
+
+/* for ondemand gov */
+unsigned int gpu_up_threshold = 75;
+bool gpu_boost = true;
+unsigned int gpu_down_threshold = 0;
+#define DOWN_THRESHOLD_MARGIN			(25)
+#define GPU_MIN_UP_THRESHOLD		(40)
+#define GPU_MAX_UP_THRESHOLD		(100)
+#define GPU_FREQ_STEP_0			(260)
+#define GPU_FREQ_STEP_1			(338)
 
 int gpu_pmqos_dvfs_min_lock(int level)
 {
@@ -1680,6 +1689,57 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 	return count;
 }
 
+static ssize_t show_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[enabled] \t[%s]\n", buf, gpu_boost ? "Y" : "N");
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+
+	if (input > 1)
+		input = 1;
+
+	gpu_boost = input;
+	return count;
+}
+
+void calc_gpu_down_threshold(void)
+{
+	gpu_down_threshold = ((gpu_up_threshold * GPU_FREQ_STEP_0 / GPU_FREQ_STEP_1) - DOWN_THRESHOLD_MARGIN);
+}
+
+static ssize_t show_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[up_threshold] \t[%u]\n", buf, gpu_up_threshold);
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+
+	if (ret != 1 || input > GPU_MAX_UP_THRESHOLD ||
+			input < GPU_MIN_UP_THRESHOLD)
+		return -EINVAL;
+
+	gpu_up_threshold = input;
+
+	/* update gpu_down_threshold */
+	calc_gpu_down_threshold();
+
+	return count;
+}
+
 static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
@@ -2050,6 +2110,12 @@ static struct kobj_attribute user_min_clock_attribute =
 
 static struct kobj_attribute cool_freq_attribute =
 	__ATTR(cool_freq, S_IRUGO|S_IWUSR, show_kernel_sysfs_cool_freq, set_kernel_sysfs_cool_freq);
+
+static struct kobj_attribute boost_attribute =
+	__ATTR(boost, S_IRUGO|S_IWUSR, show_kernel_sysfs_boost, set_kernel_sysfs_boost);
+
+static struct kobj_attribute up_threshold_attribute =
+	__ATTR(up_threshold, S_IRUGO|S_IWUSR, show_kernel_sysfs_up_threshold, set_kernel_sysfs_up_threshold);
 #endif /* #ifdef CONFIG_MALI_DVFS */
 
 static struct kobj_attribute gpu_busy_attribute =
@@ -2091,6 +2157,8 @@ static struct attribute *attrs[] = {
 	&user_max_clock_attribute.attr,
 	&user_min_clock_attribute.attr,
 	&cool_freq_attribute.attr,
+	&boost_attribute.attr,
+	&up_threshold_attribute.attr,
 #endif /* #ifdef CONFIG_MALI_DVFS */
 	&gpu_busy_attribute.attr,
 	&gpu_clock_attribute.attr,

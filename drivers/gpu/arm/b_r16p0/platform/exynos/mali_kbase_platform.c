@@ -267,6 +267,8 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 		platform->governor_type = G3D_DVFS_GOVERNOR_BOOSTER;
 	} else if (!strncmp("dynamic", of_string, strlen("dynamic"))) {
 		platform->governor_type = G3D_DVFS_GOVERNOR_DYNAMIC;
+	} else if (!strncmp("ondemand", of_string, strlen("ondemand"))) {
+		platform->governor_type = G3D_DVFS_GOVERNOR_ONDEMAND;
 	} else {
 		platform->governor_type = G3D_DVFS_GOVERNOR_DEFAULT;
 	}
