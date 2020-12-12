@@ -550,7 +550,7 @@ static struct exynos_ss_item ess_items[] = {
 /*****************************************************************/
 #ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 	{"log_kevents",	{SZ_8M,		0, 0, false, true, true}, NULL ,NULL, 0},
-	{"log_kernel",	{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kernel",	{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 	{"log_platform",{SZ_4M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #endif
