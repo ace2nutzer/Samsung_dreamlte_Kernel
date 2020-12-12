@@ -468,10 +468,10 @@ static unsigned int cpu4_max_freq = 0;
 module_param(cpu4_min_freq, uint, 0644);
 module_param(cpu4_max_freq, uint, 0644);
 
-static bool update_freqs = false;
-
 void set_suspend_cpufreq(bool suspend)
 {
+	static bool update_freqs = false;
+
 	if (!enable_suspend_freqs)
 		return;
 
