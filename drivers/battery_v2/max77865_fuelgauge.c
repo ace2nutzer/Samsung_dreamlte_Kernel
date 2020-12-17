@@ -708,12 +708,12 @@ int max77865_fg_reset_soc(struct max77865_fuelgauge_data *fuelgauge)
 	pr_info("%s: Before quick-start - current(%d), avg current(%d)\n",
 		__func__, max77865_fg_read_current(fuelgauge, SEC_BATTERY_CURRENT_MA),
 		max77865_fg_read_avg_current(fuelgauge, SEC_BATTERY_CURRENT_MA));
-
+/*
 	if (!max77865_check_jig_status(fuelgauge)) {
 		pr_info("%s : Return by No JIG_ON signal\n", __func__);
 		return 0;
 	}
-
+*/
 	max77865_write_word(fuelgauge->i2c, CYCLES_REG, 0);
 
 	if (max77865_bulk_read(fuelgauge->i2c, MISCCFG_REG,
