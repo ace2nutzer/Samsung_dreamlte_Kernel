@@ -552,7 +552,7 @@ static struct exynos_ss_item ess_items[] = {
 	{"log_kevents",	{SZ_8M,		0, 0, false, true, true}, NULL ,NULL, 0},
 	{"log_kernel",	{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
-	{"log_platform",{SZ_4M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_platform",{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #endif
 #ifdef CONFIG_EXYNOS_SNAPSHOT_SFRDUMP
 	{"log_sfr",	{SZ_4M,		0, 0, false, true, true}, NULL ,NULL, 0},
@@ -561,7 +561,7 @@ static struct exynos_ss_item ess_items[] = {
 	{"log_etm",	{SZ_8M,		0, 0, true, true, true}, NULL ,NULL, 0},
 #endif
 #else /* MINIMIZED MODE */
-	{"log_kevents",	{SZ_8M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kevents",	{SZ_4M,		0, 0, false, true, true}, NULL ,NULL, 0},
 	{"log_kernel",	{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 	{"log_platform",{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
