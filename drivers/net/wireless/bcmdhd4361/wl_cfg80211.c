@@ -101,6 +101,10 @@
 #include <dhd_event_log_filter.h>
 #endif /* DHD_EVENT_LOG_FILTER */
 
+/* from wl_android.c */
+extern unsigned int wlc_band_5g;
+extern unsigned int wlc_band_2g;
+
 #ifdef BCMWAPI_WPI
 /* these items should evetually go into wireless.h of the linux system headfile dir */
 #ifndef IW_ENCODE_ALG_SM4
@@ -1689,7 +1693,7 @@ static chanspec_t wl_cfg80211_get_shared_freq(struct wiphy *wiphy)
 		err = wldev_ioctl_get(dev, WLC_GET_BAND, &cur_band, sizeof(int));
 		if (unlikely(err)) {
 			WL_ERR(("Get band failed\n"));
-		} else if (cur_band == WLC_BAND_5G) {
+		} else if (cur_band == wlc_band_5g) {
 			channel = WL_P2P_TEMP_CHAN_5G;
 		}
 		return wl_ch_host_to_driver(channel);
@@ -3120,7 +3124,7 @@ static void wl_scan_prep(struct bcm_cfg80211 *cfg, struct wl_scan_params *params
 
 			if (request->channels[i]->band == IEEE80211_BAND_2GHZ) {
 #ifdef WL_HOST_BAND_MGMT
-				if (cfg->curr_band == WLC_BAND_5G) {
+				if (cfg->curr_band == wlc_band_5g) {
 					WL_DBG(("In 5G only mode, omit 2G channel:%d\n", channel));
 					continue;
 				}
@@ -3128,7 +3132,7 @@ static void wl_scan_prep(struct bcm_cfg80211 *cfg, struct wl_scan_params *params
 				chanspec |= WL_CHANSPEC_BAND_2G;
 			} else {
 #ifdef WL_HOST_BAND_MGMT
-				if (cfg->curr_band == WLC_BAND_2G) {
+				if (cfg->curr_band == wlc_band_2g) {
 					WL_DBG(("In 2G only mode, omit 5G channel:%d\n", channel));
 					continue;
 				}
@@ -3425,7 +3429,7 @@ wl_run_escan(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 					channel = ieee80211_frequency_to_channel(_freq);
 #ifdef WL_HOST_BAND_MGMT
 					channel_band = (channel > CH_MAX_2G_CHANNEL) ?
-						WLC_BAND_5G : WLC_BAND_2G;
+						wlc_band_5g : wlc_band_2g;
 					if ((cfg->curr_band != WLC_BAND_AUTO) &&
 						(cfg->curr_band != channel_band) &&
 						!IS_P2P_SOCIAL_CHANNEL(channel))
@@ -5445,9 +5449,9 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 
 	if (chan) {
 		if (chan->band == IEEE80211_BAND_5GHZ)
-			param[0] = WLC_BAND_5G;
+			param[0] = wlc_band_5g;
 		else if (chan->band == IEEE80211_BAND_2GHZ)
-			param[0] = WLC_BAND_2G;
+			param[0] = wlc_band_2g;
 		err = wldev_iovar_getint(dev, "bw_cap", param);
 		if (unlikely(err)) {
 			WL_ERR(("Get bw_cap Failed (%d)\n", err));
@@ -6479,7 +6483,7 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 			AP_ENV_DETECT_NOT_USED) == BCME_OK);
 
 #ifdef SKIP_ROAM_TRIGGER_RESET
-		roam_trigger[1] = WLC_BAND_2G;
+		roam_trigger[1] = wlc_band_2g;
 		is_roamtrig_reset =
 			(wldev_ioctl_get(dev, WLC_GET_ROAM_TRIGGER, roam_trigger,
 			sizeof(roam_trigger)) == BCME_OK) &&
@@ -9475,7 +9479,7 @@ wl_cfg80211_set_channel(struct wiphy *wiphy, struct net_device *dev,
 #endif /* APSTA_RESTRICTED_CHANNEL */
 
 	if (_band == IEEE80211_BAND_5GHZ) {
-		param.band = WLC_BAND_5G;
+		param.band = wlc_band_5g;
 		err = wldev_iovar_getbuf(dev, "bw_cap", &param, sizeof(param),
 			ioctl_buf, sizeof(ioctl_buf), NULL);
 		if (err) {
@@ -17654,8 +17658,8 @@ static s32 wl_escan_handler(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 				chspec = wl_chspec_driver_to_host(bi->chanspec);
 				channel_band = CHSPEC2WLC_BAND(chspec);
 
-				if ((cfg->curr_band == WLC_BAND_5G) &&
-					(channel_band == WLC_BAND_2G)) {
+				if ((cfg->curr_band == wlc_band_5g) &&
+					(channel_band == wlc_band_2g)) {
 					/* Avoid sending the GO results in band conflict */
 					if (wl_cfgp2p_retreive_p2pattrib(p2p_ie,
 						P2P_SEID_GROUP_ID) != NULL)
@@ -18365,12 +18369,12 @@ static s32 wl_cfg80211_attach_post(struct net_device *ndev)
 	s32 ret = 0;
 	WL_INFORM_MEM(("In\n"));
 	if (unlikely(!ndev)) {
-		WL_ERR(("ndev is invaild\n"));
+		WL_ERR(("ndev is invalid\n"));
 		return -ENODEV;
 	}
 	cfg = wl_get_cfg(ndev);
 	if (unlikely(!cfg)) {
-		WL_ERR(("cfg is invaild\n"));
+		WL_ERR(("cfg is invalid\n"));
 		return -EINVAL;
 	}
 	if (!wl_get_drv_status(cfg, READY, ndev)) {
@@ -18457,7 +18461,7 @@ s32 wl_cfg80211_attach(struct net_device *ndev, void *context)
 
 	WL_TRACE(("In\n"));
 	if (!ndev) {
-		WL_ERR(("ndev is invaild\n"));
+		WL_ERR(("ndev is invalid\n"));
 		return -ENODEV;
 	}
 	WL_DBG(("func %p\n", wl_cfg80211_get_parent_dev()));
@@ -19261,7 +19265,7 @@ static s32 __wl_update_wiphybands(struct bcm_cfg80211 *cfg, bool notify)
 
 	for (i = 1; i <= nband && i < ARRAYSIZE(bandlist); i++) {
 		index = -1;
-		if (bandlist[i] == WLC_BAND_5G && __wl_band_5ghz_a.n_channels > 0) {
+		if (bandlist[i] == wlc_band_5g && __wl_band_5ghz_a.n_channels > 0) {
 			bands[IEEE80211_BAND_5GHZ] =
 				&__wl_band_5ghz_a;
 			index = IEEE80211_BAND_5GHZ;
@@ -19353,7 +19357,7 @@ static s32 __wl_update_wiphybands(struct bcm_cfg80211 *cfg, bool notify)
 			}
 #endif // endif
 		}
-		else if (bandlist[i] == WLC_BAND_2G && __wl_band_2ghz.n_channels > 0) {
+		else if (bandlist[i] == wlc_band_2g && __wl_band_2ghz.n_channels > 0) {
 			bands[IEEE80211_BAND_2GHZ] =
 				&__wl_band_2ghz;
 			index = IEEE80211_BAND_2GHZ;
@@ -21328,7 +21332,7 @@ wl_cfg80211_set_band(struct net_device *ndev, int band)
 	int ret = 0;
 	char ioctl_buf[50];
 
-	if ((band < WLC_BAND_AUTO) || (band > WLC_BAND_2G)) {
+	if ((band < WLC_BAND_AUTO) || (band > wlc_band_2g)) {
 		WL_ERR(("Invalid band\n"));
 		return -EINVAL;
 	}
@@ -21353,7 +21357,7 @@ wl_cfg80211_set_if_band(struct net_device *ndev, int band)
 	int ret = 0, wait_cnt;
 	char ioctl_buf[32];
 
-	if ((band < WLC_BAND_AUTO) || (band > WLC_BAND_2G)) {
+	if ((band < WLC_BAND_AUTO) || (band > wlc_band_2g)) {
 		WL_ERR(("Invalid band\n"));
 		return -EINVAL;
 	}
@@ -21618,9 +21622,9 @@ wl_cfg80211_wbtext_config(struct net_device *ndev, char *data, char *command, in
 	}
 	rp->ver = WL_MAX_ROAM_PROF_VER;
 	if (*data && (!strncmp(data, "b", 1))) {
-		rp->band = WLC_BAND_2G;
+		rp->band = wlc_band_2g;
 	} else if (*data && (!strncmp(data, "a", 1))) {
-		rp->band = WLC_BAND_5G;
+		rp->band = wlc_band_5g;
 	} else {
 		err = snprintf(command, total_len, "Missing band\n");
 		goto exit;
@@ -21766,9 +21770,9 @@ int wl_cfg80211_wbtext_weight_config(struct net_device *ndev, char *data,
 	}
 
 	if (!strcasecmp(band, "a"))
-		bwcfg->band = WLC_BAND_5G;
+		bwcfg->band = wlc_band_5g;
 	else if (!strcasecmp(band, "b"))
-		bwcfg->band = WLC_BAND_2G;
+		bwcfg->band = wlc_band_2g;
 	else if (!strcasecmp(band, "all"))
 		bwcfg->band = WLC_BAND_ALL;
 	else {
@@ -21791,7 +21795,7 @@ int wl_cfg80211_wbtext_weight_config(struct net_device *ndev, char *data,
 		memcpy(bwcfg, ioctl_buf, sizeof(*bwcfg));
 		bytes_written = snprintf(command, total_len, "%s %s weight = %d\n",
 			(bwcfg->type == WNM_BSS_SELECT_TYPE_RSSI) ? "RSSI" : "CU",
-			(bwcfg->band == WLC_BAND_2G) ? "2G" : "5G", bwcfg->weight);
+			(bwcfg->band == wlc_band_2g) ? "2G" : "5G", bwcfg->weight);
 		err = bytes_written;
 		goto exit;
 	} else {
@@ -21858,10 +21862,10 @@ int wl_cfg80211_wbtext_table_config(struct net_device *ndev, char *data,
 	}
 
 	if (!strcasecmp(band, "a")) {
-		btcfg->band = WLC_BAND_5G;
+		btcfg->band = wlc_band_5g;
 	}
 	else if (!strcasecmp(band, "b")) {
-		btcfg->band = WLC_BAND_2G;
+		btcfg->band = wlc_band_2g;
 	}
 	else if (!strcasecmp(band, "all")) {
 		btcfg->band = WLC_BAND_ALL;
@@ -21955,9 +21959,9 @@ wl_cfg80211_wbtext_delta_config(struct net_device *ndev, char *data, char *comma
 
 	argc = sscanf(data, "%"S(BUFSZ)"s %"S(BUFSZ)"s", band, delta);
 	if (!strcasecmp(band, "a"))
-		rp->band = WLC_BAND_5G;
+		rp->band = wlc_band_5g;
 	else if (!strcasecmp(band, "b"))
-		rp->band = WLC_BAND_2G;
+		rp->band = wlc_band_2g;
 	else {
 		WL_ERR(("%s: Missing band\n", __func__));
 		goto exit;
@@ -22006,7 +22010,7 @@ wl_cfg80211_wbtext_delta_config(struct net_device *ndev, char *data, char *comma
 	else {
 		if (rp->roam_prof[i].channel_usage != 0) {
 			bytes_written = snprintf(command, total_len,
-				"%s Delta %d\n", (rp->band == WLC_BAND_2G) ? "2G" : "5G",
+				"%s Delta %d\n", (rp->band == wlc_band_2g) ? "2G" : "5G",
 				rp->roam_prof[0].roam_delta);
 		}
 		err = bytes_written;

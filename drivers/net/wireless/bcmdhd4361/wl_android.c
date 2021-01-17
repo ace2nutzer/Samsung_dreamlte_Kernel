@@ -74,11 +74,22 @@
 #include <wl_cfgvendor.h>
 #include <brcm_nl80211.h>
 #endif /* WL_BCNRECV */
+
+/*
+ * allow to disable 2.4 GHz or 5GHz band
+ * 0 = all
+ * 1 = 2.4 GHz
+ * 2 = 5 GHz
+ */
+static unsigned int wifi_band = 0;
+/* see wlioctl_defs.h */
+unsigned int wlc_band_5g = 1;
+unsigned int wlc_band_2g = 2;
+
 /*
  * Android private command strings, PLEASE define new private commands here
  * so they can be updated easily in the future (if needed)
  */
-
 #define CMD_START		"START"
 #define CMD_STOP		"STOP"
 #define	CMD_SCAN_ACTIVE		"SCAN-ACTIVE"
@@ -1296,6 +1307,68 @@ wl_android_set_band(struct net_device *dev, char *command)
 #endif /* ROAM_CHANNEL_CACHE */
 	return error;
 }
+
+#define WL_ANDROID_ATTR_RW(_name) \
+	static struct kobj_attribute _name##_attr = \
+		__ATTR(_name, 0644, _name##_show, _name##_store)
+
+static struct kobject *wl_android_kobject = NULL;
+
+static ssize_t wifi_band_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	char *txt = "2.4 GHz / 5 GHz\n";
+
+	if (wifi_band == 1)
+		txt = "2.4 GHz\n";
+	else if (wifi_band == 2)
+		txt = "5 GHz\n";
+
+	return sprintf(buf, "[Band]\t %s", txt);
+}
+
+static ssize_t wifi_band_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	unsigned int tmp = 0;
+
+	if (sscanf(buf, "%u", &tmp)) {
+
+		if (tmp < 0 || tmp > 2) {
+			pr_err("[wl_android] invalid input\n");
+			return -EINVAL;
+		}
+
+		wifi_band = tmp;
+		if (wifi_band == 0) {
+			wlc_band_5g = 1;
+			wlc_band_2g = 2;
+		} else if (wifi_band == 1) {
+			wlc_band_5g = 0;
+			wlc_band_2g = 2;
+		} else if (wifi_band == 2) {
+			wlc_band_5g = 1;
+			wlc_band_2g = 0;
+		}
+
+		return count;
+	}
+
+	pr_err("[wl_android] invalid cmd\n");
+
+	return -EINVAL;
+}
+WL_ANDROID_ATTR_RW(wifi_band);
+
+static struct attribute *wl_android_attrs[] = {
+	&wifi_band_attr.attr,
+	NULL,
+};
+
+static struct attribute_group wl_android_attr_group = {
+	.attrs = wl_android_attrs,
+};
 
 #ifdef CUSTOMER_HW4_PRIVATE_CMD
 #ifdef ROAM_API
@@ -8654,6 +8727,7 @@ wl_cfg80211_register_static_if(struct bcm_cfg80211 *cfg, u16 iftype, char *ifnam
 	struct wireless_dev *wdev = NULL;
 	int ifidx = WL_STATIC_IFIDX; /* Register ndev with a reserved ifidx */
 	u8 mac_addr[ETH_ALEN];
+	int ret;
 	struct net_device *primary_ndev;
 
 	WL_INFORM_MEM(("[STATIC_IF] Enter (%s) iftype:%d\n", ifname, iftype));
@@ -8674,6 +8748,20 @@ wl_cfg80211_register_static_if(struct bcm_cfg80211 *cfg, u16 iftype, char *ifnam
 		WL_ERR(("Failed to allocate static_if\n"));
 		goto fail;
 	}
+
+	wl_android_kobject = kobject_create_and_add("wl_android", kernel_kobj);
+
+	if (!wl_android_kobject) {
+		pr_err("[wl_android] Failed to create kobjects\n");
+	}
+
+	ret = sysfs_create_group(wl_android_kobject, &wl_android_attr_group);
+
+	if (ret) {
+		pr_err("[wl_android] Failed to register sysfs\n");
+		kobject_put(wl_android_kobject);
+	}
+
 	wdev = (struct wireless_dev *)MALLOCZ(cfg->osh, sizeof(*wdev));
 	if (unlikely(!wdev)) {
 		WL_ERR(("Failed to allocate wdev for static_if\n"));
