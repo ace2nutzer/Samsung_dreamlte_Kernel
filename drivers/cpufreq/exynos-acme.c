@@ -1024,10 +1024,15 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	unsigned int boot_qos, val;
 	int freq;
 
+	/*
+	 * Basically booting pm_qos is set to max frequency of domain.
+	 * But if pm_qos-booting exists in device tree,
+	 * booting pm_qos is selected to smaller one
+	 * between max frequency of domain and the value defined in device tree.
+	 */
+	boot_qos = domain->max_freq;
 	if (!of_property_read_u32(dn, "pm_qos-booting", &val))
-		boot_qos = val;
-	else
-		boot_qos = domain->max_freq;
+		boot_qos = min(boot_qos, val);
 
 	/*
 	 * Before setting booting pm_qos, ACME driver check thermal condition.
@@ -1274,9 +1279,9 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	 * to bigger one.
 	 */
 	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = val;
+		domain->max_freq = max(domain->max_freq, val);
 	if (!of_property_read_u32(dn, "min-freq", &val))
-		domain->min_freq = val;
+		domain->min_freq = min(domain->min_freq, val);
 
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);

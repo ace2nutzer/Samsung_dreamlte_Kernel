@@ -19,6 +19,6 @@ samsung,tmu_efuse_value = <55>;
 samsung,tmu_first_point_trim = <25>;
 samsung,tmu_second_point_trim = <85>;
 samsung,tmu_default_temp_offset = <50>;
-samsung,tmu_default_trip_temp = <115>;
+samsung,tmu_default_trip_temp = <99>;
 samsung,tmu_cal_type = <TYPE_ONE_POINT_TRIMMING>;
 samsung,tmu_sensor_type = <TEM1002X>;

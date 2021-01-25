@@ -37,7 +37,7 @@ DHDCFLAGS += -Wall -Wstrict-prototypes -Dlinux -DLINUX -DBCMDRIVER      \
 #####################
 # Bus Interface Type
 #####################
-ifeq ($(CONFIG_BCMDHD_PCIE),y)
+ifneq ($(CONFIG_BCMDHD_PCIE),)
 	BUS_IFACE_PCIE=y
 else
 	BUS_IFACE_SDIO=y

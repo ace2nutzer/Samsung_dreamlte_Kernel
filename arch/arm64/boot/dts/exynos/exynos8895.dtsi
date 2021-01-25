@@ -512,7 +512,7 @@
 				};
 			};
 		};
-		cpufreq_domain1: domain@1 {
+		domain@1 {
 			device_type = "cpufreq-domain";
 			sibling-cpus = "4-7";
 			cal-id = <ACPM_DVFS_CPUCL0>;
@@ -793,8 +793,8 @@
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
 		gpu_tmu_control = <1>;
-		gpu_temp_throttling_level_num = <6>;
-		gpu_temp_throttling = <546000 455000 385000 338000 260000 260000>;
+		gpu_temp_throttling_level_num = <9>;
+		gpu_temp_throttling = <839000 764000 683000 572000 546000 455000 385000 338000 260000>;
 		gpu_power_coeff = <625>;
 		gpu_dvfs_time_interval = <1>; /* ticks */
 		gpu_default_wakeup_lock = <1>;
@@ -803,7 +803,7 @@
 		gpu_dvs = <0>;
 		gpu_inter_frame_pm = <1>;
 		gpu_perf_gathering = <0>;
-		gpu_runtime_pm_delay_time = <50>;
+		gpu_runtime_pm_delay_time = <0>;
 		gpu_dvfs_polling_time = <30>;
 		gpu_pmqos_int_disable = <1>;
 		gpu_pmqos_mif_max_clock = <0>;
@@ -4552,8 +4552,8 @@
 		tmu_name = "MNGS";
 		id = <0>;
 		sensors = <61>;
-		sensing_mode = "balance";
-		hotplug_enable = <1>;
+		sensing_mode = "avg";
+		hotplug_enable = <0>;
 		hotplug_in_threshold = <91>;
 		hotplug_out_threshold = <96>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
@@ -4566,7 +4566,7 @@
 		tmu_name = "APOLLO";
 		id = <1>;
 		sensors = <2>;
-		sensing_mode = "max";
+		sensing_mode = "avg";
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 
@@ -4577,16 +4577,20 @@
 		tmu_name = "GPU";
 		id = <2>;
 		sensors = <1>;
-		sensing_mode = "max";
+		sensing_mode = "avg";
 		/* gpu cooling related table */
 		/* flags, driver_data(index), frequency */
-		gpu_idx_num = <6>;
-		gpu_cooling_table = < 0 0 546000
-				      0 1 455000
-				      0 2 385000
-				      0 3 338000
-				      0 4 260000
-				      0 5 TABLE_END>;
+		gpu_idx_num = <10>;
+		gpu_cooling_table = < 0 0 839000
+				      0 1 764000
+				      0 2 683000
+				      0 3 572000
+				      0 4 546000
+				      0 5 455000
+				      0 6 385000
+				      0 7 338000
+				      0 8 260000
+				      0 9 TABLE_END>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 
@@ -4597,15 +4601,15 @@
 		tmu_name = "ISP";
 		id = <3>;
 		sensors = <6>;
-		sensing_mode = "max";
+		sensing_mode = "avg";
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 
 	thermal-zones {
 		mngs_thermal: mngs-thermal {
 			zone_name  = "MNGS_THERMAL";
-			polling-delay-passive = <50>;
-			polling-delay = <1000>;
+			polling-delay-passive = <1000>;
+			polling-delay = <0>;
 			thermal-sensors = <&tmuctrl_0>;
 			governor = "power_allocator";
 			sustainable-power = <2000>;
@@ -4622,12 +4626,12 @@
 					type = "active";
 				};
 				mngs_alert0: mngs-alert0 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <60000>; /* millicelsius */
 					hysteresis = <2000>; /* millicelsius */
 					type = "active";
 				};
 				mngs_alert1: mngs-alert1 {
-					temperature = <95000>; /* millicelsius */
+					temperature = <75000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "passive";
 				};
@@ -4641,11 +4645,11 @@
 			cooling-maps {
 				map0 {
 				     trip = <&mngs_alert0>;
-				     cooling-device = <&cpufreq_domain1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				     cooling-device = <&cpu4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map1 {
 				     trip = <&mngs_alert1>;
-				     cooling-device = <&cpufreq_domain1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				     cooling-device = <&cpu4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 			       };
 			};
 		};
@@ -4663,32 +4667,32 @@
 					type = "active";
 				};
 				apo_alert1: apo-alert1 {
-					temperature = <85000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
-				};
-				apo_alert2: apo-alert2 {
-					temperature = <90000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
-				};
-				apo_alert3: apo-alert3 {
-					temperature = <91000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
-				};
-				apo_alert4: apo-alert4 {
-					temperature = <92000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
-				};
-				apo_alert5: apo-alert5 {
 					temperature = <93000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
-				apo_alert6: apo-alert6 {
+				apo_alert2: apo-alert2 {
 					temperature = <94000>; /* millicelsius */
+					hysteresis = <5000>; /* millicelsius */
+					type = "active";
+				};
+				apo_alert3: apo-alert3 {
+					temperature = <95000>; /* millicelsius */
+					hysteresis = <5000>; /* millicelsius */
+					type = "active";
+				};
+				apo_alert4: apo-alert4 {
+					temperature = <96000>; /* millicelsius */
+					hysteresis = <5000>; /* millicelsius */
+					type = "active";
+				};
+				apo_alert5: apo-alert5 {
+					temperature = <97000>; /* millicelsius */
+					hysteresis = <5000>; /* millicelsius */
+					type = "active";
+				};
+				apo_alert6: apo-alert6 {
+					temperature = <98000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
@@ -4745,7 +4749,7 @@
 
 		gpu_thermal: GPU {
 			zone_name  = "GPU_THERMAL";
-			polling-delay-passive = <100>;
+			polling-delay-passive = <1000>;
 			polling-delay = <0>;
 			thermal-sensors = <&tmuctrl_2>;
 			governor = "power_allocator";
@@ -4763,12 +4767,12 @@
 					type = "active";
 				};
 				gpu_alert0: gpu-alert0 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <60000>; /* millicelsius */
 					hysteresis = <2000>; /* millicelsius */
 					type = "active";
 				};
 				gpu_alert1: gpu-alert1 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <75000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "passive";
 				};
@@ -4804,17 +4808,17 @@
 					type = "active";
 				};
 				isp_alert1: isp-alert1 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <96000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				isp_alert2: isp-alert2 {
-					temperature = <90000>; /* millicelsius */
+					temperature = <97000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
 				isp_alert3: isp-alert3 {
-					temperature = <95000>; /* millicelsius */
+					temperature = <98000>; /* millicelsius */
 					hysteresis = <5000>; /* millicelsius */
 					type = "active";
 				};
