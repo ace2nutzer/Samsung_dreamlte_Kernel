@@ -626,7 +626,7 @@ config ZSMALLOC_STAT
 
 config DIRECT_RECLAIM_FILE_PAGES_ONLY
 	bool "Reclaim file pages only on direct reclaim path"
-	depends on ZSWAP
+	depends on ZSWAP || ZRAM
 	default n
 
 config INCREASE_MAXIMUM_SWAPPINESS
@@ -636,12 +636,12 @@ config INCREASE_MAXIMUM_SWAPPINESS
 
 config FIX_INACTIVE_RATIO
 	bool "Fix active:inactive anon ratio to 1:1"
-	depends on ZSWAP
+	depends on ZSWAP || ZRAM
 	default n
 
 config TIGHT_PGDAT_BALANCE
 	bool "Set more tight balanced condition to kswapd"
-	depends on ZSWAP
+	depends on ZSWAP || ZRAM
 	default n
 
 config SWAP_ENABLE_READAHEAD
