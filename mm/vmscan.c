@@ -3573,6 +3573,10 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int order,
 	finish_wait(&pgdat->kswapd_wait, &wait);
 }
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+extern struct cpumask hmp_fast_cpu_mask;
+#endif
+
 /*
  * The background pageout daemon, started as a kernel thread
  * from the init process.
@@ -3597,15 +3601,16 @@ static int kswapd(void *p)
 	struct reclaim_state reclaim_state = {
 		.reclaimed_slab = 0,
 	};
-#ifndef CONFIG_SCHED_HMP_CUSTOM
-	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
-#endif
+#ifdef CONFIG_SCHED_HMP_CUSTOM
 	lockdep_set_current_reclaim_state(GFP_KERNEL);
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
 	if (!cpumask_empty(&hmp_fast_cpu_mask))
-		sched_setaffinity(0, &hmp_fast_cpu_mask);
+		set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
 #else
+	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
+
+	lockdep_set_current_reclaim_state(GFP_KERNEL);
+
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
 #endif
@@ -3753,7 +3758,6 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 }
 #endif /* CONFIG_HIBERNATION */
 
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 /* It's optimal to keep kswapds on the same CPUs as their memory, but
    not required for correctness.  So if the last cpu in a node goes
    away, we get changed to run anywhere: as the first one comes back,
@@ -3766,6 +3770,12 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 	if (action == CPU_ONLINE || action == CPU_ONLINE_FROZEN) {
 		for_each_node_state(nid, N_MEMORY) {
 			pg_data_t *pgdat = NODE_DATA(nid);
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+			if (cpumask_any_and(cpu_online_mask, &hmp_fast_cpu_mask) < nr_cpu_ids)
+				/* One of our CPUs online: restore mask */
+				set_cpus_allowed_ptr(pgdat->kswapd, &hmp_fast_cpu_mask);
+#else
 			const struct cpumask *mask;
 
 			mask = cpumask_of_node(pgdat->node_id);
@@ -3773,11 +3783,11 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 			if (cpumask_any_and(cpu_online_mask, mask) < nr_cpu_ids)
 				/* One of our CPUs online: restore mask */
 				set_cpus_allowed_ptr(pgdat->kswapd, mask);
+#endif
 		}
 	}
 	return NOTIFY_OK;
 }
-#endif
 
 /*
  * This kswapd start function will be called by init and node-hot-add.
@@ -3823,9 +3833,7 @@ static int __init kswapd_init(void)
 	swap_setup();
 	for_each_node_state(nid, N_MEMORY)
  		kswapd_run(nid);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	hotcpu_notifier(cpu_callback, 0);
-#endif
 #ifdef CONFIG_SYSFS
 	if (sysfs_create_group(mm_kobj, &mem_boost_attr_group))
 		pr_err("vmscan: register mem boost sysfs failed\n");

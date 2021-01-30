@@ -1733,19 +1733,8 @@ static int ksmd_should_run(void)
 	return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
 }
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-static bool affinity = false;
-#endif
-
 static int ksm_scan_thread(void *nothing)
 {
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if ((!affinity) && (!cpumask_empty(&hmp_slow_cpu_mask))) {
-		sched_setaffinity(0, &hmp_slow_cpu_mask);
-		affinity = true;
-	}
-#endif
-
 	set_freezable();
 	set_user_nice(current, 5);
 
