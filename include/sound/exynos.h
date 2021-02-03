@@ -38,7 +38,7 @@ enum {
 	AUD_PWR_AFTR,
 };
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) && defined(CONFIG_EXYNOS5_DYNAMIC_CPU_HOTPLUG)
 #define USE_EXYNOS_AUD_SCHED
 enum {
 	AUD_MODE_DEFAULT = 0,

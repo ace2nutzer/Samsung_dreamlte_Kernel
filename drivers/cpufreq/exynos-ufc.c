@@ -27,13 +27,46 @@
 /*********************************************************************
  *                          SYSFS INTERFACES                         *
  *********************************************************************/
+
+/* custom DVFS */
+static unsigned int cpu_dvfs_max_temp = 65;		/* min 45, max 85 °C */
+/* from exynos-acme */
+extern unsigned int cpu4_max_freq;
+
+extern int get_cpu_temp(void);
+
+#define CPU_DVFS_MARGIN_TEMP		10		/* °C */
+#define CPU_DVFS_CHECK_DELAY		100		/* ms */
+
+/* Cluster 1 big cpu */
+#define FREQ_STEP_0               (741000)
+#define FREQ_STEP_1               (858000)
+#define FREQ_STEP_2               (962000)
+#define FREQ_STEP_3               (1066000)
+#define FREQ_STEP_4               (1170000)
+#define FREQ_STEP_5               (1261000)
+#define FREQ_STEP_6               (1469000)
+#define FREQ_STEP_7               (1703000)
+#define FREQ_STEP_8               (1807000)
+#define FREQ_STEP_9               (1937000)
+#define FREQ_STEP_10              (2002000)
+#define FREQ_STEP_11              (2158000)
+#define FREQ_STEP_12              (2314000)
+#define FREQ_STEP_13              (2496000)
+#define FREQ_STEP_14              (2574000)
+#define FREQ_STEP_15              (2652000)
+#define FREQ_STEP_16              (2704000)
+#define FREQ_STEP_17              (2808000)
+
+static struct pm_qos_request cpu_maxlock_cl1;
+
 /*
  * Log2 of the number of scale size. The frequencies are scaled up or
  * down as the multiple of this number.
  */
 #define SCALE_SIZE	2
 
-static int last_max_limit = -1;
+//static int last_max_limit = -1;
 static int sse_mode = 0;
 
 static ssize_t show_cpufreq_table(struct kobject *kobj,
@@ -407,6 +440,7 @@ static void disable_domain_cpus(struct exynos_cpufreq_domain *domain)
 	pm_qos_update_request(&cpu_online_max_qos_req, cpumask_weight(&mask));
 }
 
+#if 0
 static void cpufreq_max_limit_update(int input_freq)
 {
 	struct list_head *domains = get_domain_list();
@@ -503,6 +537,7 @@ static void cpufreq_max_limit_update(int input_freq)
 		set_max = true;
 	}
 }
+#endif
 
 static ssize_t store_cpufreq_max_limit(struct kobject *kobj, struct attribute *attr,
 					const char *buf, size_t count)
@@ -528,6 +563,7 @@ static ssize_t show_execution_mode_change(struct kobject *kobj,
 static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribute *attr,
 					const char *buf, size_t count)
 {
+/*
 	int input;
 	int prev_mode;
 
@@ -541,8 +577,144 @@ static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribut
 		if (last_max_limit != -1)
 			cpufreq_max_limit_update(last_max_limit);
 	}
-
+*/
 	return count;
+}
+
+
+
+static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, cpu_dvfs_max_temp);
+	return strlen(buf);
+}
+
+static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
+{
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u", &tmp)) {
+
+		if (tmp < 45 || tmp > 85) {
+			pr_err("%s: out of range 45 - 85\n", __func__);
+			return -EINVAL;
+		}
+
+		cpu_dvfs_max_temp = tmp;
+		return count;
+	}
+
+	pr_err("%s: invalid input\n", __func__);
+	return -EINVAL;
+}
+
+static void cpu_dvfs_check_thread(struct work_struct *work);
+DECLARE_DELAYED_WORK(cpu_dvfs_check_work, cpu_dvfs_check_thread);
+
+static void cpu_dvfs_check_thread(struct work_struct *work)
+{
+	int cpu_temp = 0;
+	static int cpu_max_limit = 0;
+
+	if (!cpu_max_limit)
+		cpu_max_limit = cpu4_max_freq;
+
+	cpu_temp = get_cpu_temp();
+
+	if (cpu_temp >= cpu_dvfs_max_temp) {
+
+		if (cpu_max_limit == FREQ_STEP_0)
+			goto out;
+
+		if (cpu_max_limit == FREQ_STEP_17)
+			cpu_max_limit = FREQ_STEP_16;
+		else if (cpu_max_limit == FREQ_STEP_16)
+			cpu_max_limit = FREQ_STEP_15;
+		else if (cpu_max_limit == FREQ_STEP_15)
+			cpu_max_limit = FREQ_STEP_14;
+		else if (cpu_max_limit == FREQ_STEP_14)
+			cpu_max_limit = FREQ_STEP_13;
+		else if (cpu_max_limit == FREQ_STEP_13)
+			cpu_max_limit = FREQ_STEP_12;
+		else if (cpu_max_limit == FREQ_STEP_12)
+			cpu_max_limit = FREQ_STEP_11;
+		else if (cpu_max_limit == FREQ_STEP_11)
+			cpu_max_limit = FREQ_STEP_10;
+		else if (cpu_max_limit == FREQ_STEP_10)
+			cpu_max_limit = FREQ_STEP_9;
+		else if (cpu_max_limit == FREQ_STEP_9)
+			cpu_max_limit = FREQ_STEP_8;
+		else if (cpu_max_limit == FREQ_STEP_8)
+			cpu_max_limit = FREQ_STEP_7;
+		else if (cpu_max_limit == FREQ_STEP_7)
+			cpu_max_limit = FREQ_STEP_6;
+		else if (cpu_max_limit == FREQ_STEP_6)
+			cpu_max_limit = FREQ_STEP_5;
+		else if (cpu_max_limit == FREQ_STEP_5)
+			cpu_max_limit = FREQ_STEP_4;
+		else if (cpu_max_limit == FREQ_STEP_4)
+			cpu_max_limit = FREQ_STEP_3;
+		else if (cpu_max_limit == FREQ_STEP_3)
+			cpu_max_limit = FREQ_STEP_2;
+		else if (cpu_max_limit == FREQ_STEP_2)
+			cpu_max_limit = FREQ_STEP_1;
+		else if (cpu_max_limit == FREQ_STEP_1)
+			cpu_max_limit = FREQ_STEP_0;
+		else
+			goto out;
+
+		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
+		goto out;
+	}
+
+	if (cpu_max_limit == cpu4_max_freq)
+		goto out;
+
+	if (cpu_temp <= (cpu_dvfs_max_temp - CPU_DVFS_MARGIN_TEMP)) {
+
+		if (cpu_max_limit == FREQ_STEP_0)
+			cpu_max_limit = FREQ_STEP_1;
+		else if (cpu_max_limit == FREQ_STEP_1)
+			cpu_max_limit = FREQ_STEP_2;
+		else if (cpu_max_limit == FREQ_STEP_2)
+			cpu_max_limit = FREQ_STEP_3;
+		else if (cpu_max_limit == FREQ_STEP_3)
+			cpu_max_limit = FREQ_STEP_4;
+		else if (cpu_max_limit == FREQ_STEP_4)
+			cpu_max_limit = FREQ_STEP_5;
+		else if (cpu_max_limit == FREQ_STEP_5)
+			cpu_max_limit = FREQ_STEP_6;
+		else if (cpu_max_limit == FREQ_STEP_6)
+			cpu_max_limit = FREQ_STEP_7;
+		else if (cpu_max_limit == FREQ_STEP_7)
+			cpu_max_limit = FREQ_STEP_8;
+		else if (cpu_max_limit == FREQ_STEP_8)
+			cpu_max_limit = FREQ_STEP_9;
+		else if (cpu_max_limit == FREQ_STEP_9)
+			cpu_max_limit = FREQ_STEP_10;
+		else if (cpu_max_limit == FREQ_STEP_10)
+			cpu_max_limit = FREQ_STEP_11;
+		else if (cpu_max_limit == FREQ_STEP_11)
+			cpu_max_limit = FREQ_STEP_12;
+		else if (cpu_max_limit == FREQ_STEP_12)
+			cpu_max_limit = FREQ_STEP_13;
+		else if (cpu_max_limit == FREQ_STEP_13)
+			cpu_max_limit = FREQ_STEP_14;
+		else if (cpu_max_limit == FREQ_STEP_14)
+			cpu_max_limit = FREQ_STEP_15;
+		else if (cpu_max_limit == FREQ_STEP_15)
+			cpu_max_limit = FREQ_STEP_16;
+		else if (cpu_max_limit == FREQ_STEP_16)
+			cpu_max_limit = FREQ_STEP_17;
+		else
+			goto out;
+
+		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
+	}
+
+out:
+	schedule_delayed_work(&cpu_dvfs_check_work, 
+			msecs_to_jiffies(CPU_DVFS_CHECK_DELAY));
 }
 
 static struct global_attr cpufreq_table =
@@ -559,6 +731,9 @@ __ATTR(cpufreq_max_limit, 0644,
 static struct global_attr execution_mode_change =
 __ATTR(execution_mode_change, 0644,
 		show_execution_mode_change, store_execution_mode_change);
+static struct global_attr sysfs_cpu_dvfs_max_temp =
+__ATTR(cpu_dvfs_max_temp, 0644,
+		show_cpu_dvfs_max_temp, store_cpu_dvfs_max_temp);
 
 static __init void init_sysfs(void)
 {
@@ -575,7 +750,10 @@ static __init void init_sysfs(void)
 		pr_err("failed to create cpufreq_max_limit node\n");
 
 	if (sysfs_create_file(power_kobj, &execution_mode_change.attr))
-		pr_err("failed to create cpufreq_max_limit node\n");
+		pr_err("failed to create execution_mode_change node\n");
+
+	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_max_temp.attr))
+		pr_err("failed to create cpu_dvfs_max_temp node\n");
 
 }
 
@@ -598,6 +776,10 @@ static __init void init_pm_qos(struct exynos_cpufreq_domain *domain)
 			domain->pm_qos_max_class, domain->max_freq);
 	pm_qos_add_request(&domain->user_min_qos_wo_boost_req,
 			domain->pm_qos_min_class, domain->min_freq);
+
+	if (domain->id == 1)
+		pm_qos_add_request(&cpu_maxlock_cl1,
+				PM_QOS_CLUSTER1_FREQ_MAX, domain->max_freq);
 }
 
 int ufc_domain_init(struct exynos_cpufreq_domain *domain)
@@ -708,6 +890,9 @@ static int __init exynos_ufc_init(void)
 
 	pm_qos_add_request(&cpu_online_max_qos_req, PM_QOS_CPU_ONLINE_MAX,
 					PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
+
+	schedule_delayed_work(&cpu_dvfs_check_work, 0);
+	pr_err("%s: started cpu_dvfs_check_work\n", __func__);
 
 	while ((dn = of_find_node_by_type(dn, "cpufreq-userctrl"))) {
 		struct cpumask shared_mask;

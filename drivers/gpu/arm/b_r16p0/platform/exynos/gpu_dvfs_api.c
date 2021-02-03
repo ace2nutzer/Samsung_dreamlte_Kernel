@@ -635,5 +635,6 @@ int gpu_dvfs_get_max_freq(void)
 
 	DVFS_ASSERT(platform);
 
+	platform->user_max_lock_input = platform->gpu_max_clock;
 	return platform->gpu_max_clock;
 }

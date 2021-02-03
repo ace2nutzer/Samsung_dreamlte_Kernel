@@ -61,6 +61,8 @@ static LIST_HEAD(thermal_governor_list);
 static DEFINE_MUTEX(thermal_list_lock);
 static DEFINE_MUTEX(thermal_governor_lock);
 
+#define MCELSIUS		1000
+
 static atomic_t in_suspend;
 
 #ifdef CONFIG_SCHED_HMP
@@ -463,13 +465,13 @@ static void handle_critical_trips(struct thermal_zone_device *tz,
 	if (trip_type == THERMAL_TRIP_CRITICAL) {
 		dev_emerg(&tz->device,
 			  "critical temperature reached(%d C),shutting down\n",
-			  tz->temperature / 1000);
+			  tz->temperature / MCELSIUS);
 		orderly_poweroff(true);
 	}
 }
 
 #ifdef CONFIG_SEC_DEBUG_HW_PARAM
-#define APO_THROTTLE_TEMP	81000
+#define APO_THROTTLE_TEMP	100000
 static bool period_check;
 static bool is_apo_check;
 static int trip_temp;
@@ -694,6 +696,28 @@ static void thermal_zone_device_check(struct work_struct *work)
 #define to_thermal_zone(_dev) \
 	container_of(_dev, struct thermal_zone_device, device)
 
+static struct thermal_zone_device *mngs_tz = NULL;
+
+int get_cpu_temp(void)
+{
+	int temperature, ret;
+
+	if (mngs_tz == NULL) {
+		pr_err("%s: mngs_tz not ready !\n", __func__);
+		return -ENODEV;
+	}
+
+	ret = thermal_zone_get_temp(mngs_tz, &temperature);
+
+	if (ret) {
+		pr_err("%s: failed to get cpu_temp\n", __func__);
+		return ret;
+	} else {
+		temperature /= MCELSIUS;
+		return temperature;
+	}
+}
+
 static ssize_t
 type_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -893,7 +917,7 @@ passive_store(struct device *dev, struct device_attribute *attr,
 	/* sanity check: values below 1000 millicelcius don't make sense
 	 * and can cause the system to go into a thermal heart attack
 	 */
-	if (state && state < 1000)
+	if (state && state < MCELSIUS)
 		return -EINVAL;
 
 	if (state && !tz->forced_passive) {
@@ -1917,6 +1941,7 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type,
 	int count;
 	int passive = 0;
 	struct thermal_governor *governor;
+	const char *mngs = "mngs-thermal";
 
 	if (type && strlen(type) >= THERMAL_NAME_LENGTH)
 		return ERR_PTR(-EINVAL);
@@ -1933,6 +1958,9 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type,
 	tz = kzalloc(sizeof(struct thermal_zone_device), GFP_KERNEL);
 	if (!tz)
 		return ERR_PTR(-ENOMEM);
+
+	if (strcmp(type, mngs) == 0)
+		mngs_tz = tz;
 
 	INIT_LIST_HEAD(&tz->thermal_instances);
 	idr_init(&tz->idr);

@@ -387,6 +387,7 @@ static unsigned int exynos_cpufreq_get(unsigned int cpu)
 
 static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 {
+#if 0
 	struct exynos_cpufreq_domain *domain = find_domain(policy->cpu);
 	unsigned int freq;
 
@@ -412,12 +413,13 @@ static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 	 * cpufreq suspend, disable scaling for all domains.
 	 */
 	disable_domain(domain);
-
+#endif
 	return 0;
 }
 
 static int exynos_cpufreq_resume(struct cpufreq_policy *policy)
 {
+/*
 	struct exynos_cpufreq_domain *domain = find_domain(policy->cpu);
 
 	if (!domain)
@@ -427,7 +429,7 @@ static int exynos_cpufreq_resume(struct cpufreq_policy *policy)
 
 	pm_qos_update_request(&domain->min_qos_req, domain->min_freq);
 	pm_qos_update_request(&domain->max_qos_req, domain->max_freq);
-
+*/
 	return 0;
 }
 
@@ -464,7 +466,7 @@ module_param(cpu0_min_freq, uint, 0644);
 module_param(cpu0_max_freq, uint, 0644);
 
 static unsigned int cpu4_min_freq = 0;
-static unsigned int cpu4_max_freq = 0;
+unsigned int cpu4_max_freq = 0;
 module_param(cpu4_min_freq, uint, 0644);
 module_param(cpu4_max_freq, uint, 0644);
 

@@ -747,11 +747,11 @@ static int exynos_get_temp(void *p, int *temp)
 	mutex_lock(&thermal_suspend_lock);
 
 	if (cdev->ops->set_cur_temp && data->id != 1)
-		cdev->ops->set_cur_temp(cdev, suspended, *temp / 1000);
+		cdev->ops->set_cur_temp(cdev, suspended, *temp / MCELSIUS);
 
 	mutex_unlock(&thermal_suspend_lock);
 
-	exynos_ss_thermal(data->pdata, *temp / 1000, data->tmu_name, 0);
+	exynos_ss_thermal(data->pdata, *temp / MCELSIUS, data->tmu_name, 0);
 
 	if (data->id == 0) {
 		mcinfo_count = get_mcinfo_base_count();
@@ -778,19 +778,19 @@ void sec_bootstat_get_thermal(int *temp)
 	list_for_each_entry(data, &dtm_dev_list, node) {
 		if (!strncasecmp(data->tmu_name, "MNGS", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[0]);
-			temp[0] /= 1000;
+			temp[0] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "APOLLO", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[1]);
-			temp[1] /= 1000;
+			temp[1] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "GPU", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[2]);
-			temp[2] /= 1000;
+			temp[2] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "ISP", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[3]);
-			temp[3] /= 1000;
+			temp[3] /= MCELSIUS;
 		}
 		else
 			continue;
@@ -810,19 +810,19 @@ exynos_tmu_curr_temp(struct device *dev,
 	list_for_each_entry(data, &dtm_dev_list, node) {
 		if (!strncasecmp(data->tmu_name, "MNGS", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[0]);
-			temp[0] /= 1000;
+			temp[0] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "APOLLO", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[1]);
-			temp[1] /= 1000;
+			temp[1] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "GPU", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[2]);
-			temp[2] /= 1000;
+			temp[2] /= MCELSIUS;
 		}
 		else if (!strncasecmp(data->tmu_name, "ISP", THERMAL_NAME_LENGTH)) {
 			exynos_get_temp(data, &temp[3]);
-			temp[3] /= 1000;
+			temp[3] /= MCELSIUS;
 		}
 		else {
 			pr_info("%s: %s\n", __func__, data->tmu_name);
@@ -1066,7 +1066,7 @@ static int exynos_pm_notifier(struct notifier_block *notifier,
 			cdev = devnode->cool_dev;
 
 			if (cdev && cdev->ops->set_cur_temp && devnode->id != 1)
-				cdev->ops->set_cur_temp(cdev, suspended, devnode->tzd->temperature / 1000);
+				cdev->ops->set_cur_temp(cdev, suspended, devnode->tzd->temperature / MCELSIUS);
 		}
 		mutex_unlock(&thermal_suspend_lock);
 		break;

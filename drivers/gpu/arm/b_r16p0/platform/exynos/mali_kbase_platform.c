@@ -468,6 +468,8 @@ static int gpu_context_init(struct kbase_device *kbdev)
 	core_props = &(kbdev->gpu_props.props.core_props);
 	core_props->gpu_freq_khz_max = platform->gpu_max_clock_limit;
 
+	platform->user_max_lock_input = platform->gpu_max_clock;
+
 #if MALI_SEC_PROBE_TEST != 1
 	kbdev->vendor_callbacks = (struct kbase_vendor_callbacks *)gpu_get_callbacks();
 #endif

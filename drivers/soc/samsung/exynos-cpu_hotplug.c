@@ -374,13 +374,14 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf,
 		size_t count)
 {
+/*
 	int input;
 
 	if (!sscanf(buf, "%d", &input))
 		return -EINVAL;
 
 	control_cpu_hotplug(!!input);
-
+*/
 	return count;
 }
 
@@ -503,7 +504,7 @@ static int __init cpu_hotplug_init(void)
 	register_pm_notifier(&exynos_cpu_hotplug_nb);
 
 	/* Enable cpu_hotplug */
-	update_enable_flag(true);
+	//update_enable_flag(true);
 
 	return 0;
 }
