@@ -26,10 +26,12 @@ bool sleep_mode = false;
 static bool is_s8_plus = true;
 static unsigned int ac_curr_max = 2300;
 static unsigned int usbpd_curr_max = 2300;
+static unsigned int usbcd_curr_max = 2300;
 #else
 static bool is_s8_plus = false;
 static unsigned int ac_curr_max = 2000;
 static unsigned int usbpd_curr_max = 2000;
+static unsigned int usbcd_curr_max = 2000;
 #endif
 static unsigned int wc_curr_max = 1000;
 static unsigned int usb3_curr_max = 900;
@@ -59,7 +61,7 @@ static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
 static unsigned int batt_max_temp = 40; /* °C */
 
-#define CHARGER_CONTROL_VERSION		"2.7"
+#define CHARGER_CONTROL_VERSION		"2.8"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -915,8 +917,12 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		else
 			input_current = usbpd_curr_max;
 		charging_current = usbpd_curr_max;
+	// USB-CD
+	} else if (battery->cable_type == SEC_BATTERY_CABLE_USB_CDP) {
+		input_current = usbcd_curr_max;
+		charging_current = usbcd_curr_max;
 	// USB
-	} else if (battery->cable_type == SEC_BATTERY_CABLE_USB || battery->cable_type == SEC_BATTERY_CABLE_USB_CDP) {
+	} else if (battery->cable_type == SEC_BATTERY_CABLE_USB) {
 		// USB 3.0
 		if (battery->current_event & SEC_BAT_CURRENT_EVENT_USB_SUPER) {
 			input_current = usb3_curr_max;
@@ -1137,6 +1143,7 @@ static ssize_t curr_max_show(struct kobject *kobj,
 
 	sprintf(buf, "%sAC current max:   \t%u mA\n", buf, ac_curr_max);
 	sprintf(buf, "%sUSB-PD current max:   \t%u mA\n", buf, usbpd_curr_max);
+	sprintf(buf, "%sUSB-CD current max:   \t%u mA\n", buf, usbcd_curr_max);
 	sprintf(buf, "%sWC current max:   \t%u mA\n", buf, wc_curr_max);
 	sprintf(buf, "%sUSB 3.0 current max:   \t%u mA\n", buf, usb3_curr_max);
 	sprintf(buf, "%sUSB 2.0 current max:   \t%u mA\n\n", buf, usb2_curr_max);
@@ -1160,7 +1167,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
-	unsigned int ac, usb2, usb3, usbpd, wc, max_curr, power;
+	unsigned int ac, usb2, usb3, usbpd, usbcd, wc, max_curr, power;
 
 	max_curr = _battery->pdata->max_charging_current;
 
@@ -1221,6 +1228,15 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		usbpd_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
 		if (usbpd_in_curr_9v < 100)
 			usbpd_in_curr_9v = 100;
+		goto out;
+	}
+
+	if (sscanf(buf, "usbcd=%u", &usbcd)) {
+		if (usbcd < 200 || usbcd > max_curr) {
+			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
+			return -EINVAL;
+		}
+		usbcd_curr_max = usbcd;
 		goto out;
 	}
 
