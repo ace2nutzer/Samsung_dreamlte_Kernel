@@ -18,6 +18,7 @@
 #include <mali_kbase.h>
 
 #include <linux/fb.h>
+#include <linux/freezer.h>
 
 #if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL) && defined(CONFIG_GPU_THERMAL)
 #include "exynos_tmu.h"
@@ -39,10 +40,14 @@
 extern struct kbase_device *pkbdev;
 
 /* custom DVFS */
-static unsigned int gpu_dvfs_max_temp = 65;			/* min 45, max 85 °C */
+static unsigned int gpu_dvfs_max_temp = 70;
+static unsigned int gpu_dvfs_peak_temp = 0;
+static bool gpu_dvfs_debug = false;
 
-#define GPU_DVFS_MARGIN_TEMP	10				/* °C */
-#define GPU_DVFS_CHECK_DELAY		100		/* ms */
+#define GPU_DVFS_RANGE_TEMP_MIN		(50)	/* °C */
+#define GPU_DVFS_RANGE_TEMP_MAX		(90)	/* °C */
+#define GPU_DVFS_MARGIN_TEMP			(5)		/* °C */
+#define GPU_DVFS_CHECK_DELAY				(40)	/* ms */
 
 #define FREQ_STEP_0	260000
 #define FREQ_STEP_1	338000
@@ -2078,6 +2083,7 @@ static ssize_t show_kernel_sysfs_gpu_temp(struct kobject *kobj, struct kobj_attr
 static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, gpu_dvfs_max_temp);
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
 	return strlen(buf);
 }
 
@@ -2087,12 +2093,18 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 
 	if (sscanf(buf, "%u", &tmp)) {
 
-		if (tmp < 45 || tmp > 85) {
-			pr_err("%s: out of range 45 - 85\n", __func__);
+		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_RANGE_TEMP_MAX) {
+			pr_err("%s: out of range %d - %d\n", __func__ , (int)GPU_DVFS_RANGE_TEMP_MIN , (int)GPU_DVFS_RANGE_TEMP_MAX);
 			return -EINVAL;
 		}
 
 		gpu_dvfs_max_temp = tmp;
+		gpu_dvfs_peak_temp = 0;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "reset_peak")) {
+		gpu_dvfs_peak_temp = 0;
 		return count;
 	}
 
@@ -2100,22 +2112,57 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 	return -EINVAL;
 }
 
-static void gpu_dvfs_check_thread(struct work_struct *work);
-DECLARE_DELAYED_WORK(gpu_dvfs_check_work, gpu_dvfs_check_thread);
-
-static void gpu_dvfs_check_thread(struct work_struct *work)
+static ssize_t show_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	int gpu_temp, clock = 0;
+	sprintf(buf, "%s\n", gpu_dvfs_debug ? "1" : "0");
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
+		gpu_dvfs_debug = true;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
+		gpu_dvfs_debug = false;
+		return count;
+	}
+
+	pr_err("%s: invalid input\n", __func__);
+	return -EINVAL;
+}
+
+static int gpu_dvfs_check_thread(void *nothing)
+{
+	int gpu_temp, clock, cpu = 0;
 	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
+init:
 	if (gpu_thermal_data == NULL) {
 		pr_err("%s: gpu_thermal_data not ready !\n", __func__);
-		goto out;
+		msleep(500);
+		goto init;
 	}
 
 	if (platform == NULL) {
 		pr_err("%s: platform not ready !\n", __func__);
-		goto out;
+		msleep(500);
+		goto init;
+	}
+
+	set_user_nice(current, MIN_NICE);
+
+check:
+	schedule_timeout_interruptible(msecs_to_jiffies(GPU_DVFS_CHECK_DELAY));
+
+	if (gpu_dvfs_debug) {
+		if (gpu_temp > gpu_dvfs_peak_temp) {
+			gpu_dvfs_peak_temp = gpu_temp;
+			cpu = smp_processor_id();
+			pr_err("%s: peak_temp: %u - PID: %d - CPU: %d\n", __func__, gpu_dvfs_peak_temp, current->pid, cpu);
+		}
 	}
 
 	gpu_temp = gpu_thermal_data->tmu_read(gpu_thermal_data);
@@ -2123,7 +2170,7 @@ static void gpu_dvfs_check_thread(struct work_struct *work)
 	if (gpu_temp >= gpu_dvfs_max_temp) {
 
 		if (platform->user_max_lock_input == FREQ_STEP_0)
-			goto out;
+			goto check;
 
 		if (platform->user_max_lock_input == FREQ_STEP_8)
 			clock = FREQ_STEP_7;
@@ -2142,15 +2189,15 @@ static void gpu_dvfs_check_thread(struct work_struct *work)
 		else if (platform->user_max_lock_input == FREQ_STEP_1)
 			clock = FREQ_STEP_0;
 		else
-			goto out;
+			goto check;
 
 		platform->user_max_lock_input = clock;
 		gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, clock);
-		goto out;
+		goto check;
 	}
 
 	if (platform->user_max_lock_input == platform->gpu_max_clock)
-		goto out;
+		goto check;
 
 	if (gpu_temp <= (gpu_dvfs_max_temp - GPU_DVFS_MARGIN_TEMP)) {
 
@@ -2171,15 +2218,13 @@ static void gpu_dvfs_check_thread(struct work_struct *work)
 		else if (platform->user_max_lock_input == FREQ_STEP_7)
 			clock = FREQ_STEP_8;
 		else
-			goto out;
+			goto check;
 
 		platform->user_max_lock_input = clock;
 		gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, clock);
 	}
-
-out:
-	schedule_delayed_work(&gpu_dvfs_check_work, 
-			msecs_to_jiffies(GPU_DVFS_CHECK_DELAY));
+	goto check;
+	return 0;
 }
 
 static struct kobj_attribute gpu_temp_attribute =
@@ -2207,6 +2252,9 @@ static struct kobj_attribute user_min_clock_attribute =
 
 static struct kobj_attribute gpu_dvfs_max_temp_attribute =
 	__ATTR(gpu_dvfs_max_temp, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_dvfs_max_temp, set_kernel_sysfs_gpu_dvfs_max_temp);
+
+static struct kobj_attribute gpu_dvfs_debug_attribute =
+	__ATTR(gpu_dvfs_debug, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_dvfs_debug, set_kernel_sysfs_gpu_dvfs_debug);
 
 static struct kobj_attribute boost_attribute =
 	__ATTR(boost, S_IRUGO|S_IWUSR, show_kernel_sysfs_boost, set_kernel_sysfs_boost);
@@ -2254,6 +2302,7 @@ static struct attribute *attrs[] = {
 	&user_max_clock_attribute.attr,
 	&user_min_clock_attribute.attr,
 	&gpu_dvfs_max_temp_attribute.attr,
+	&gpu_dvfs_debug_attribute.attr,
 	&boost_attribute.attr,
 	&up_threshold_attribute.attr,
 #endif /* #ifdef CONFIG_MALI_DVFS */
@@ -2520,8 +2569,14 @@ void gpu_remove_sysfs_file(struct device *dev)
 
 static int __init gpu_dvfs_init(void)
 {
-	schedule_delayed_work(&gpu_dvfs_check_work, 0);
-	pr_err("%s: started gpu_dvfs_check_work\n", __func__);
+	struct task_struct *gpu_dvfs_thread;
+
+	gpu_dvfs_thread = kthread_run(gpu_dvfs_check_thread, NULL, "gpu_dvfsd");
+	if (IS_ERR(gpu_dvfs_thread)) {
+		pr_err("gpu_dvfs: creating kthread failed\n");
+		PTR_ERR(gpu_dvfs_thread);
+	}
+
 	return 0;
 }
 late_initcall(gpu_dvfs_init);

@@ -17,26 +17,32 @@
 #include <linux/cpumask.h>
 #include <linux/cpufreq.h>
 #include <linux/pm_opp.h>
+#include <linux/delay.h>
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 #include "exynos-acme.h"
 
 #include <linux/moduleparam.h>
+#include <linux/kthread.h>
+#include <linux/freezer.h>
 
 /*********************************************************************
  *                          SYSFS INTERFACES                         *
  *********************************************************************/
 
 /* custom DVFS */
-static unsigned int cpu_dvfs_max_temp = 65;		/* min 45, max 85 °C */
-/* from exynos-acme */
+static unsigned int cpu_dvfs_max_temp = 70;
+static unsigned int cpu_dvfs_peak_temp = 0;
+static bool cpu_dvfs_debug = false;
 extern unsigned int cpu4_max_freq;
-
 extern int get_cpu_temp(void);
+static struct pm_qos_request cpu_maxlock_cl1;
 
-#define CPU_DVFS_MARGIN_TEMP		10		/* °C */
-#define CPU_DVFS_CHECK_DELAY		100		/* ms */
+#define CPU_DVFS_RANGE_TEMP_MIN		(50)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MAX		(90)	/* °C */
+#define CPU_DVFS_MARGIN_TEMP				(5)		/* °C */
+#define CPU_DVFS_CHECK_DELAY				(40)	/* ms */
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
@@ -57,8 +63,6 @@ extern int get_cpu_temp(void);
 #define FREQ_STEP_15              (2652000)
 #define FREQ_STEP_16              (2704000)
 #define FREQ_STEP_17              (2808000)
-
-static struct pm_qos_request cpu_maxlock_cl1;
 
 /*
  * Log2 of the number of scale size. The frequencies are scaled up or
@@ -586,6 +590,7 @@ static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribut
 static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, char *buf)
 {
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, cpu_dvfs_max_temp);
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
 	return strlen(buf);
 }
 
@@ -595,12 +600,18 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 
 	if (sscanf(buf, "%u", &tmp)) {
 
-		if (tmp < 45 || tmp > 85) {
-			pr_err("%s: out of range 45 - 85\n", __func__);
+		if (tmp < CPU_DVFS_RANGE_TEMP_MIN || tmp > CPU_DVFS_RANGE_TEMP_MAX) {
+			pr_err("%s: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_RANGE_TEMP_MAX);
 			return -EINVAL;
 		}
 
 		cpu_dvfs_max_temp = tmp;
+		cpu_dvfs_peak_temp = 0;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "reset_peak")) {
+		cpu_dvfs_peak_temp = 0;
 		return count;
 	}
 
@@ -608,23 +619,52 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 	return -EINVAL;
 }
 
-static void cpu_dvfs_check_thread(struct work_struct *work);
-DECLARE_DELAYED_WORK(cpu_dvfs_check_work, cpu_dvfs_check_thread);
-
-static void cpu_dvfs_check_thread(struct work_struct *work)
+static ssize_t show_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr, char *buf)
 {
-	int cpu_temp = 0;
-	static int cpu_max_limit = 0;
+	sprintf(buf, "%s\n", cpu_dvfs_debug ? "1" : "0");
+	return strlen(buf);
+}
 
-	if (!cpu_max_limit)
-		cpu_max_limit = cpu4_max_freq;
+static ssize_t store_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
+{
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
+		cpu_dvfs_debug = true;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
+		cpu_dvfs_debug = false;
+		return count;
+	}
+
+	pr_err("%s: invalid input\n", __func__);
+	return -EINVAL;
+}
+
+static int cpu_dvfs_check_thread(void *nothing)
+{
+	static int cpu_max_limit = 0;
+	int cpu_temp, cpu = 0;
+
+	set_user_nice(current, MIN_NICE);
+
+check:
+	schedule_timeout_interruptible(msecs_to_jiffies(CPU_DVFS_CHECK_DELAY));
+
+	if (cpu_dvfs_debug) {
+		if (cpu_temp > cpu_dvfs_peak_temp) {
+			cpu_dvfs_peak_temp = cpu_temp;
+			cpu = smp_processor_id();
+			pr_err("%s: peak_temp: %u - PID: %d - CPU: %d\n",__func__, cpu_dvfs_peak_temp, current->pid, cpu);
+		}
+	}
 
 	cpu_temp = get_cpu_temp();
 
 	if (cpu_temp >= cpu_dvfs_max_temp) {
 
 		if (cpu_max_limit == FREQ_STEP_0)
-			goto out;
+			goto check;
 
 		if (cpu_max_limit == FREQ_STEP_17)
 			cpu_max_limit = FREQ_STEP_16;
@@ -660,15 +700,17 @@ static void cpu_dvfs_check_thread(struct work_struct *work)
 			cpu_max_limit = FREQ_STEP_1;
 		else if (cpu_max_limit == FREQ_STEP_1)
 			cpu_max_limit = FREQ_STEP_0;
-		else
-			goto out;
+		else {
+			cpu_max_limit = cpu4_max_freq;
+			goto check;
+		}
 
 		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
-		goto out;
+		goto check;
 	}
 
 	if (cpu_max_limit == cpu4_max_freq)
-		goto out;
+		goto check;
 
 	if (cpu_temp <= (cpu_dvfs_max_temp - CPU_DVFS_MARGIN_TEMP)) {
 
@@ -706,15 +748,15 @@ static void cpu_dvfs_check_thread(struct work_struct *work)
 			cpu_max_limit = FREQ_STEP_16;
 		else if (cpu_max_limit == FREQ_STEP_16)
 			cpu_max_limit = FREQ_STEP_17;
-		else
-			goto out;
+		else {
+			cpu_max_limit = cpu4_max_freq;
+			goto check;
+		}
 
 		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
 	}
-
-out:
-	schedule_delayed_work(&cpu_dvfs_check_work, 
-			msecs_to_jiffies(CPU_DVFS_CHECK_DELAY));
+	goto check;
+	return 0;
 }
 
 static struct global_attr cpufreq_table =
@@ -734,6 +776,9 @@ __ATTR(execution_mode_change, 0644,
 static struct global_attr sysfs_cpu_dvfs_max_temp =
 __ATTR(cpu_dvfs_max_temp, 0644,
 		show_cpu_dvfs_max_temp, store_cpu_dvfs_max_temp);
+static struct global_attr sysfs_cpu_dvfs_debug =
+__ATTR(cpu_dvfs_debug, 0644,
+		show_cpu_dvfs_debug, store_cpu_dvfs_debug);
 
 static __init void init_sysfs(void)
 {
@@ -754,6 +799,9 @@ static __init void init_sysfs(void)
 
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_max_temp.attr))
 		pr_err("failed to create cpu_dvfs_max_temp node\n");
+
+	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_debug.attr))
+		pr_err("failed to create cpu_dvfs_debug node\n");
 
 }
 
@@ -887,12 +935,16 @@ static int __init exynos_ufc_init(void)
 	const char *buf;
 	struct exynos_cpufreq_domain *domain;
 	int ret = 0;
+	struct task_struct *cpu_dvfs_thread;
 
 	pm_qos_add_request(&cpu_online_max_qos_req, PM_QOS_CPU_ONLINE_MAX,
 					PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
 
-	schedule_delayed_work(&cpu_dvfs_check_work, 0);
-	pr_err("%s: started cpu_dvfs_check_work\n", __func__);
+	cpu_dvfs_thread = kthread_run(cpu_dvfs_check_thread, NULL, "cpu_dvfsd");
+	if (IS_ERR(cpu_dvfs_thread)) {
+		pr_err("cpu_dvfs: creating kthread failed\n");
+		PTR_ERR(cpu_dvfs_thread);
+	}
 
 	while ((dn = of_find_node_by_type(dn, "cpufreq-userctrl"))) {
 		struct cpumask shared_mask;
