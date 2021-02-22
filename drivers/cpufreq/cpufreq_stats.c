@@ -85,7 +85,7 @@ void acct_update_power(struct task_struct *task, cputime_t cputime) {
 
 	policy = cpufreq_cpu_get(cpu_num);
 
-	if (WARN_ON_ONCE(!policy))
+	if (!policy)
 		return;
 
 	powerstats = per_cpu(cpufreq_power_stats, cpu_num);

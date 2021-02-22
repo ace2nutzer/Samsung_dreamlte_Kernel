@@ -140,9 +140,15 @@ struct scan_control {
 #endif
 
 /*
- * From 0 .. 100.  Higher means more swappy.
+ * From 0 .. 200.  Higher means more swappy.
  */
+#if IS_ENABLED(CONFIG_ZRAM) && IS_ENABLED(CONFIG_INCREASE_MAXIMUM_SWAPPINESS)
+int vm_swappiness = 150;
+#elif IS_ENABLED(CONFIG_ZRAM)
 int vm_swappiness = 100;
+#else
+int vm_swappiness = 50;
+#endif
 /*
  * The total number of pages which are beyond the high watermark within all
  * zones.
@@ -3601,18 +3607,17 @@ static int kswapd(void *p)
 	struct reclaim_state reclaim_state = {
 		.reclaimed_slab = 0,
 	};
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	lockdep_set_current_reclaim_state(GFP_KERNEL);
-
-	if (!cpumask_empty(&hmp_fast_cpu_mask))
-		set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
-#else
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
-
+#endif
 	lockdep_set_current_reclaim_state(GFP_KERNEL);
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
+#else
+	if (!cpumask_empty(&hmp_fast_cpu_mask))
+		set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
 #endif
 	current->reclaim_state = &reclaim_state;
 
@@ -3630,6 +3635,7 @@ static int kswapd(void *p)
 	 */
 	tsk->flags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
 	set_freezable();
+	set_user_nice(current, MIN_NICE);
 
 	order = new_order = 0;
 	classzone_idx = new_classzone_idx = pgdat->nr_zones - 1;
@@ -3758,6 +3764,7 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
 }
 #endif /* CONFIG_HIBERNATION */
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 /* It's optimal to keep kswapds on the same CPUs as their memory, but
    not required for correctness.  So if the last cpu in a node goes
    away, we get changed to run anywhere: as the first one comes back,
@@ -3771,11 +3778,6 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 		for_each_node_state(nid, N_MEMORY) {
 			pg_data_t *pgdat = NODE_DATA(nid);
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-			if (cpumask_any_and(cpu_online_mask, &hmp_fast_cpu_mask) < nr_cpu_ids)
-				/* One of our CPUs online: restore mask */
-				set_cpus_allowed_ptr(pgdat->kswapd, &hmp_fast_cpu_mask);
-#else
 			const struct cpumask *mask;
 
 			mask = cpumask_of_node(pgdat->node_id);
@@ -3783,11 +3785,11 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 			if (cpumask_any_and(cpu_online_mask, mask) < nr_cpu_ids)
 				/* One of our CPUs online: restore mask */
 				set_cpus_allowed_ptr(pgdat->kswapd, mask);
-#endif
 		}
 	}
 	return NOTIFY_OK;
 }
+#endif
 
 /*
  * This kswapd start function will be called by init and node-hot-add.
@@ -3833,7 +3835,9 @@ static int __init kswapd_init(void)
 	swap_setup();
 	for_each_node_state(nid, N_MEMORY)
  		kswapd_run(nid);
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	hotcpu_notifier(cpu_callback, 0);
+#endif
 #ifdef CONFIG_SYSFS
 	if (sysfs_create_group(mm_kobj, &mem_boost_attr_group))
 		pr_err("vmscan: register mem boost sysfs failed\n");

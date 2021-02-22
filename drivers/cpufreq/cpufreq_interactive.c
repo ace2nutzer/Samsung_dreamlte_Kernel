@@ -43,8 +43,10 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_interactive.h>
 
+#ifdef CONFIG_SCHED_HMP
 #define CONFIG_DYNAMIC_MODE_SUPPORT
 //#define CONFIG_DYNAMIC_MODE_SUPPORT_DEBUG
+#endif
 
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;

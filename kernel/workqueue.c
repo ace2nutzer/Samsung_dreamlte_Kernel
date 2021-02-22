@@ -3047,7 +3047,13 @@ struct workqueue_attrs *alloc_workqueue_attrs(gfp_t gfp_mask)
 	if (!alloc_cpumask_var(&attrs->cpumask, gfp_mask))
 		goto fail;
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, attrs->cpumask))
+		cpumask_copy(attrs->cpumask, &hmp_slow_cpu_mask);
+#else
 	cpumask_copy(attrs->cpumask, cpu_possible_mask);
+#endif
+
 	return attrs;
 fail:
 	free_workqueue_attrs(attrs);
@@ -3584,7 +3590,12 @@ apply_wqattrs_prepare(struct workqueue_struct *wq,
 
 	/* save the user configured attrs and sanitize it. */
 	copy_workqueue_attrs(new_attrs, attrs);
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, new_attrs->cpumask))
+		cpumask_copy(new_attrs->cpumask, &hmp_slow_cpu_mask);
+#else
 	cpumask_and(new_attrs->cpumask, new_attrs->cpumask, cpu_possible_mask);
+#endif
 	ctx->attrs = new_attrs;
 
 	ctx->wq = wq;
@@ -4838,7 +4849,13 @@ int workqueue_set_unbound_cpumask(cpumask_var_t cpumask)
 	if (!zalloc_cpumask_var(&saved_cpumask, GFP_KERNEL))
 		return -ENOMEM;
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, cpumask))
+		cpumask_copy(cpumask, &hmp_slow_cpu_mask);
+#else
 	cpumask_and(cpumask, cpumask, cpu_possible_mask);
+#endif
+
 	if (!cpumask_empty(cpumask)) {
 		apply_wqattrs_lock();
 
@@ -5279,7 +5296,13 @@ static int __init init_workqueues(void)
 	WARN_ON(__alignof__(struct pool_workqueue) < __alignof__(long long));
 
 	BUG_ON(!alloc_cpumask_var(&wq_unbound_cpumask, GFP_KERNEL));
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, wq_unbound_cpumask))
+		cpumask_copy(wq_unbound_cpumask, &hmp_slow_cpu_mask);
+#else
 	cpumask_copy(wq_unbound_cpumask, cpu_possible_mask);
+#endif
 
 	pwq_cache = KMEM_CACHE(pool_workqueue, SLAB_PANIC);
 

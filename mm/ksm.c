@@ -2376,6 +2376,12 @@ static int __init ksm_init(void)
 		goto out_free;
 	}
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	set_cpus_allowed_ptr(ksm_thread, &hmp_slow_cpu_mask);
+#else
+	set_cpus_allowed_ptr(ksm_thread, cpu_all_mask);
+#endif
+
 #ifdef CONFIG_SYSFS
 	err = sysfs_create_group(mm_kobj, &ksm_attr_group);
 	if (err) {

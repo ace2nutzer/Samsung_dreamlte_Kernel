@@ -15,6 +15,10 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+extern struct cpumask hmp_slow_cpu_mask;
+#endif
+
 static struct fimc_is_lib_vra *g_lib_vra;
 
 static void fimc_is_lib_vra_callback_frw_abort(void)
@@ -275,7 +279,11 @@ int fimc_is_lib_vra_init_task(struct fimc_is_lib_vra *lib_vra)
 
 #ifdef SET_CPU_AFFINITY
 	cpu = TASK_VRA_AFFINITY;
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, &hmp_slow_cpu_mask);
+#else
 	ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, cpumask_of(cpu));
+#endif
 	dbg_lib("lib_vra_task_init: affinity cpu(%d) (%d)\n", cpu, ret);
 #endif
 	return 0;

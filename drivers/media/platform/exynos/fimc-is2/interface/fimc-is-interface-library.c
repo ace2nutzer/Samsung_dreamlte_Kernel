@@ -30,6 +30,10 @@
 #include <linux/rkp.h>
 #endif
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+extern struct cpumask hmp_slow_cpu_mask;
+#endif
+
 struct fimc_is_lib_support gPtr_lib_support;
 struct mutex gPtr_bin_load_ctrl;
 
@@ -1736,7 +1740,11 @@ int fimc_is_init_ddk_thread(void)
 		if (i != TASK_RTA) {
 #ifdef SET_CPU_AFFINITY
 			cpu = lib_get_task_affinity(i);
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+			ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, &hmp_slow_cpu_mask);
+#else
 			ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, cpumask_of(cpu));
+#endif
 			dbg_lib("%s: task(%d) affinity cpu(%d) (%d)\n", __func__, i, cpu, ret);
 #endif
 		}

@@ -1243,6 +1243,11 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 		goto out;
 	}
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, new_mask))
+		new_mask = &hmp_slow_cpu_mask;
+#endif
+
 	if (cpumask_equal(&p->cpus_allowed, new_mask))
 		goto out;
 
@@ -3841,10 +3846,6 @@ static void __setscheduler_params(struct task_struct *p,
 	set_load_weight(p);
 }
 
-#ifdef CONFIG_SCHED_HMP
-extern struct cpumask hmp_slow_cpu_mask;
-#endif
-
 /* Actually do priority change: must hold pi & rq lock. */
 static void __setscheduler(struct rq *rq, struct task_struct *p,
 			   const struct sched_attr *attr, bool keep_boost)
@@ -3870,6 +3871,10 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 #endif
 	} else
 		p->sched_class = &fair_sched_class;
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
+		do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
+#endif
 }
 
 static void
@@ -4618,6 +4623,12 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 
 
 	cpuset_cpus_allowed(p, cpus_allowed);
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	if (cpumask_equal(cpu_all_mask, in_mask))
+		in_mask = &hmp_slow_cpu_mask;
+#endif
+
 	cpumask_and(new_mask, in_mask, cpus_allowed);
 
 	/*

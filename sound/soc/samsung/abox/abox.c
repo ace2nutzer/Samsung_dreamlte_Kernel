@@ -4219,9 +4219,11 @@ static void abox_system_ipc_handler(struct device *dev,
 		break;
 	}
 	default:
+/*
 		dev_warn(dev, "Redundant system message: %d(%d, %d, %d)\n",
 				system_msg->msgtype, system_msg->param1,
 				system_msg->param2, system_msg->param3);
+*/
 		break;
 	}
 }

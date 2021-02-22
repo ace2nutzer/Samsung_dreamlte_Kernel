@@ -88,7 +88,11 @@ static struct clock_event_device ce_broadcast_hrtimer = {
 	.max_delta_ticks	= ULONG_MAX,
 	.mult			= 1,
 	.shift			= 0,
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	.cpumask		= &hmp_slow_cpu_mask,
+#else
 	.cpumask		= cpu_all_mask,
+#endif
 };
 
 static enum hrtimer_restart bc_handler(struct hrtimer *t)
