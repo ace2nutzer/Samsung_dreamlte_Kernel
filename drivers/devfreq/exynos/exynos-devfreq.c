@@ -2221,11 +2221,13 @@ static int exynos_devfreq_probe(struct platform_device *pdev)
 
 	if (data->use_tmu) {
 		data->tmu_notifier.notifier_call = exynos_devfreq_tmu_notifier;
+#ifdef CONFIG_CPU_THERMAL
 		ret = exynos_tmu_add_notifier(&data->tmu_notifier);
 		if (ret) {
 			dev_err(data->dev, "failed register tmu notifier\n");
 			goto err_tmu_noti;
 		}
+#endif
 	}
 
 	data->reboot_notifier.notifier_call = exynos_devfreq_reboot_notifier;

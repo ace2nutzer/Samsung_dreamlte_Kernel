@@ -154,6 +154,7 @@ static void acpm_noti_mif_callback(unsigned int *cmd, unsigned int size)
 	//pm_qos_update_request(&mif_request_from_acpm, cmd[1]);
 }
 
+#ifdef CONFIG_CPU_THERMAL
 static int acpm_cpu_tmu_notifier(struct notifier_block *nb, unsigned long event, void *v)
 {
 	unsigned int *is_cold_temp = v;
@@ -172,7 +173,9 @@ static int acpm_cpu_tmu_notifier(struct notifier_block *nb, unsigned long event,
 
 	return NOTIFY_OK;
 }
+#endif
 
+#ifdef CONFIG_GPU_THERMAL
 static int acpm_gpu_tmu_notifier(struct notifier_block *nb, unsigned long event, void *v)
 {
 	unsigned int *is_cold_temp = v;
@@ -191,7 +194,9 @@ static int acpm_gpu_tmu_notifier(struct notifier_block *nb, unsigned long event,
 
 	return ret;
 }
+#endif
 
+#ifdef CONFIG_CPU_THERMAL
 static void acpm_dvfs_get_cpu_cold_temp_list(struct device *dev)
 {
 	struct device_node *node = dev->of_node;
@@ -219,7 +224,9 @@ static void acpm_dvfs_get_cpu_cold_temp_list(struct device *dev)
 		dev_err(dev, "failed register cpu tmu notifier\n");
 
 }
+#endif
 
+#ifdef CONFIG_GPU_THERMAL
 static void acpm_dvfs_get_gpu_cold_temp_list(struct device *dev)
 {
 	struct device_node *node = dev->of_node;
@@ -245,6 +252,7 @@ static void acpm_dvfs_get_gpu_cold_temp_list(struct device *dev)
 	if (exynos_gpu_add_notifier(&acpm_dvfs.gpu_tmu_notifier))
 		dev_err(dev, "failed register gpu tmu notifier\n");
 }
+#endif
 
 static int acpm_dvfs_probe(struct platform_device *pdev)
 {
@@ -263,8 +271,12 @@ static int acpm_dvfs_probe(struct platform_device *pdev)
 
 	//pm_qos_add_request(&mif_request_from_acpm, PM_QOS_BUS_THROUGHPUT, 0);
 
+#ifdef CONFIG_CPU_THERMAL
 	acpm_dvfs_get_cpu_cold_temp_list(dev);
+#endif
+#ifdef CONFIG_GPU_THERMAL
 	acpm_dvfs_get_gpu_cold_temp_list(dev);
+#endif
 
 	return ret;
 }

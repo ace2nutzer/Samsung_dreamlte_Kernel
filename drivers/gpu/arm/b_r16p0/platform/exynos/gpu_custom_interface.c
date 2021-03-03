@@ -20,7 +20,7 @@
 #include <linux/fb.h>
 #include <linux/freezer.h>
 
-#if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL) && defined(CONFIG_GPU_THERMAL)
+#if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL)
 #include "exynos_tmu.h"
 #endif
 
@@ -2041,7 +2041,7 @@ static ssize_t show_kernel_sysfs_gpu_model(struct kobject *kobj, struct kobj_att
 	return scnprintf(buf, PAGE_SIZE, "%s\n", product_name);
 }
 
-#if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL) && defined(CONFIG_GPU_THERMAL)
+#if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL)
 
 extern struct exynos_tmu_data *gpu_thermal_data;
 
@@ -2292,7 +2292,7 @@ static struct kobj_attribute gpu_volt_attribute =
 
 static struct attribute *attrs[] = {
 #ifdef CONFIG_MALI_DVFS
-#if defined(CONFIG_EXYNOS_THERMAL) && defined(CONFIG_GPU_THERMAL)
+#if defined(CONFIG_EXYNOS_THERMAL)
 	&gpu_temp_attribute.attr,
 #endif
 	&gpu_info_attribute.attr,

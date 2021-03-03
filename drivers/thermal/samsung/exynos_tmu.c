@@ -1404,7 +1404,7 @@ static int exynos_cpufreq_cooling_register(struct exynos_tmu_data *data)
 	return ret;
 }
 
-#ifdef CONFIG_GPU_THERMAL
+//#ifdef CONFIG_GPU_THERMAL
 
 #ifdef CONFIG_MALI_DEBUG_KERNEL_SYSFS
 struct exynos_tmu_data *gpu_thermal_data = NULL;
@@ -1472,9 +1472,9 @@ static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data)
 
 	return ret;
 }
-#else
-static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data) {return 0;}
-#endif
+//#else
+//static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data) {return 0;}
+//#endif
 
 #ifdef CONFIG_ISP_THERMAL
 static int exynos_isp_cooling_register(struct exynos_tmu_data *data)
@@ -1522,6 +1522,8 @@ static int exynos_isp_cooling_register(struct exynos_tmu_data *data) {return 0;}
 #if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 extern struct cpumask hmp_fast_cpu_mask;
 #endif
+
+#ifdef CONFIG_CPU_THERMAL
 static int exynos_tmu_cpus_notifier(struct notifier_block *nb,
 				    unsigned long event, void *data)
 {
@@ -1557,6 +1559,7 @@ static int exynos_tmu_cpus_notifier(struct notifier_block *nb,
 	}
 	return NOTIFY_OK;
 }
+#endif
 
 static ssize_t
 balance_offset_show(struct device *dev, struct device_attribute *devattr,
@@ -1804,12 +1807,14 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 	list_add_tail(&data->node, &dtm_dev_list);
 	mutex_unlock(&data->lock);
 
+#ifdef CONFIG_CPU_THERMAL
 	if (list_is_singular(&dtm_dev_list)) {
 		register_pm_notifier(&exynos_tmu_pm_notifier);
 		data->nb.notifier_call = exynos_tmu_cpus_notifier;
 		register_cpus_notifier(&data->nb);
 		exynos_cpufreq_reset_boot_qos();
 	}
+#endif
 
 	if (!IS_ERR(data->tzd))
 		data->tzd->ops->set_mode(data->tzd, THERMAL_DEVICE_ENABLED);
