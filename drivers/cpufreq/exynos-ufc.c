@@ -17,32 +17,32 @@
 #include <linux/cpumask.h>
 #include <linux/cpufreq.h>
 #include <linux/pm_opp.h>
-#include <linux/delay.h>
+#include <linux/reboot.h>
+#include <linux/thermal.h>
+#include <linux/kthread.h>
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 #include "exynos-acme.h"
-
-#include <linux/moduleparam.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
 
 /*********************************************************************
  *                          SYSFS INTERFACES                         *
  *********************************************************************/
 
 /* custom DVFS */
-static unsigned int cpu_dvfs_max_temp = 70;
+static unsigned int cpu_dvfs_max_temp = 75;
 static unsigned int cpu_dvfs_peak_temp = 0;
+static int cpu_temp = 0;
 static bool cpu_dvfs_debug = false;
 extern unsigned int cpu4_max_freq;
 extern int get_cpu_temp(void);
+static unsigned int cpu_dvfs_check_delay = 8;	/* ms */
 static struct pm_qos_request cpu_maxlock_cl1;
 
-#define CPU_DVFS_RANGE_TEMP_MIN		(50)	/* °C */
-#define CPU_DVFS_RANGE_TEMP_MAX		(90)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MIN		(65)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MAX		(95)	/* °C */
 #define CPU_DVFS_MARGIN_TEMP				(5)		/* °C */
-#define CPU_DVFS_CHECK_DELAY				(40)	/* ms */
+#define CPU_DVFS_TJMAX						(105)	/* °C */
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
@@ -52,7 +52,7 @@ static struct pm_qos_request cpu_maxlock_cl1;
 #define FREQ_STEP_4               (1170000)
 #define FREQ_STEP_5               (1261000)
 #define FREQ_STEP_6               (1469000)
-#define FREQ_STEP_7               (1703000)
+#define FREQ_STEP_7               (1703000)		/* durable Freq */
 #define FREQ_STEP_8               (1807000)
 #define FREQ_STEP_9               (1937000)
 #define FREQ_STEP_10              (2002000)
@@ -63,6 +63,8 @@ static struct pm_qos_request cpu_maxlock_cl1;
 #define FREQ_STEP_15              (2652000)
 #define FREQ_STEP_16              (2704000)
 #define FREQ_STEP_17              (2808000)
+
+static DEFINE_MUTEX(poweroff_lock);
 
 /*
  * Log2 of the number of scale size. The frequencies are scaled up or
@@ -585,12 +587,15 @@ static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribut
 	return count;
 }
 
-
-
 static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, char *buf)
 {
+	sprintf(buf, "%s[cpu_temp]\t%d °C\n",buf, cpu_temp);
+	if (!cpu_dvfs_debug)
+		sprintf(buf, "%s[peak_temp]\t%s\n",buf, "enable debug");
+	else
+		sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, cpu_dvfs_max_temp);
-	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
+	sprintf(buf, "%s[tjmax]\t\t%d °C\n",buf, (int)CPU_DVFS_TJMAX);
 	return strlen(buf);
 }
 
@@ -601,32 +606,29 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 	if (sscanf(buf, "%u", &tmp)) {
 
 		if (tmp < CPU_DVFS_RANGE_TEMP_MIN || tmp > CPU_DVFS_RANGE_TEMP_MAX) {
-			pr_err("%s: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_RANGE_TEMP_MAX);
+			pr_warn("%s: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_RANGE_TEMP_MAX);
 			return -EINVAL;
 		}
 
 		cpu_dvfs_max_temp = tmp;
-		cpu_dvfs_peak_temp = 0;
 		return count;
 	}
 
-	if (sysfs_streq(buf, "reset_peak")) {
-		cpu_dvfs_peak_temp = 0;
-		return count;
-	}
-
-	pr_err("%s: invalid input\n", __func__);
+	pr_warn("%s: invalid input\n", __func__);
 	return -EINVAL;
 }
 
 static ssize_t show_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr, char *buf)
 {
 	sprintf(buf, "%s\n", cpu_dvfs_debug ? "1" : "0");
+	sprintf(buf, "%s[check_delay]\t%u ms\n",buf, cpu_dvfs_check_delay);
 	return strlen(buf);
 }
 
 static ssize_t store_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
+	unsigned int tmp;
+
 	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
 		cpu_dvfs_debug = true;
 		return count;
@@ -637,125 +639,117 @@ static ssize_t store_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr
 		return count;
 	}
 
-	pr_err("%s: invalid input\n", __func__);
+	if (sscanf(buf, "delay=%d", &tmp)) {
+
+		if (tmp < 1 || tmp > 1000) {
+			pr_warn("%s: out of range !\n", __func__);
+			return -EINVAL;
+		}
+
+		cpu_dvfs_check_delay = tmp;
+		return count;
+	}
+
+	if (sysfs_streq(buf, "reset_peak")) {
+		cpu_dvfs_peak_temp = 0;
+		return count;
+	}
+
+	pr_warn("%s: invalid input\n", __func__);
 	return -EINVAL;
 }
 
 static int cpu_dvfs_check_thread(void *nothing)
 {
-	static int cpu_max_limit = 0;
-	int cpu_temp, cpu = 0;
+	unsigned int cpu_max_limit = 0;
+	bool power_off_triggered = false;
 
-	set_user_nice(current, MIN_NICE);
-
-check:
-	schedule_timeout_interruptible(msecs_to_jiffies(CPU_DVFS_CHECK_DELAY));
-
-	if (cpu_dvfs_debug) {
-		if (cpu_temp > cpu_dvfs_peak_temp) {
-			cpu_dvfs_peak_temp = cpu_temp;
-			cpu = smp_processor_id();
-			pr_err("%s: peak_temp: %u - PID: %d - CPU: %d\n",__func__, cpu_dvfs_peak_temp, current->pid, cpu);
-		}
-	}
-
-	cpu_temp = get_cpu_temp();
-
-	if (cpu_temp >= cpu_dvfs_max_temp) {
-
-		if (cpu_max_limit == FREQ_STEP_0)
-			goto check;
-
-		if (cpu_max_limit == FREQ_STEP_17)
-			cpu_max_limit = FREQ_STEP_16;
-		else if (cpu_max_limit == FREQ_STEP_16)
-			cpu_max_limit = FREQ_STEP_15;
-		else if (cpu_max_limit == FREQ_STEP_15)
-			cpu_max_limit = FREQ_STEP_14;
-		else if (cpu_max_limit == FREQ_STEP_14)
-			cpu_max_limit = FREQ_STEP_13;
-		else if (cpu_max_limit == FREQ_STEP_13)
-			cpu_max_limit = FREQ_STEP_12;
-		else if (cpu_max_limit == FREQ_STEP_12)
-			cpu_max_limit = FREQ_STEP_11;
-		else if (cpu_max_limit == FREQ_STEP_11)
-			cpu_max_limit = FREQ_STEP_10;
-		else if (cpu_max_limit == FREQ_STEP_10)
-			cpu_max_limit = FREQ_STEP_9;
-		else if (cpu_max_limit == FREQ_STEP_9)
-			cpu_max_limit = FREQ_STEP_8;
-		else if (cpu_max_limit == FREQ_STEP_8)
-			cpu_max_limit = FREQ_STEP_7;
-		else if (cpu_max_limit == FREQ_STEP_7)
-			cpu_max_limit = FREQ_STEP_6;
-		else if (cpu_max_limit == FREQ_STEP_6)
-			cpu_max_limit = FREQ_STEP_5;
-		else if (cpu_max_limit == FREQ_STEP_5)
-			cpu_max_limit = FREQ_STEP_4;
-		else if (cpu_max_limit == FREQ_STEP_4)
-			cpu_max_limit = FREQ_STEP_3;
-		else if (cpu_max_limit == FREQ_STEP_3)
-			cpu_max_limit = FREQ_STEP_2;
-		else if (cpu_max_limit == FREQ_STEP_2)
-			cpu_max_limit = FREQ_STEP_1;
-		else if (cpu_max_limit == FREQ_STEP_1)
-			cpu_max_limit = FREQ_STEP_0;
-		else {
-			cpu_max_limit = cpu4_max_freq;
-			goto check;
+	while (!power_off_triggered) {
+		schedule_timeout_interruptible(msecs_to_jiffies(cpu_dvfs_check_delay));
+		if (unlikely(cpu_dvfs_debug)) {
+			if (cpu_temp > cpu_dvfs_peak_temp) {
+				cpu_dvfs_peak_temp = cpu_temp;
+				pr_info("%s: peak_temp: %u °C\n",__func__, cpu_dvfs_peak_temp);
+			}
 		}
 
-		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
-		goto check;
-	}
+		cpu_temp = get_cpu_temp();
 
-	if (cpu_max_limit == cpu4_max_freq)
-		goto check;
+		if (likely(cpu_temp >= cpu_dvfs_max_temp)) {
+			if (cpu_temp > CPU_DVFS_TJMAX) {
+				pr_warn("%s: Critical temp reached: %d °C !!! - shutting down ...\n", __func__ , cpu_temp);
+				mutex_lock(&poweroff_lock);
+				if (!power_off_triggered) {
+					/*
+					 * Queue a backup emergency shutdown in the event of
+					 * orderly_poweroff failure
+					 */
+					thermal_emergency_poweroff();
+					orderly_poweroff(true);
+					power_off_triggered = true;
+				}
+				mutex_unlock(&poweroff_lock);
+				break;
+			}
 
-	if (cpu_temp <= (cpu_dvfs_max_temp - CPU_DVFS_MARGIN_TEMP)) {
+			if (cpu_max_limit >= FREQ_STEP_14)
+				cpu_max_limit = FREQ_STEP_13;
+			else if (cpu_max_limit == FREQ_STEP_13)
+				cpu_max_limit = FREQ_STEP_12;
+			else if (cpu_max_limit == FREQ_STEP_12)
+				cpu_max_limit = FREQ_STEP_11;
+			else if (cpu_max_limit == FREQ_STEP_11)
+				cpu_max_limit = FREQ_STEP_10;
+			else if (cpu_max_limit == FREQ_STEP_10)
+				cpu_max_limit = FREQ_STEP_9;
+			else if (cpu_max_limit == FREQ_STEP_9)
+				cpu_max_limit = FREQ_STEP_8;
+			else if (cpu_max_limit == FREQ_STEP_8)
+				cpu_max_limit = FREQ_STEP_7;
+			else if (cpu_max_limit == FREQ_STEP_7)
+				continue;
+			else
+				cpu_max_limit = cpu4_max_freq;
 
-		if (cpu_max_limit == FREQ_STEP_0)
-			cpu_max_limit = FREQ_STEP_1;
-		else if (cpu_max_limit == FREQ_STEP_1)
-			cpu_max_limit = FREQ_STEP_2;
-		else if (cpu_max_limit == FREQ_STEP_2)
-			cpu_max_limit = FREQ_STEP_3;
-		else if (cpu_max_limit == FREQ_STEP_3)
-			cpu_max_limit = FREQ_STEP_4;
-		else if (cpu_max_limit == FREQ_STEP_4)
-			cpu_max_limit = FREQ_STEP_5;
-		else if (cpu_max_limit == FREQ_STEP_5)
-			cpu_max_limit = FREQ_STEP_6;
-		else if (cpu_max_limit == FREQ_STEP_6)
-			cpu_max_limit = FREQ_STEP_7;
-		else if (cpu_max_limit == FREQ_STEP_7)
-			cpu_max_limit = FREQ_STEP_8;
-		else if (cpu_max_limit == FREQ_STEP_8)
-			cpu_max_limit = FREQ_STEP_9;
-		else if (cpu_max_limit == FREQ_STEP_9)
-			cpu_max_limit = FREQ_STEP_10;
-		else if (cpu_max_limit == FREQ_STEP_10)
-			cpu_max_limit = FREQ_STEP_11;
-		else if (cpu_max_limit == FREQ_STEP_11)
-			cpu_max_limit = FREQ_STEP_12;
-		else if (cpu_max_limit == FREQ_STEP_12)
-			cpu_max_limit = FREQ_STEP_13;
-		else if (cpu_max_limit == FREQ_STEP_13)
-			cpu_max_limit = FREQ_STEP_14;
-		else if (cpu_max_limit == FREQ_STEP_14)
-			cpu_max_limit = FREQ_STEP_15;
-		else if (cpu_max_limit == FREQ_STEP_15)
-			cpu_max_limit = FREQ_STEP_16;
-		else if (cpu_max_limit == FREQ_STEP_16)
-			cpu_max_limit = FREQ_STEP_17;
-		else {
-			cpu_max_limit = cpu4_max_freq;
-			goto check;
+			pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
+			continue;
 		}
 
-		pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
+		if (cpu_temp < (cpu_dvfs_max_temp - CPU_DVFS_MARGIN_TEMP)) {
+			if (cpu_max_limit == FREQ_STEP_7)
+				cpu_max_limit = FREQ_STEP_8;
+			else if (cpu_max_limit == FREQ_STEP_8)
+				cpu_max_limit = FREQ_STEP_9;
+			else if (cpu_max_limit == FREQ_STEP_9)
+				cpu_max_limit = FREQ_STEP_10;
+			else if (cpu_max_limit == FREQ_STEP_10)
+				cpu_max_limit = FREQ_STEP_11;
+			else if (cpu_max_limit == FREQ_STEP_11)
+				cpu_max_limit = FREQ_STEP_12;
+			else if (cpu_max_limit == FREQ_STEP_12)
+				cpu_max_limit = FREQ_STEP_13;
+			else if (cpu_max_limit == FREQ_STEP_13)
+				cpu_max_limit = FREQ_STEP_14;
+			else if (cpu_max_limit == FREQ_STEP_14)
+				cpu_max_limit = FREQ_STEP_15;
+			else if (cpu_max_limit == FREQ_STEP_15)
+				cpu_max_limit = FREQ_STEP_16;
+			else if (cpu_max_limit == FREQ_STEP_16)
+				cpu_max_limit = FREQ_STEP_17;
+			else if (cpu_max_limit == FREQ_STEP_17)
+				continue;
+			else
+				cpu_max_limit = cpu4_max_freq;
+
+			if ((cpu_temp >= 85) && (cpu_max_limit >= FREQ_STEP_14))
+				cpu_max_limit = FREQ_STEP_13;
+
+			pm_qos_update_request(&cpu_maxlock_cl1, cpu_max_limit);
+		}
+
+		continue;
 	}
-	goto check;
+
 	return 0;
 }
 
@@ -937,14 +931,26 @@ static int __init exynos_ufc_init(void)
 	int ret = 0;
 	struct task_struct *cpu_dvfs_thread;
 
+	mutex_init(&poweroff_lock);
+
 	pm_qos_add_request(&cpu_online_max_qos_req, PM_QOS_CPU_ONLINE_MAX,
 					PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
 
 	cpu_dvfs_thread = kthread_run(cpu_dvfs_check_thread, NULL, "cpu_dvfsd");
 	if (IS_ERR(cpu_dvfs_thread)) {
-		pr_err("cpu_dvfs: creating kthread failed\n");
-		PTR_ERR(cpu_dvfs_thread);
+		pr_err("cpu_dvfs: failed to start check_thread\n");
+		goto exit;
+	} else {
+		pr_info("cpu_dvfs: check_thread started successfully.\n");
 	}
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	set_cpus_allowed_ptr(cpu_dvfs_thread, &hmp_slow_cpu_mask);
+#else
+	set_cpus_allowed_ptr(cpu_dvfs_thread, cpu_all_mask);
+#endif
+
+	set_user_nice(cpu_dvfs_thread, MIN_NICE);
 
 	while ((dn = of_find_node_by_type(dn, "cpufreq-userctrl"))) {
 		struct cpumask shared_mask;
@@ -983,7 +989,11 @@ static int __init exynos_ufc_init(void)
 	init_sysfs();
 
 	pr_info("Initialized Exynos UFC(User-Frequency-Ctrl) driver\n");
-exit:
+
 	return 0;
+
+exit:
+	mutex_destroy(&poweroff_lock);
+	return ret;
 }
 late_initcall(exynos_ufc_init);
