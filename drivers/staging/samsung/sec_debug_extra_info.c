@@ -490,6 +490,7 @@ void sec_debug_set_extra_info_ufs_error(char *str)
 	sec_debug_set_extra_info(INFO_ETC, "%s", str);
 }
 
+#ifdef CONFIG_ZSWAP
 /******************************************************************************
  * sec_debug_set_extra_info_zswap
  ******************************************************************************/
@@ -498,6 +499,7 @@ void sec_debug_set_extra_info_zswap(char *str)
 {
 	sec_debug_set_extra_info(INFO_ETC, "%s", str);
 }
+#endif
 
 /******************************************************************************
  * sec_debug_set_extra_info_mfc_error

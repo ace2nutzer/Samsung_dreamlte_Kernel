@@ -1352,7 +1352,9 @@ unsigned long kmem_cache_flags(unsigned long object_size,
 		if (name && 
 			(!strncmp(name, "zspage", strlen("zspage")) ||
 			!strncmp(name, "zs_handle", strlen("zs_handle")) ||
+#ifdef CONFIG_ZSWAP
 			!strncmp(name, "zswap_entry", strlen("zswap_entry")) ||
+#endif
 			!strncmp(name, "avtab_node", strlen("avtab_node"))))
 			flags &= ~SLAB_STORE_USER;
 	}
