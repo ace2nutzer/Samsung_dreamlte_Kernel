@@ -1706,6 +1706,8 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 			platform->gpu_max_clock = clock;
 			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, clock);
 			platform->user_max_lock_input = clock;
+			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n",
+					platform->gpu_min_clock, platform->gpu_max_clock);
 		} else {
 			pr_warning("[GPU:] Invaild input\n");
 			return -EINVAL;
@@ -1789,6 +1791,8 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000) {
 
 			platform->gpu_min_clock = clock;
+			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n",
+					platform->gpu_min_clock, platform->gpu_max_clock);
 		} else {
 			pr_warning("[GPU:] Invaild input\n");
 			return -EINVAL;
