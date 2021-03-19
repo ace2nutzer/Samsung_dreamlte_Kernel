@@ -180,6 +180,7 @@ static const struct file_operations abox_dump_auto_stop_fops = {
 	.write = abox_dump_auto_stop_write,
 };
 
+#ifdef CONFIG_SND_SOC_SAMSUNG_ABOX_DEBUG
 static int __init samsung_abox_dump_late_initcall(void)
 {
 	pr_info("%s\n", __func__);
@@ -194,6 +195,7 @@ static int __init samsung_abox_dump_late_initcall(void)
 	return 0;
 }
 late_initcall(samsung_abox_dump_late_initcall);
+#endif
 
 static struct snd_soc_dai_link abox_dump_dai_links[BUFFER_MAX];
 
