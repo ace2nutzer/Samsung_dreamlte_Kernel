@@ -21,10 +21,6 @@
 #include <linux/freezer.h>
 #include "internal.h"
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-extern struct cpumask hmp_fast_cpu_mask;
-#endif
-
 #ifdef CONFIG_COMPACTION
 static inline void count_compact_event(enum vm_event_item item)
 {
@@ -1936,8 +1932,7 @@ static int kcompactd(void *p)
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
 #else
-	if (!cpumask_empty(&hmp_fast_cpu_mask))
-		set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
+	set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
 #endif
 
 	set_freezable();

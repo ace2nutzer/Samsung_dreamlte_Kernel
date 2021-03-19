@@ -3616,8 +3616,7 @@ static int kswapd(void *p)
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
 #else
-	if (!cpumask_empty(&hmp_fast_cpu_mask))
-		set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
+	set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
 #endif
 	current->reclaim_state = &reclaim_state;
 
