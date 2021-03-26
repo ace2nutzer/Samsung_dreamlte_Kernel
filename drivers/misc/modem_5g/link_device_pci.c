@@ -2506,7 +2506,7 @@ static int pci_irq_affinity_set(struct mem_link_device *mld, unsigned int irq)
 	/* Below hard-coded mask values should be removed later on.
 	 * Like net-sysfs, argos module also should support sysfs knob,
 	 * so that user layer must be able to control these cpu mask. */
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 	cpumask_copy(mld->dmask, &hmp_slow_cpu_mask);
 #endif
 

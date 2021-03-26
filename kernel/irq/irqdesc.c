@@ -24,16 +24,11 @@
  */
 static struct lock_class_key irq_desc_lock_class;
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
-extern struct cpumask hmp_slow_cpu_mask;
-#endif
 #if defined(CONFIG_SMP)
 static void __init init_irq_default_affinity(void)
 {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	alloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
 	cpumask_setall(irq_default_affinity);
-#endif
 }
 #else
 static void __init init_irq_default_affinity(void)
@@ -59,11 +54,7 @@ static int alloc_masks(struct irq_desc *desc, gfp_t gfp, int node)
 
 static void desc_smp_init(struct irq_desc *desc, int node)
 {
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	cpumask_copy(desc->irq_common_data.affinity, &hmp_slow_cpu_mask);
-#else
 	cpumask_copy(desc->irq_common_data.affinity, irq_default_affinity);
-#endif
 #ifdef CONFIG_GENERIC_PENDING_IRQ
 	cpumask_clear(desc->pending_mask);
 #endif

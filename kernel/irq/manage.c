@@ -211,11 +211,6 @@ int irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask,
 	if (!chip || !chip->irq_set_affinity)
 		return -EINVAL;
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, mask))
-		mask = &hmp_slow_cpu_mask;
-#endif
-
 	if (irq_can_move_pcntxt(data)) {
 		ret = irq_do_set_affinity(data, mask, force);
 	} else {
@@ -241,11 +236,6 @@ int __irq_set_affinity(unsigned int irq, const struct cpumask *mask, bool force)
 	if (!desc)
 		return -EINVAL;
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, mask))
-		mask = &hmp_slow_cpu_mask;
-#endif
-
 	raw_spin_lock_irqsave(&desc->lock, flags);
 	ret = irq_set_affinity_locked(irq_desc_get_irq_data(desc), mask, force);
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
@@ -259,11 +249,6 @@ int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m)
 
 	if (!desc)
 		return -EINVAL;
-
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, m))
-		m = &hmp_slow_cpu_mask;
-#endif
 
 	desc->affinity_hint = m;
 	irq_put_desc_unlock(desc, flags);
