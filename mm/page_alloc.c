@@ -1876,7 +1876,7 @@ static struct page *__rmqueue(struct zone *zone, unsigned int order,
 	if ((migratetype == MIGRATE_MOVABLE) && (gfp_flags & (__GFP_CMA | __GFP_RBIN))) {
 #ifdef CONFIG_RBIN
 		if (gfp_flags & __GFP_RBIN)
-		    test_and_set_mem_boost_timeout();
+			test_and_set_mem_boost_timeout();
 		if (!((gfp_flags & __GFP_RBIN) && atomic_read(&zone->rbin_alloc)))
 #endif
 			page = __rmqueue_cma_rbin_fallback(zone, order,

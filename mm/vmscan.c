@@ -2175,6 +2175,11 @@ static inline bool need_memory_boosting(struct zone *zone)
 	}
 	return ret;
 }
+#else
+void test_and_set_mem_boost_timeout(void)
+{
+	return;
+}
 #endif // MEM_BOOST
 
 /*
