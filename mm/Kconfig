@@ -552,7 +552,7 @@ config ZSWAP
 
 config ZSWAP_MIGRATION_SUPPORT
 	bool "Support the migration of zsmalloc pages used by zswap"
-	depends on ZSWAP && ZSMALLOC && COMPACTION
+	depends on ZSWAP || ZRAM && ZSMALLOC && COMPACTION
 	default n
 	help
 	  By supporting the migration of zsmalloc pages, the compaction can migrate
