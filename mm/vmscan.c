@@ -59,6 +59,8 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/vmscan.h>
 
+//#define MEM_BOOST
+
 struct scan_control {
 	/* How many pages shrink_list() should reclaim */
 	unsigned long nr_to_reclaim;
@@ -1614,7 +1616,9 @@ static int current_may_throttle(void)
 		bdi_write_congested(current->backing_dev_info);
 }
 
+#ifdef MEM_BOOST
 static inline bool need_memory_boosting(struct zone *zone);
+#endif
 
 /*
  * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
@@ -1675,10 +1679,12 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 	if (nr_taken == 0)
 		return 0;
 
+#ifdef MEM_BOOST
 	if (need_memory_boosting(zone)) {
 		force_reclaim = true;
 		ttu |= TTU_IGNORE_ACCESS;
 	}
+#endif
 
 	nr_reclaimed = shrink_page_list(&page_list, zone, sc, ttu,
 				&nr_dirty, &nr_unqueued_dirty, &nr_congested,
@@ -2022,6 +2028,7 @@ enum scan_balance {
 	SCAN_FILE,
 };
 
+#ifdef MEM_BOOST
 /* mem_boost throttles only kswapd's behavior */
 enum mem_boost {
 	NO_BOOST,
@@ -2168,6 +2175,7 @@ static inline bool need_memory_boosting(struct zone *zone)
 	}
 	return ret;
 }
+#endif // MEM_BOOST
 
 /*
  * Determine how aggressively the anon and file LRU lists should be
@@ -2265,10 +2273,12 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
 		}
 	}
 
+#ifdef MEM_BOOST
 	if (current_is_kswapd() && need_memory_boosting(zone)) {
 		scan_balance = SCAN_FILE;
 		goto out;
 	}
+#endif
 
 	/*
 	 * There is enough inactive page cache, do not reclaim
@@ -3175,14 +3185,19 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc)
 	} while (memcg);
 }
 
+#ifdef MEM_BOOST
 #define MEM_BOOST_WMARK_SCALE_FACTOR 1
+#endif
+
 static bool zone_balanced(struct zone *zone, int order, bool highorder,
 			unsigned long balance_gap, int classzone_idx)
 {
 	unsigned long mark = high_wmark_pages(zone);
 
+#ifdef MEM_BOOST
 	if (current_is_kswapd() && need_memory_boosting(zone))
 		mark *= MEM_BOOST_WMARK_SCALE_FACTOR;
+#endif
 
 	/*
 	 * When checking from pgdat_balanced(), kswapd should stop and sleep
@@ -3711,8 +3726,10 @@ void wakeup_kswapd(struct zone *zone, int order, enum zone_type classzone_idx)
 	if (!waitqueue_active(&pgdat->kswapd_wait))
 		return;
 
+#ifdef MEM_BOOST
 	if (need_memory_boosting(zone))
 		goto wakeup;
+#endif
 
 	if (zone_balanced(zone, order, true, 0, 0))
 		return;
@@ -3837,9 +3854,11 @@ static int __init kswapd_init(void)
 #ifndef CONFIG_SCHED_HMP_CUSTOM
 	hotcpu_notifier(cpu_callback, 0);
 #endif
+#ifdef MEM_BOOST
 #ifdef CONFIG_SYSFS
 	if (sysfs_create_group(mm_kobj, &mem_boost_attr_group))
 		pr_err("vmscan: register mem boost sysfs failed\n");
+#endif
 #endif
 	return 0;
 }
