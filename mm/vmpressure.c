@@ -233,7 +233,7 @@ void vmpressure(gfp_t gfp, struct mem_cgroup *memcg,
 	 * Indirect reclaim (kswapd) sets sc->gfp_mask to GFP_KERNEL, so
 	 * we account it too.
 	 */
-	if (!(gfp & (__GFP_HIGHMEM | __GFP_MOVABLE | __GFP_IO | __GFP_FS)))
+	if (!(gfp & (__GFP_HIGHMEM | __GFP_MOVABLE | __GFP_IO | __GFP_FS | __GFP_CMA | __GFP_RBIN)))
 		return;
 
 	/*
