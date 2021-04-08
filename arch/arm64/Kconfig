@@ -555,16 +555,8 @@ config SCHED_SMT
 	  MultiThreading at a cost of slightly increased overhead in some
 	  places. If unsure say N here.
 
-config SCHED_HMP_CUSTOM
-	bool "Custom HMP driver without task migration"
-	depends on SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP
-	help
-	  Custom scheduler optimizations for heterogeneous platforms.
-	  This will try to manage only some essentials. No task migration at all since it's buggy.
-
 config DISABLE_CPU_SCHED_DOMAIN_BALANCE
 	bool "(EXPERIMENTAL) Disable CPU level scheduler load-balancing"
-	depends on !SCHED_HMP_CUSTOM
 	help
 	  Disables scheduler load-balancing at CPU sched domain level.
 
@@ -579,6 +571,13 @@ config SCHED_HMP
 	  There is currently no support for migration of task groups, hence
 	  !SCHED_AUTOGROUP. Furthermore, normal load-balancing must be disabled
 	  between cpus of different type (DISABLE_CPU_SCHED_DOMAIN_BALANCE).
+
+config SCHED_HMP_CUSTOM
+	bool "Custom HMP driver without task migration"
+	depends on DISABLE_CPU_SCHED_DOMAIN_BALANCE && SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP
+	help
+	  Custom scheduler optimizations for heterogeneous platforms.
+	  This will try to manage only some essentials. No task migration at all since it's buggy.
 
 config SCHED_HMP_PRIO_FILTER
 	bool "(EXPERIMENTAL) Filter HMP migrations by task priority"

@@ -3599,10 +3599,6 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int order,
 	finish_wait(&pgdat->kswapd_wait, &wait);
 }
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-extern struct cpumask hmp_fast_cpu_mask;
-#endif
-
 /*
  * The background pageout daemon, started as a kernel thread
  * from the init process.
@@ -3633,9 +3629,12 @@ static int kswapd(void *p)
 	if (!cpumask_empty(cpumask)) {
 #ifdef CONFIG_SCHED_HMP_CUSTOM
 		if (cpumask_equal(cpu_all_mask, cpumask))
-			cpumask_copy(cpumask, &hmp_fast_cpu_mask);
-#endif
+			set_cpus_allowed_ptr(tsk, &hmp_fast_cpu_mask);
+		else
+			set_cpus_allowed_ptr(tsk, cpumask);
+#else
 		set_cpus_allowed_ptr(tsk, cpumask);
+#endif
 	}
 	current->reclaim_state = &reclaim_state;
 

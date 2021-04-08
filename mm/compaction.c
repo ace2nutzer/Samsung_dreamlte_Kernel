@@ -1931,9 +1931,12 @@ static int kcompactd(void *p)
 	if (!cpumask_empty(cpumask)) {
 #ifdef CONFIG_SCHED_HMP_CUSTOM
 		if (cpumask_equal(cpu_all_mask, cpumask))
-			cpumask_copy(cpumask, &hmp_slow_cpu_mask);
-#endif
+			set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
+		else
+			set_cpus_allowed_ptr(tsk, cpumask);
+#else
 		set_cpus_allowed_ptr(tsk, cpumask);
+#endif
 	}
 
 	set_freezable();

@@ -435,12 +435,12 @@ static int gotoCpu0(void)
 static int gotoAllCpu(void)
 {
 	int ret = 0;
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	struct cpumask mask = CPU_MASK_ALL;
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	ret = set_cpus_allowed_ptr(current, &hmp_slow_cpu_mask);
-#else
 	ret = set_cpus_allowed_ptr(current, &mask);
+#else
+	ret = set_cpus_allowed_ptr(current, &hmp_slow_cpu_mask);
 #endif
 	if (0 != ret)
 		LOG(KERN_INFO "set_cpus_allowed_ptr=%d.\n", ret);

@@ -318,6 +318,10 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 		if (!cpumask_and(&temp_mask, &temp_mask, cpu_coregroup_mask(0)))
 			goto err_out;
 #endif
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+		if (cpumask_equal(cpu_all_mask, &temp_mask))
+			cpumask_copy(&temp_mask, &hmp_slow_cpu_mask);
+#endif
 		for_each_cpu(cpu, &temp_mask) {
 			if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
 				goto err_out;
@@ -325,10 +329,24 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 		}
 		bit <<= shift;
 	} else {
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+		if (cpumask_equal(cpu_all_mask, mask_val)) {
+			if (!force)
+				cpu = cpumask_any(&hmp_slow_cpu_mask);
+			else
+				cpu = cpumask_first(&hmp_slow_cpu_mask);
+		} else {
+			if (!force)
+				cpu = cpumask_any(mask_val);
+			else
+				cpu = cpumask_first(mask_val);
+		}
+#else
 		if (!force)
 			cpu = cpumask_any_and(mask_val, cpu_online_mask);
 		else
 			cpu = cpumask_first(mask_val);
+#endif
 
 		if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
 			goto err_out;

@@ -694,6 +694,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen)
 #if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
 	if (cpumask_test_cpu(cpu, &hmp_fast_cpu_mask)) {
 		cpumask_or(&dest_cpus, cpumask_of(cpu), cpu_online_mask);
+
 		ret = cpus_notify(CPUS_UP_PREPARE, (void *)&dest_cpus);
 		if (ret)
 			goto out;

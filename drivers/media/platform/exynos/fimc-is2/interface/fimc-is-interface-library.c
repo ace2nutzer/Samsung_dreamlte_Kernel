@@ -1741,7 +1741,10 @@ int fimc_is_init_ddk_thread(void)
 #ifdef SET_CPU_AFFINITY
 			cpu = lib_get_task_affinity(i);
 #ifdef CONFIG_SCHED_HMP_CUSTOM
-			ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, &hmp_slow_cpu_mask);
+			if (cpumask_equal(cpu_all_mask, cpumask_of(cpu)))
+				ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, &hmp_slow_cpu_mask);
+			else
+				ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, cpumask_of(cpu));
 #else
 			ret = set_cpus_allowed_ptr(lib->task_taaisp[i].task, cpumask_of(cpu));
 #endif

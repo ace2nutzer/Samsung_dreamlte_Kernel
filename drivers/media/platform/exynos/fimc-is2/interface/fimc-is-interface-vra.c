@@ -280,7 +280,10 @@ int fimc_is_lib_vra_init_task(struct fimc_is_lib_vra *lib_vra)
 #ifdef SET_CPU_AFFINITY
 	cpu = TASK_VRA_AFFINITY;
 #ifdef CONFIG_SCHED_HMP_CUSTOM
-	ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, &hmp_slow_cpu_mask);
+	if (cpumask_equal(cpu_all_mask, cpumask_of(cpu)))
+		ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, &hmp_slow_cpu_mask);
+	else
+		ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, cpumask_of(cpu));
 #else
 	ret = set_cpus_allowed_ptr(lib_vra->task_vra.task, cpumask_of(cpu));
 #endif
