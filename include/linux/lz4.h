@@ -56,7 +56,7 @@
  * Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
  */
 #ifdef CONFIG_SOC_EXYNOS8895
-#define LZ4_MEMORY_USAGE 15
+#define LZ4_MEMORY_USAGE 12
 #else
 #define LZ4_MEMORY_USAGE 14
 #endif
