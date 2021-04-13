@@ -59,7 +59,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/vmscan.h>
 
-//#define MEM_BOOST
+#define MEM_BOOST
 
 struct scan_control {
 	/* How many pages shrink_list() should reclaim */
@@ -2176,10 +2176,7 @@ static inline bool need_memory_boosting(struct zone *zone)
 	return ret;
 }
 #else
-void test_and_set_mem_boost_timeout(void)
-{
-	return;
-}
+void test_and_set_mem_boost_timeout(void) {}
 #endif // MEM_BOOST
 
 /*
