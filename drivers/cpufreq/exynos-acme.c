@@ -855,10 +855,10 @@ void exynos_cpufreq_reset_boot_qos(void)
 		if (!domain->boot_qos)
 			continue;
 
-		pm_qos_update_request_timeout(&domain->min_qos_req,
-				domain->boot_qos, 40 * USEC_PER_SEC);
 		pm_qos_update_request_timeout(&domain->max_qos_req,
-				domain->boot_qos, 40 * USEC_PER_SEC);
+				domain->boot_qos, 5 * USEC_PER_SEC);
+		pm_qos_update_request_timeout(&domain->min_qos_req,
+				domain->boot_qos, 5 * USEC_PER_SEC);
 	}
 }
 EXPORT_SYMBOL(exynos_cpufreq_reset_boot_qos);
@@ -1058,10 +1058,10 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 		boot_qos = min(val, boot_qos);
 	}
 
-	pm_qos_update_request_timeout(&domain->min_qos_req,
-			boot_qos, 40 * USEC_PER_SEC);
 	pm_qos_update_request_timeout(&domain->max_qos_req,
-			boot_qos, 40 * USEC_PER_SEC);
+			boot_qos, 5 * USEC_PER_SEC);
+	pm_qos_update_request_timeout(&domain->min_qos_req,
+			boot_qos, 5 * USEC_PER_SEC);
 
 	/* In case of factory mode, if jig cable is attached,
 	 * set cpufreq max limit as frequency of "pm_qos-jigbooting" in device tree.
