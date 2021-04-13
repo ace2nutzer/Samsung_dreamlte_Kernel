@@ -51,22 +51,6 @@
 		};
 	};
 
-	firmware {
-		android {
-			compatible = "android,firmware";
-			fstab {
-				compatible = "android,fstab";
-				system {
-					compatible = "android,system";
-					dev = "/dev/block/platform/11120000.ufs/by-name/SYSTEM";
-					type = "ext4";
-					mnt_flags = "ro,noatime";
-					fsmgr_flags = "wait";
-				};
-			};
-		};
-	};
-
 	serial_0: uart@10430000 {
 		status = "okay";
 	};
