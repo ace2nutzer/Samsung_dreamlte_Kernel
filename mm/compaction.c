@@ -1928,16 +1928,8 @@ static int kcompactd(void *p)
 
 	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
 
-	if (!cpumask_empty(cpumask)) {
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-		if (cpumask_equal(cpu_all_mask, cpumask))
-			set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
-		else
-			set_cpus_allowed_ptr(tsk, cpumask);
-#else
+	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
-#endif
-	}
 
 	set_freezable();
 	set_user_nice(current, MIN_NICE);
