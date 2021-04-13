@@ -173,11 +173,9 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE |
 					__GFP_RBIN);
 	else
-		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE |
-					__GFP_CMA);
+		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
 #else
-	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE |
-					__GFP_CMA);
+	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
 #endif
 	mapping->private_data = NULL;
 	mapping->writeback_index = 0;
