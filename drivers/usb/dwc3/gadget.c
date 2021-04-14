@@ -2022,7 +2022,11 @@ static int set_cpu_core_from_usb_irq(int enable)
 		if (!alloc_cpumask_var(&new_value, GFP_KERNEL))
 			return -ENOMEM;
 
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+		cpumask_copy(new_value, &hmp_slow_cpu_mask);
+#else
 		cpumask_setall(new_value);
+#endif
 
 		if (!cpumask_intersects(new_value, cpu_online_mask)) {
 			err = irq_select_affinity_usr(irq, new_value);

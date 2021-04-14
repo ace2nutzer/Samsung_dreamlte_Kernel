@@ -1182,18 +1182,8 @@ static int migration_cpu_stop(void *data)
  */
 void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_mask)
 {
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, new_mask)) {
-		cpumask_copy(&p->cpus_allowed, &hmp_slow_cpu_mask);
-		p->nr_cpus_allowed = cpumask_weight(&hmp_slow_cpu_mask);
-	} else {
-		cpumask_copy(&p->cpus_allowed, new_mask);
-		p->nr_cpus_allowed = cpumask_weight(new_mask);
-	}
-#else
 	cpumask_copy(&p->cpus_allowed, new_mask);
 	p->nr_cpus_allowed = cpumask_weight(new_mask);
-#endif
 }
 
 void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
@@ -1217,14 +1207,7 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 	if (running)
 		put_prev_task(rq, p);
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, new_mask))
-		p->sched_class->set_cpus_allowed(p, &hmp_slow_cpu_mask);
-	else
-		p->sched_class->set_cpus_allowed(p, new_mask);
-#else
 	p->sched_class->set_cpus_allowed(p, new_mask);
-#endif
 
 	if (running)
 		p->sched_class->set_curr_task(rq);
@@ -1268,25 +1251,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 		goto out;
 	}
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, new_mask)) {
-		do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
-
-		/* Can the task run on the task's current CPU? If so, we're done */
-		if (cpumask_test_cpu(task_cpu(p), &hmp_slow_cpu_mask))
-			goto out;
-
-		dest_cpu = cpumask_any(&hmp_slow_cpu_mask);
-	} else {
-		do_set_cpus_allowed(p, new_mask);
-
-		/* Can the task run on the task's current CPU? If so, we're done */
-		if (cpumask_test_cpu(task_cpu(p), new_mask))
-			goto out;
-
-		dest_cpu = cpumask_any_and(cpu_active_mask, new_mask);
-	}
-#else
 	do_set_cpus_allowed(p, new_mask);
 
 	/* Can the task run on the task's current CPU? If so, we're done */
@@ -1294,7 +1258,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 		goto out;
 
 	dest_cpu = cpumask_any_and(cpu_active_mask, new_mask);
-#endif
 
 	if (task_running(rq, p) || p->state == TASK_WAKING) {
 		struct migration_arg arg = { p, dest_cpu };
@@ -3898,12 +3861,12 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio)) {
 		p->sched_class = &rt_sched_class;
+#ifdef CONFIG_SCHED_HMP
+		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
+			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
+#endif
 	} else
 		p->sched_class = &fair_sched_class;
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
-	if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
-		do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
-#endif
 }
 
 static void
@@ -4650,20 +4613,8 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	if (retval)
 		goto out_free_new_mask;
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, in_mask)) {
-		cpumask_copy(cpus_allowed, &hmp_slow_cpu_mask);
-		cpuset_cpus_allowed(p, cpus_allowed);
-		cpumask_copy(new_mask, &hmp_slow_cpu_mask);
-	} else {
-		cpumask_copy(cpus_allowed, in_mask);
-		cpuset_cpus_allowed(p, cpus_allowed);
-		cpumask_copy(new_mask, in_mask);
-	}
-#else
 	cpuset_cpus_allowed(p, cpus_allowed);
 	cpumask_and(new_mask, in_mask, cpus_allowed);
-#endif
 
 	/*
 	 * Since bandwidth control happens on root_domain basis,

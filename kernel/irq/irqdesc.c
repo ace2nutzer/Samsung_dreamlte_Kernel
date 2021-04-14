@@ -30,11 +30,10 @@ static void __init init_irq_default_affinity(void)
 	alloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
 
 #ifdef CONFIG_SCHED_HMP_CUSTOM
-	if (cpumask_equal(cpu_all_mask, irq_default_affinity))
-		cpumask_copy(irq_default_affinity, &hmp_slow_cpu_mask);
-#endif
-
+	cpumask_copy(irq_default_affinity, &hmp_slow_cpu_mask);
+#else
 	cpumask_setall(irq_default_affinity);
+#endif
 }
 #else
 static void __init init_irq_default_affinity(void)

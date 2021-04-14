@@ -1925,12 +1925,14 @@ static int kcompactd(void *p)
 {
 	pg_data_t *pgdat = (pg_data_t*)p;
 	struct task_struct *tsk = current;
-
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
 
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
-
+#else
+	set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
+#endif
 	set_freezable();
 	set_user_nice(current, MIN_NICE);
 
@@ -1983,6 +1985,7 @@ void kcompactd_stop(int nid)
 	}
 }
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 /*
  * It's optimal to keep kcompactd on the same CPUs as their memory, but
  * not required for correctness. So if the last cpu in a node goes
@@ -2008,6 +2011,7 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 	}
 	return NOTIFY_OK;
 }
+#endif
 
 static int __init kcompactd_init(void)
 {
@@ -2016,7 +2020,9 @@ static int __init kcompactd_init(void)
 	for_each_node_state(nid, N_MEMORY)
 		kcompactd_run(nid);
 
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	hotcpu_notifier(cpu_callback, 0);
+#endif
 
 	return 0;
 }
