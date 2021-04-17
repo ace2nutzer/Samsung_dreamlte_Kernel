@@ -170,7 +170,7 @@ static struct dentry *zs_stat_root;
 static struct vfsmount *zsmalloc_mnt;
 #endif
 
-#ifdef CONFIG_ZSWAP_MIGRATION_SUPPORT
+#ifdef CONFIG_ZSMALLOC_MIGRATION_SUPPORT
 static int zs_page_migration_enabled = 1;
 #else
 static int zs_page_migration_enabled;

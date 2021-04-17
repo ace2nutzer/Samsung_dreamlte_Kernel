@@ -550,15 +550,6 @@ config ZSWAP
 	  they have not be fully explored on the large set of potential
 	  configurations and workloads that exist.
 
-config ZSWAP_MIGRATION_SUPPORT
-	bool "Support the migration of zsmalloc pages used by zswap"
-	depends on ZSWAP || ZRAM && ZSMALLOC && COMPACTION
-	default n
-	help
-	  By supporting the migration of zsmalloc pages, the compaction can migrate
-	  more pages (originally, only anon and fs pages) so that
-	  the compaction success rate may increase.
-
 config ZSWAP_ENABLE_WRITEBACK
 	bool "Enable zswap writeback"
 	depends on ZSWAP
@@ -613,6 +604,15 @@ config PGTABLE_MAPPING
 
 	  You can check speed with zsmalloc benchmark:
 	  https://github.com/spartacus06/zsmapbench
+
+config ZSMALLOC_MIGRATION_SUPPORT
+	bool "Support the migration of zsmalloc pages used by zswap or zram"
+	depends on ZSWAP || ZRAM && ZSMALLOC && COMPACTION
+	default n
+	help
+	  By supporting the migration of zsmalloc pages, the compaction can migrate
+	  more pages (originally, only anon and fs pages) so that
+	  the compaction success rate may increase.
 
 config ZSMALLOC_STAT
 	bool "Export zsmalloc statistics"
