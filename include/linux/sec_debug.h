@@ -256,7 +256,9 @@ extern void sec_debug_set_extra_info_hint(u64 hint);
 extern void sec_debug_set_extra_info_decon(unsigned int err);
 extern void sec_debug_set_extra_info_batt(int cap, int volt, int temp, int curr);
 extern void sec_debug_set_extra_info_ufs_error(char *str);
+#if defined(CONFIG_ZSWAP)
 extern void sec_debug_set_extra_info_zswap(char *str);
+#endif
 extern void sec_debug_set_extra_info_mfc_error(char *str);
 
 #else
@@ -284,7 +286,9 @@ extern void sec_debug_set_extra_info_mfc_error(char *str);
 #define sec_debug_set_extra_info_decon(a)	do { } while (0)
 #define sec_debug_set_extra_info_batt(a, b, c, d)	do { } while (0)
 #define sec_debug_set_extra_info_ufs_error(a)	do { } while (0)
+#if defined(CONFIG_ZSWAP)
 #define sec_debug_set_extra_info_zswap(a)	do { } while (0)
+#endif
 #define sec_debug_set_extra_info_mfc_error(a)	do { } while (0)
 
 #endif /* CONFIG_SEC_DEBUG_EXTRA_INFO */
