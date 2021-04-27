@@ -24,9 +24,9 @@
 #include <linux/ctype.h>
 #include <linux/of_gpio.h>
 
-// Torch Control
-// Range 1 - 15
-static unsigned int torch_brightness = 5; // 100 mA by default
+// Torch max_brightness
+// Range 10 - 15
+static unsigned int torch_max_brightness = 10;
 
 extern struct class *camera_class; /*sys/class/camera*/
 struct device *s2mpb02_led_dev;
@@ -312,25 +312,6 @@ ssize_t s2mpb02_store(struct device *dev,
 {
 	int value = 0;
 	int ret = 0;
-	unsigned int tmp = 0;
-
-	if (sscanf(buf, "torch_lux_boot=%d", &tmp)) {
-		if (tmp < 0 || tmp > 15) {
-			pr_err("[LED]s2mpb02_store , out of range 1 - 15.\n");
-			return -EINVAL;
-		}
-		torch_brightness = tmp;
-		return count;
-	} else if (sscanf(buf, "torch_lux=%d", &tmp)) {
-		if (tmp < 0 || tmp > 15) {
-			pr_err("[LED]s2mpb02_store , out of range 1 - 15.\n");
-			return -EINVAL;
-		}
-		torch_brightness = tmp;
-		/* Turn on Torch */
-		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_brightness;
-		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
-	}
 
 	if ((buf == NULL) || kstrtouint(buf, 10, &value)) {
 		return -1;
@@ -350,7 +331,7 @@ ssize_t s2mpb02_store(struct device *dev,
 		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (value == 1) {
 		/* Turn on Torch */
-		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_brightness;
+		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = S2MPB02_TORCH_OUT_I_60MA;
 		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (value == 100) {
 		/* Factory mode Turn on Torch */
@@ -367,7 +348,10 @@ ssize_t s2mpb02_store(struct device *dev,
 		global_led_datas[S2MPB02_FLASH_LED_1]->data->brightness = S2MPB02_FLASH_OUT_I_350MA;
 		led_set(global_led_datas[S2MPB02_FLASH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 	} else if (1001 <= value && value <= 1010) {
-		int brightness_value = value - 1001;
+		int brightness_value = value - 999; // -1001
+
+		if (brightness_value == 10)
+			brightness_value = torch_max_brightness;
 /*
 		int torch_intensity = -1;
 
@@ -381,9 +365,11 @@ ssize_t s2mpb02_store(struct device *dev,
 		}
 		// Turn on Torch Step 40mA ~ 240mA
 		pr_info("[LED]%s , %d->%d(%dmA)\n", __func__, brightness_value, torch_intensity, (torch_intensity)*20);
-		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = torch_intensity;
-		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
 */
+		pr_info("[LED]%s ,torch brightness value %d (%dmA)\n", __func__, brightness_value, (brightness_value)*20);
+		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = brightness_value; // torch_intensity
+		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+
 	} else {
 		pr_info("[LED]%s , Invalid value:%d\n", __func__, value);
 	}
@@ -422,6 +408,30 @@ ssize_t s2mpb02_show(struct device *dev,
 
 	pr_info("[LED] %s , MAX STEP TORCH_LED:%d\n", __func__, S2MPB02_TORCH_OUT_I_MAX - 1);
 	return sprintf(buf, "%d\n", S2MPB02_TORCH_OUT_I_MAX - 1);
+}
+
+ssize_t torch_max_brightness_store(struct device *dev,
+			struct device_attribute *attr, const char *buf,
+			size_t count)
+{
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u", &tmp)) {
+		if (tmp < 10 || tmp > 15) {
+			pr_err("[LED] %s, out of range 10 - 15.\n", __func__);
+			return -EINVAL;
+		}
+		torch_max_brightness = tmp;
+		return count;
+	}
+	pr_err("[LED] %s, invalid input.\n", __func__);
+	return -EINVAL;
+}
+
+ssize_t torch_max_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", torch_max_brightness);
 }
 
 #ifdef CONFIG_LEDS_IRIS_IRLED_CERTIFICATE_SUPPORT
@@ -522,6 +532,9 @@ static DEVICE_ATTR(rear_flash, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH,
 
 static DEVICE_ATTR(rear_torch_flash, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH,
 	s2mpb02_show, s2mpb02_store);
+
+static DEVICE_ATTR(torch_max_brightness, S_IRUGO|S_IWUSR,
+	torch_max_brightness_show, torch_max_brightness_store);
 
 #ifdef CONFIG_LEDS_IRIS_IRLED_SUPPORT
 int s2mpb02_ir_led_current(uint32_t current_value)
@@ -850,6 +863,12 @@ static int s2mpb02_led_probe(struct platform_device *pdev)
 				__func__ , dev_attr_rear_torch_flash.attr.name);
 		}
 
+		if (device_create_file(s2mpb02_led_dev,
+					 &dev_attr_torch_max_brightness) < 0) {
+			pr_err("<%s> failed to create device file, %s\n",
+				__func__ , dev_attr_torch_max_brightness.attr.name);
+		}
+
 #ifdef CONFIG_LEDS_IRIS_IRLED_CERTIFICATE_SUPPORT
 		if (device_create_file(s2mpb02_led_dev,
 					 &dev_attr_irled_torch) < 0) {
@@ -885,6 +904,7 @@ static int s2mpb02_led_remove(struct platform_device *pdev)
 	if (s2mpb02_led_dev) {
 		device_remove_file(s2mpb02_led_dev, &dev_attr_rear_flash);
 		device_remove_file(s2mpb02_led_dev, &dev_attr_rear_torch_flash);
+		device_remove_file(s2mpb02_led_dev, &dev_attr_torch_max_brightness);
 #ifdef CONFIG_LEDS_IRIS_IRLED_CERTIFICATE_SUPPORT
 		device_remove_file(s2mpb02_led_dev, &dev_attr_irled_torch);
 #endif
