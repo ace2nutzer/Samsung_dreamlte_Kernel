@@ -27,6 +27,13 @@ config SECURITY_PERF_EVENTS_RESTRICT
 	  perf_event_open syscall will be permitted unless it is
 	  changed.
 
+config A2N
+	bool "A2N module"
+	depends on SYSFS
+	help
+	  To prevent manipulation of customs sysfs interfaces by
+	  3rd-party apps.
+
 config SECURITY
 	bool "Enable different security models"
 	depends on SYSFS
