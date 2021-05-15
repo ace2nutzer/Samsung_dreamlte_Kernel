@@ -24,6 +24,10 @@
 #include <linux/ctype.h>
 #include <linux/of_gpio.h>
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 // Torch max_brightness
 // Range 10 - 15
 static unsigned int torch_max_brightness = 10;
@@ -416,16 +420,40 @@ ssize_t torch_max_brightness_store(struct device *dev,
 {
 	unsigned int tmp;
 
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 10 || tmp > 15) {
 			pr_err("[LED] %s, out of range 10 - 15.\n", __func__);
-			return -EINVAL;
+			goto err;
 		}
 		torch_max_brightness = tmp;
-		return count;
+		goto out;
 	}
-	pr_err("[LED] %s, invalid input.\n", __func__);
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 
 ssize_t torch_max_brightness_show(struct device *dev,

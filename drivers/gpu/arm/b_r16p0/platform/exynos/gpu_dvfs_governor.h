@@ -18,15 +18,24 @@
 #ifndef _GPU_DVFS_GOVERNOR_H_
 #define _GPU_DVFS_GOVERNOR_H_
 
+#define BUILD_ONLY_ONDEMAND_GOV
+
+#ifdef BUILD_ONLY_ONDEMAND_GOV
 typedef enum {
-	G3D_DVFS_GOVERNOR_DEFAULT = 0,
+	G3D_DVFS_GOVERNOR_ONDEMAND = 0,
+	G3D_MAX_GOVERNOR_NUM,
+} gpu_governor_type;
+#else
+typedef enum {
+	G3D_DVFS_GOVERNOR_ONDEMAND = 0,
 	G3D_DVFS_GOVERNOR_INTERACTIVE,
 	G3D_DVFS_GOVERNOR_STATIC,
 	G3D_DVFS_GOVERNOR_BOOSTER,
 	G3D_DVFS_GOVERNOR_DYNAMIC,
-	G3D_DVFS_GOVERNOR_ONDEMAND,
+	G3D_DVFS_GOVERNOR_DEFAULT,
 	G3D_MAX_GOVERNOR_NUM,
 } gpu_governor_type;
+#endif
 
 void gpu_dvfs_update_start_clk(int governor_type, int clk);
 void gpu_dvfs_update_table(int governor_type, gpu_dvfs_info *table);

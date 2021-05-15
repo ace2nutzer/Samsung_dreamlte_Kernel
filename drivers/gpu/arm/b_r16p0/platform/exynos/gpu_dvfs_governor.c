@@ -34,14 +34,17 @@ extern bool gpu_boost;
 extern unsigned int gpu_down_threshold;
 extern void calc_gpu_down_threshold(void);
 
+#ifndef BUILD_ONLY_ONDEMAND_GOV
 static int gpu_dvfs_governor_default(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_interactive(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_static(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_booster(struct exynos_context *platform, int utilization);
 static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utilization);
+#endif
 static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization);
 
 static gpu_dvfs_governor_info governor_info[G3D_MAX_GOVERNOR_NUM] = {
+#ifndef BUILD_ONLY_ONDEMAND_GOV
 	{
 		G3D_DVFS_GOVERNOR_DEFAULT,
 		"default",
@@ -72,6 +75,7 @@ static gpu_dvfs_governor_info governor_info[G3D_MAX_GOVERNOR_NUM] = {
 		gpu_dvfs_governor_dynamic,
 		NULL
 	},
+#endif
 	{
 		G3D_DVFS_GOVERNOR_ONDEMAND,
 		"ondemand",
@@ -100,6 +104,7 @@ void *gpu_dvfs_get_governor_info(void)
 	return &governor_info;
 }
 
+#ifndef BUILD_ONLY_ONDEMAND_GOV
 static int gpu_dvfs_governor_default(struct exynos_context *platform, int utilization)
 {
 	DVFS_ASSERT(platform);
@@ -288,6 +293,7 @@ static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utiliz
 
 	return 0;
 }
+#endif
 
 static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization)
 {
@@ -404,7 +410,7 @@ int gpu_dvfs_governor_setting(struct exynos_context *platform, int governor_type
 
 int gpu_dvfs_governor_init(struct kbase_device *kbdev)
 {
-	int governor_type = G3D_DVFS_GOVERNOR_DEFAULT;
+	int governor_type = G3D_DVFS_GOVERNOR_ONDEMAND;
 	struct exynos_context *platform = (struct exynos_context *) kbdev->platform_context;
 
 	DVFS_ASSERT(platform);

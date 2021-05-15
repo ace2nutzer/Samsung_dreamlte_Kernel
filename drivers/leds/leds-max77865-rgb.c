@@ -27,6 +27,10 @@
 #include <linux/regmap.h>
 #include <linux/sec_sysfs.h>
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 #define SEC_LED_SPECIFIC
 
 /* Registers */
@@ -1047,33 +1051,49 @@ static ssize_t blink_delays_store(struct kobject *kobj,
 {
 	unsigned int tmp;
 
-	if (sscanf(buf, "blink_on_delay=%u", &tmp)) {
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
+	if (sscanf(buf, "blink_on_delay=%u", &tmp)) {
 		if (tmp < 200 || tmp > 10000) {
 			pr_err("[led_rgb] Invaild input\n");
-			return -EINVAL;
+			goto err;
 		}
-
 		blink_on_delay = tmp;
-
-		return count;
+		goto out;
 	}
 
 	if (sscanf(buf, "blink_off_delay=%u", &tmp)) {
-
 		if (tmp < 200 || tmp > 10000) {
 			pr_err("[led_rgb] Invaild input\n");
-			return -EINVAL;
+			goto err;
 		}
-
 		blink_off_delay = tmp;
-
-		return count;
+		goto out;
 	}
 
-	pr_err("[led_rgb] Invaild cmd\n");
-
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 LED_RGB_ATTR_RW(blink_delays);
 
@@ -1096,28 +1116,41 @@ static ssize_t disable_lowpow_mode_store(struct kobject *kobj,
 	struct max77865_rgb *max77865_rgb = dev_get_drvdata(led_dev);
 	int tmp;
 
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
 	if (sscanf(buf, "red=%d", &tmp)) {
 		if (tmp < 0 || tmp > 1) {
 			pr_err("[led_rgb] Invaild input\n");
-			return -EINVAL;
+			goto err;
 		}
 		disable_lowpow_mode_r = tmp;
-		return count;
+		goto out;
 	}
 
 	if (sscanf(buf, "green=%d", &tmp)) {
 		if (tmp < 0 || tmp > 1) {
 			pr_err("[led_rgb] Invaild input\n");
-			return -EINVAL;
+			goto err;
 		}
 		disable_lowpow_mode_g = tmp;
-		return count;
+		goto out;
 	}
 
 	if (sscanf(buf, "blue=%d", &tmp)) {
 		if (tmp < 0 || tmp > 1) {
 			pr_err("[led_rgb] Invaild input\n");
-			return -EINVAL;
+			goto err;
 		}
 		disable_lowpow_mode_b = tmp;
 
@@ -1129,12 +1162,21 @@ static ssize_t disable_lowpow_mode_store(struct kobject *kobj,
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 		}
 
-		return count;
+		goto out;
 	}
 
-	pr_err("[led_rgb] Invaild cmd\n");
-
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 LED_RGB_ATTR_RW(disable_lowpow_mode);
 

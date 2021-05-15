@@ -19,15 +19,20 @@
 #include "cpufreq_governor.h"
 #include <linux/pm_qos.h>
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(75)
+#define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(25)
+#define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 #define DEF_BOOST				(1)
+#define IO_IS_BUSY				(0)
 
 /* Cluster 0 little cpu */
 #define DEF_FREQUENCY_STEP_CL0_0               (455000)
@@ -64,6 +69,11 @@
 #define DEF_FREQUENCY_STEP_CL1_17              (2808000)
 
 static unsigned int down_threshold = 0;
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+static unsigned int up_threshold_suspend = 95;
+static bool boost_suspend = false;
+#endif
 
 static DEFINE_PER_CPU(struct od_cpu_dbs_info_s, od_cpu_dbs_info);
 
@@ -163,21 +173,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 
 		} else {
 			/* Boost */
-			/* Little cpu 0 */
-			if (cpu == 0) {
-				if (policy->cur == DEF_FREQUENCY_STEP_CL0_0) {
-					requested_freq = DEF_FREQUENCY_STEP_CL0_1;
-
-					if (requested_freq > policy->max)
-						requested_freq = policy->max;
-
-				} else {
-					requested_freq = policy->max;
-				}
-			/* Big cpu 4 */
-			} else {
-				requested_freq = policy->max;
-			}
+			requested_freq = policy->max;
 		}
 
 		/* If switching to max speed, apply sampling_down_factor */
@@ -377,12 +373,17 @@ static ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 {
 	unsigned int input;
 	int ret;
+
 	ret = sscanf(buf, "%u", &input);
 	if (ret != 1)
-		return -EINVAL;
+		goto err;
 
 	update_sampling_rate(dbs_data, input);
 	return count;
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+	return -EINVAL;
 }
 
 static ssize_t store_io_is_busy(struct dbs_data *dbs_data, const char *buf,
@@ -414,19 +415,45 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	unsigned int input;
 	int ret;
-	ret = sscanf(buf, "%u", &input);
 
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &input);
+		if (input == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	ret = sscanf(buf, "%u", &input);
 	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
 			input < MIN_FREQUENCY_UP_THRESHOLD) {
-		return -EINVAL;
+		goto err;
 	}
-
 	od_tuners->up_threshold = input;
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+	od_tuners->up_threshold_resume = input;
+#endif
 
 	/* update down_threshold */
 	update_down_threshold(od_tuners);
 
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
 }
 
 static ssize_t store_sampling_down_factor(struct dbs_data *dbs_data,
@@ -492,15 +519,43 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 	unsigned int input;
 	int ret;
 
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &input);
+		if (input == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
 	ret = sscanf(buf, "%u", &input);
 	if (ret != 1)
-		return -EINVAL;
+		goto err;
 
 	if (input > 1)
 		input = 1;
 
 	od_tuners->boost = input;
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+	od_tuners->boost_resume = input;
+#endif
+
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
 }
 
 show_store_one(od, sampling_rate);
@@ -571,15 +626,22 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		tuners->up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+		tuners->up_threshold_resume = MICRO_FREQUENCY_UP_THRESHOLD;
+#endif
 		/*
 		 * In nohz/micro accounting case we set the minimum frequency
 		 * not depending on HZ, but fixed (very low). The deferred
 		 * timer might skip some samples if idle/sleeping as needed.
 		*/
-		dbs_data->min_sampling_rate = jiffies_to_usecs(1);
+		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 	} else {
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
 
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+		tuners->up_threshold_resume = DEF_FREQUENCY_UP_THRESHOLD;
+#endif
 		/* For correct statistics, we need 10 ticks for each measure */
 		dbs_data->min_sampling_rate = MIN_SAMPLING_RATE_RATIO *
 			jiffies_to_usecs(10);
@@ -587,8 +649,12 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
-	tuners->io_is_busy = 0;
+	tuners->io_is_busy = IO_IS_BUSY;
 	tuners->boost = DEF_BOOST;
+
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+	tuners->boost_resume = DEF_BOOST;
+#endif
 
 	dbs_data->tuners = tuners;
 
@@ -633,12 +699,43 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 	.owner			= THIS_MODULE,
 };
 
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+void update_gov_tunables(bool suspend)
+{
+	int cpu = 0;
+	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
+	struct od_cpu_dbs_info_s *dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+	struct cpufreq_policy *policy = dbs_info->cdbs.shared->policy;
+	struct dbs_data *dbs_data = policy->governor_data;
+	od_tuners_lit = dbs_data->tuners;
+
+	cpu = 4;
+	dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+	policy = dbs_info->cdbs.shared->policy;
+	dbs_data = policy->governor_data;
+	od_tuners_big = dbs_data->tuners;
+
+	if (suspend) {
+		od_tuners_lit->up_threshold = up_threshold_suspend;
+		od_tuners_lit->boost = boost_suspend;
+		od_tuners_big->up_threshold = up_threshold_suspend;
+		od_tuners_big->boost = boost_suspend;
+	} else {
+		/* resume */
+		od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
+		od_tuners_lit->boost = od_tuners_lit->boost_resume;
+		od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
+		od_tuners_big->boost = od_tuners_big->boost_resume;
+	}
+}
+#endif
+
 #ifdef CONFIG_ARCH_EXYNOS
 static int cpufreq_ondemand_cluster1_min_qos_handler(struct notifier_block *b,
 						unsigned long val, void *v)
 {
 	struct od_cpu_dbs_info_s *pcpu;
-	struct cpufreq_ondemand_tunables *tunables;
+	struct od_dbs_tuners *od_tuners;
 	unsigned long flags;
 	int ret = NOTIFY_OK;
 	int cpu = 4; /* policy cpu of cluster 1 */
@@ -656,7 +753,7 @@ static int cpufreq_ondemand_cluster1_min_qos_handler(struct notifier_block *b,
 	//trace_cpufreq_ondemand_cpu_min_qos(cpu, val, pcpu->policy->cur);
 
 	if (val < pcpu->policy->cur)
-		tunables = pcpu->policy->governor_data;
+		od_tuners = pcpu->policy->governor_data;
 
 exit:
 	mutex_unlock(&cpufreq_governor_lock);
@@ -671,7 +768,7 @@ static int cpufreq_ondemand_cluster1_max_qos_handler(struct notifier_block *b,
 						unsigned long val, void *v)
 {
 	struct od_cpu_dbs_info_s *pcpu;
-	struct cpufreq_ondemand_tunables *tunables;
+	struct od_dbs_tuners *od_tuners;
 	unsigned long flags;
 	int ret = NOTIFY_OK;
 	int cpu = 4; /* policy cpu of cluster1 */
@@ -689,7 +786,7 @@ static int cpufreq_ondemand_cluster1_max_qos_handler(struct notifier_block *b,
 	//trace_cpufreq_ondemand_cpu_max_qos(cpu, val, pcpu->policy->cur);
 
 	if (val > pcpu->policy->cur)
-		tunables = pcpu->policy->governor_data;
+		od_tuners = pcpu->policy->governor_data;
 
 exit:
 	mutex_unlock(&cpufreq_governor_lock);
@@ -704,7 +801,7 @@ static int cpufreq_ondemand_cluster0_min_qos_handler(struct notifier_block *b,
 						unsigned long val, void *v)
 {
 	struct od_cpu_dbs_info_s *pcpu;
-	struct cpufreq_ondemand_tunables *tunables;
+	struct od_dbs_tuners *od_tuners;
 	unsigned long flags;
 	int ret = NOTIFY_OK;
 	int cpu = 0; /* policy cpu of cluster0 */
@@ -722,7 +819,7 @@ static int cpufreq_ondemand_cluster0_min_qos_handler(struct notifier_block *b,
 	//trace_cpufreq_ondemand_cpu_min_qos(cpu, val, pcpu->policy->cur);
 
 	if (val < pcpu->policy->cur)
-		tunables = pcpu->policy->governor_data;
+		od_tuners = pcpu->policy->governor_data;
 
 exit:
 	mutex_unlock(&cpufreq_governor_lock);
@@ -737,7 +834,7 @@ static int cpufreq_ondemand_cluster0_max_qos_handler(struct notifier_block *b,
 						unsigned long val, void *v)
 {
 	struct od_cpu_dbs_info_s *pcpu;
-	struct cpufreq_ondemand_tunables *tunables;
+	struct od_dbs_tuners *od_tuners;
 	unsigned long flags;
 	int ret = NOTIFY_OK;
 	int cpu = 0; /* policy cpu of cluster0 */
@@ -755,7 +852,7 @@ static int cpufreq_ondemand_cluster0_max_qos_handler(struct notifier_block *b,
 	//trace_cpufreq_ondemand_cpu_max_qos(cpu, val, pcpu->policy->cur);
 
 	if (val > pcpu->policy->cur)
-		tunables = pcpu->policy->governor_data;
+		od_tuners = pcpu->policy->governor_data;
 
 exit:
 	mutex_unlock(&cpufreq_governor_lock);

@@ -39,6 +39,10 @@
 #include <soc/samsung/exynos-pd.h>
 #endif
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 extern struct kbase_device *pkbdev;
 
 /* custom DVFS */
@@ -66,7 +70,7 @@ static unsigned int gpu_dvfs_check_delay = 8;	/* ms */
 static DEFINE_MUTEX(poweroff_lock);
 
 /* for ondemand gov */
-unsigned int gpu_up_threshold = 75;
+unsigned int gpu_up_threshold = 95;
 bool gpu_boost = true;
 unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN			(25)
@@ -1693,28 +1697,48 @@ static ssize_t show_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kob
 
 static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	int clock = 0;
 	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+	unsigned int val;
 
-	if (!platform)
-		return -ENODEV;
-
-	if (sscanf(buf, "%d", &clock)) {
-
-		if (clock == 260000 || clock == 338000 || clock == 385000 || clock == 455000 || clock == 546000
-				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000) {
-			platform->gpu_max_clock = clock;
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, clock);
-			platform->user_max_lock_input = clock;
-			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n",
-					platform->gpu_min_clock, platform->gpu_max_clock);
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
 		} else {
-			pr_warning("[GPU:] Invaild input\n");
-			return -EINVAL;
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
 		}
+	}
+#endif
 
+	if (!platform) {
+		pr_err("[%s] platform not ready !\n",__func__);
+		goto err;
 	}
 
+	if (sscanf(buf, "%d", &val)) {
+		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 546000
+				|| val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+			platform->gpu_max_clock = val;
+			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, val);
+			platform->user_max_lock_input = val;
+			pr_info("gpufreq: new max freq is %d kHz\n", platform->gpu_max_clock);
+			goto out;
+		}
+	}
+
+err:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
 }
 
@@ -1726,17 +1750,42 @@ static ssize_t show_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribu
 
 static ssize_t set_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int input;
-	int ret;
+	unsigned int val;
 
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1)
-		return -EINVAL;
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
-	if (input > 1)
-		input = 1;
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
+		gpu_boost = true;
+		goto out;
+	}
 
-	gpu_boost = input;
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
+		gpu_boost = false;
+		goto out;
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
 }
 
@@ -1755,18 +1804,41 @@ static ssize_t set_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_a
 {
 	unsigned int input;
 	int ret;
-	ret = sscanf(buf, "%u", &input);
 
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &input);
+		if (input == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	ret = sscanf(buf, "%u", &input);
 	if (ret != 1 || input > GPU_MAX_UP_THRESHOLD ||
 			input < GPU_MIN_UP_THRESHOLD)
-		return -EINVAL;
+		goto err;
 
 	gpu_up_threshold = input;
 
 	/* update gpu_down_threshold */
 	calc_gpu_down_threshold();
 
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
 }
 
 static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -1779,27 +1851,48 @@ static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kob
 
 static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	int clock = 0;
 	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+	unsigned int val;
 
-	if (!platform)
-		return -ENODEV;
-
-	if (sscanf(buf, "%d", &clock)) {
-
-		if (clock == 260000 || clock == 338000 || clock == 385000 || clock == 455000 || clock == 546000
-				|| clock == 572000 || clock == 683000 || clock == 764000 || clock == 839000) {
-
-			platform->gpu_min_clock = clock;
-			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n",
-					platform->gpu_min_clock, platform->gpu_max_clock);
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
 		} else {
-			pr_warning("[GPU:] Invaild input\n");
-			return -EINVAL;
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
 		}
+	}
+#endif
 
+	if (!platform) {
+		pr_err("[%s] platform not ready !\n",__func__);
+		goto err;
 	}
 
+	if (sscanf(buf, "%d", &val)) {
+		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 546000
+				|| val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+
+			platform->gpu_min_clock = val;
+			pr_info("gpufreq: new min freq is %d kHz\n", platform->gpu_min_clock);
+			goto out;
+		}
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return count;
 }
 
@@ -2107,19 +2200,40 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 {
 	unsigned int tmp;
 
-	if (sscanf(buf, "%u", &tmp)) {
-
-		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_RANGE_TEMP_MAX) {
-			pr_warn("%s: out of range %d - %d\n", __func__ , (int)GPU_DVFS_RANGE_TEMP_MIN , (int)GPU_DVFS_RANGE_TEMP_MAX);
-			return -EINVAL;
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
 		}
+	}
+#endif
 
+	if (sscanf(buf, "%u", &tmp)) {
+		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_RANGE_TEMP_MAX) {
+			pr_err("%s: out of range %d - %d\n", __func__ , (int)GPU_DVFS_RANGE_TEMP_MIN , (int)GPU_DVFS_RANGE_TEMP_MAX);
+			goto err;
+		}
 		gpu_dvfs_max_temp = tmp;
-		return count;
+		goto out;
 	}
 
-	pr_warn("%s: invalid input\n", __func__);
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 
 static ssize_t show_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj_attribute *attr, char *buf)

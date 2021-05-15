@@ -75,6 +75,10 @@
 #include <brcm_nl80211.h>
 #endif /* WL_BCNRECV */
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 /*
  * allow to disable 2.4 GHz or 5GHz band
  * 0 = all
@@ -1333,13 +1337,24 @@ static ssize_t wifi_band_store(struct kobject *kobj,
 {
 	unsigned int tmp = 0;
 
-	if (sscanf(buf, "%u", &tmp)) {
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
+	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 0 || tmp > 2) {
 			pr_err("[wl_android] invalid input\n");
-			return -EINVAL;
+			goto err;
 		}
-
 		wifi_band = tmp;
 		if (wifi_band == 0) {
 			wlc_band_5g = 1;
@@ -1352,12 +1367,21 @@ static ssize_t wifi_band_store(struct kobject *kobj,
 			wlc_band_2g = 0;
 		}
 
-		return count;
+		goto out;
 	}
 
-	pr_err("[wl_android] invalid cmd\n");
-
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 WL_ANDROID_ATTR_RW(wifi_band);
 

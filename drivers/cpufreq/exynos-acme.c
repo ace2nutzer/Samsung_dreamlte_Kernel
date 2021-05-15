@@ -25,6 +25,10 @@
 
 #include "exynos-acme.h"
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 /*
  * list head of cpufreq domain
  */
@@ -451,61 +455,145 @@ static bool enable_suspend_freqs = false;
 module_param(enable_suspend_freqs, bool, 0644);
 
 static unsigned int cpu0_suspend_min_freq = 0;
-static unsigned int cpu0_suspend_max_freq = 0;
 module_param(cpu0_suspend_min_freq, uint, 0644);
-module_param(cpu0_suspend_max_freq, uint, 0644);
+
+static unsigned int cpu0_suspend_max_freq = 0;
 
 static unsigned int cpu4_suspend_min_freq = 0;
-static unsigned int cpu4_suspend_max_freq = 0;
 module_param(cpu4_suspend_min_freq, uint, 0644);
-module_param(cpu4_suspend_max_freq, uint, 0644);
 
-static unsigned int cpu0_min_freq = 0;
-static unsigned int cpu0_max_freq = 0;
-module_param(cpu0_min_freq, uint, 0644);
-module_param(cpu0_max_freq, uint, 0644);
+static unsigned int cpu4_suspend_max_freq = 0;
 
-static unsigned int cpu4_min_freq = 0;
-unsigned int cpu4_max_freq = 0;
-module_param(cpu4_min_freq, uint, 0644);
-module_param(cpu4_max_freq, uint, 0644);
+extern unsigned int cpu0_min_freq;
+extern unsigned int cpu0_max_freq;
+
+extern unsigned int cpu4_min_freq;
+extern unsigned int cpu4_max_freq;
+
+extern void update_gov_tunables(bool);
+
+static int set_cpu0_suspend_max_freq(const char *buf, struct kernel_param *kp)
+{
+	unsigned int tmp;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return 0;
+		}
+		if ((tmp != 0) && (tmp != 1690000)) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	if (sscanf(buf, "%u", &tmp)) {
+		if (tmp > 2002000) {
+			goto err;
+		}
+		cpu0_suspend_max_freq = tmp;
+		goto out;
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return 0;
+}
+module_param_call(cpu0_suspend_max_freq, set_cpu0_suspend_max_freq, param_get_int, &cpu0_suspend_max_freq, 0664);
+
+static int set_cpu4_suspend_max_freq(const char *buf, struct kernel_param *kp)
+{
+	unsigned int tmp;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return 0;
+		}
+		if ((tmp != 0) && (tmp != 2314000)) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	if (sscanf(buf, "%u", &tmp)) {
+		if (tmp > 2808000) {
+			goto err;
+		}
+		cpu4_suspend_max_freq = tmp;
+		goto out;
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return 0;
+}
+module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_int, &cpu4_suspend_max_freq, 0664);
 
 void set_suspend_cpufreq(bool suspend)
 {
-	static bool update_freqs = false;
+	static bool update_cpu0, update_cpu4 = false;
 
 	if (!enable_suspend_freqs)
 		return;
 
 	if (suspend) {
-		if (!cpu0_suspend_min_freq || !cpu0_suspend_max_freq)
-			goto cpu4;
+		if (cpu0_suspend_max_freq) {
 
-		/* set min/max cpu0 freq for suspend */
-		cpufreq_update_freq(0, cpu0_suspend_min_freq, cpu0_suspend_max_freq);
+			if (!cpu0_suspend_min_freq)
+				cpu0_suspend_min_freq = cpu0_min_freq;
 
-cpu4:
-		if (!cpu4_suspend_min_freq || !cpu4_suspend_max_freq)
-			goto out;
+			/* set min/max cpu0 freq for suspend */
+			cpufreq_update_freq(0, cpu0_suspend_min_freq, cpu0_suspend_max_freq);
+			update_cpu0 = true;
+		}
 
-		/* set min/max cpu4 freq for suspend */
-		cpufreq_update_freq(4, cpu4_suspend_min_freq, cpu4_suspend_max_freq);
+		if (cpu4_suspend_max_freq) {
 
-out:
-		if ((!cpu0_suspend_min_freq || !cpu0_suspend_max_freq) && (!cpu4_suspend_min_freq || !cpu4_suspend_max_freq))
-			update_freqs = false;
-		else
-			update_freqs = true;
+			if (!cpu4_suspend_min_freq)
+				cpu4_suspend_min_freq = cpu4_min_freq;
 
+			/* set min/max cpu4 freq for suspend */
+			cpufreq_update_freq(4, cpu4_suspend_min_freq, cpu4_suspend_max_freq);
+			update_cpu4 = true;
+		}
 	} else {
 		/* resume */
-		if (update_freqs) {
-			/* restore previous min/max cpufreq */
+		/* restore previous min/max cpufreq */
+		if (update_cpu0)
 			cpufreq_update_freq(0, cpu0_min_freq, cpu0_max_freq);
+		if (update_cpu4)
 			cpufreq_update_freq(4, cpu4_min_freq, cpu4_max_freq);
-			update_freqs = false;
-		}
+
+		update_cpu0 = false;
+		update_cpu4 = false;
 	}
+
+	update_gov_tunables(suspend);
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND
 

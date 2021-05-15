@@ -19,6 +19,10 @@
 #include <linux/sti/abc_common.h>
 #endif
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 bool sleep_mode = false;
 
 /* Charger Control */
@@ -1167,7 +1171,20 @@ static ssize_t curr_max_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
-	unsigned int ac, usb2, usb3, usbpd, usbcd, wc, max_curr, power;
+	unsigned int val, max_curr, power;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
 	max_curr = _battery->pdata->max_charging_current;
 
@@ -1177,12 +1194,12 @@ static ssize_t curr_max_store(struct kobject *kobj,
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
-	if (sscanf(buf, "ac=%u", &ac)) {
-		if (ac < 200 || ac > max_curr) {
+	if (sscanf(buf, "ac=%u", &val)) {
+		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+			goto err;
 		}
-		ac_curr_max = ac;
+		ac_curr_max = val;
 
 		/* calculate optimal input_current */
 		power = (ac_curr_max * 5);
@@ -1195,30 +1212,30 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		goto out;
 	}
 
-	if (sscanf(buf, "usb2=%u", &usb2)) {
-		if (usb2 < 200 || usb2 > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+	if (sscanf(buf, "usb2=%u", &val)) {
+		if (val < 100 || val > max_curr) {
+			pr_err("[sec_batt] Out of valid range 100 - %u mA\n", max_curr);
+			goto err;
 		}
-		usb2_curr_max = usb2;
+		usb2_curr_max = val;
 		goto out;
 	}
 
-	if (sscanf(buf, "usb3=%u", &usb3)) {
-		if (usb3 < 200 || usb3 > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+	if (sscanf(buf, "usb3=%u", &val)) {
+		if (val < 100 || val > max_curr) {
+			pr_err("[sec_batt] Out of valid range 100 - %u mA\n", max_curr);
+			goto err;
 		}
-		usb3_curr_max = usb3;
+		usb3_curr_max = val;
 		goto out;
 	}
 
-	if (sscanf(buf, "usbpd=%u", &usbpd)) {
-		if (usbpd < 200 || usbpd > max_curr) {
+	if (sscanf(buf, "usbpd=%u", &val)) {
+		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+			goto err;
 		}
-		usbpd_curr_max = usbpd;
+		usbpd_curr_max = val;
 
 		/* calculate optimal input_current */
 		power = (usbpd_curr_max * 5);
@@ -1231,21 +1248,21 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		goto out;
 	}
 
-	if (sscanf(buf, "usbcd=%u", &usbcd)) {
-		if (usbcd < 200 || usbcd > max_curr) {
+	if (sscanf(buf, "usbcd=%u", &val)) {
+		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+			goto err;
 		}
-		usbcd_curr_max = usbcd;
+		usbcd_curr_max = val;
 		goto out;
 	}
 
-	if (sscanf(buf, "wc=%u", &wc)) {
-		if (wc < 200 || wc > max_curr) {
+	if (sscanf(buf, "wc=%u", &val)) {
+		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			return -EINVAL;
+			goto err;
 		}
-		wc_curr_max = wc;
+		wc_curr_max = val;
 
 		/* calculate optimal input_current */
 		power = (wc_curr_max * 5);
@@ -1261,10 +1278,17 @@ static ssize_t curr_max_store(struct kobject *kobj,
 		goto out;
 	}
 
-	pr_err("[sec_batt] Invaild cmd\n");
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
 
 out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	/* reset aicl current for just in case */
 	_battery->aicl_current = 0;
 
@@ -1348,28 +1372,43 @@ static ssize_t water_detection_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
-	if (!strncmp(buf, "true", 1)) {
+	unsigned int val;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
 		water_detect = true;
-		return count;
+		goto out;
 	}
 
-	if (sysfs_streq(buf, "1")) {
-		water_detect = true;
-		return count;
-	}
-
-	if (!strncmp(buf, "false", 2)) {
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
 		water_detect = false;
-		return count;
+		goto out;
 	}
 
-	if (sysfs_streq(buf, "0")) {
-		water_detect = false;
-		return count;
-	}
-
-	pr_err("[sec_batt] Invaild cmd\n");
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 SEC_BAT_ATTR_RW(water_detection);
 #endif
@@ -1386,31 +1425,42 @@ static ssize_t batt_idle_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
-	if (!strncmp(buf, "true", 1)) {
+	unsigned int val;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &val);
+		if (val == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
 		batt_idle = true;
 		goto out;
 	}
 
-	if (sysfs_streq(buf, "1")) {
-		batt_idle = true;
-		goto out;
-	}
-
-	if (!strncmp(buf, "false", 2)) {
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
 		batt_idle = false;
 		goto out;
 	}
 
-	if (sysfs_streq(buf, "0")) {
-		batt_idle = false;
-		goto out;
-	}
-
-	pr_err("[sec_batt] Invaild cmd\n");
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
 
 out:
-
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	if (is_charger && batt_idle) {
 		sec_bat_set_charge(_battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
 		charging_curr = 0;
@@ -1421,7 +1471,6 @@ out:
 		enable_blue_led(false);
 		batt_level = 0;
 	}
-
 	/* set charging current */
 	if (is_charger)
 		sec_bat_set_charging_current(_battery);
@@ -1449,13 +1498,24 @@ static ssize_t batt_care_store(struct kobject *kobj,
 {
 	unsigned int tmp;
 
-	if (sscanf(buf, "%u", &tmp)) {
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
+	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 50 || tmp > 100) {
 			pr_err("[sec_batt] Invaild cmd\n");
-			return -EINVAL;
+			goto err;
 		}
-
 		batt_care = tmp;
 
 		if (batt_care == 100)
@@ -1473,11 +1533,21 @@ static ssize_t batt_care_store(struct kobject *kobj,
 		if (is_charger)
 			sec_bat_set_charging_current(_battery);
 
-		return count;
+		goto out;
 	}
 
-	pr_err("[sec_batt] Invaild cmd\n");
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 SEC_BAT_ATTR_RW(batt_care);
 
@@ -1535,13 +1605,24 @@ static ssize_t batt_max_temp_store(struct kobject *kobj,
 {
 	unsigned int tmp;
 
-	if (sscanf(buf, "%u", &tmp)) {
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if (tmp == a2n) {
+			a2n_allow = true;
+			return count;
+		} else {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
 
+	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 35 || tmp > 45) {
 			pr_err("[sec_batt] Invaild cmd\n");
-			return -EINVAL;
+			goto err;
 		}
-
 		batt_max_temp = tmp;
 
 		/* update */
@@ -1563,11 +1644,21 @@ static ssize_t batt_max_temp_store(struct kobject *kobj,
 		_battery->pdata->swelling_high_temp_block = tmp + 1;
 		_battery->pdata->swelling_high_temp_recov = tmp;
 
-		return count;
+		goto out;
 	}
 
-	pr_err("[sec_batt] Invaild cmd\n");
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
 	return -EINVAL;
+
+out:
+#if IS_ENABLED(CONFIG_A2N)
+	a2n_allow = false;
+#endif
+	return count;
 }
 SEC_BAT_ATTR_RW(batt_max_temp);
 
