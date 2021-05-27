@@ -327,9 +327,6 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 	if (utilization <= gpu_down_threshold)
 		platform->step++;
 
-	DVFS_ASSERT((platform->step >= gpu_dvfs_get_level(platform->gpu_max_clock))
-					&& (platform->step <= gpu_dvfs_get_level(platform->gpu_min_clock)));
-
 	return 0;
 }
 

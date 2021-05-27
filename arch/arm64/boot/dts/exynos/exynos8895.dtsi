@@ -813,7 +813,7 @@
 		gpu_max_clock_limit = <839000>;
 		gpu_min_clock = <260000>;
 		gpu_dvfs_start_clock = <260000>;
-		gpu_dvfs_bl_config_clock = <260000>;
+		gpu_dvfs_bl_config_clock = <0>;
 		gpu_default_voltage = <0>;
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
@@ -821,22 +821,22 @@
 		gpu_temp_throttling_level_num = <9>;
 		gpu_temp_throttling = <839000 764000 683000 572000 546000 455000 385000 338000 260000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <1>; /* ticks */
+		gpu_dvfs_time_interval = <10>; /* ticks */
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
 		gpu_dvs = <0>;
 		gpu_inter_frame_pm = <1>;
 		gpu_perf_gathering = <0>;
-		gpu_runtime_pm_delay_time = <0>;
+		gpu_runtime_pm_delay_time = <50>;
 		gpu_dvfs_polling_time = <30>;
 		gpu_pmqos_int_disable = <1>;
 		gpu_pmqos_mif_max_clock = <0>;
 		gpu_pmqos_mif_max_clock_base = <0>;
-		gpu_cl_dvfs_start_base = <260000>;
+		gpu_cl_dvfs_start_base = <0>;
 		gpu_debug_level = <4>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
-		gpu_trace_level = <1>; /*8 = TRACE_ALL*/
-		gpu_mo_min_clock = <260000>;
+		gpu_trace_level = <0>; /*8 = TRACE_ALL*/
+		gpu_mo_min_clock = <0>;
 		gpu_boost_gpu_min_lock = <0>;
 		gpu_boost_egl_min_lock = <0>;
 		gpu_vk_boost_max_lock = <0>;

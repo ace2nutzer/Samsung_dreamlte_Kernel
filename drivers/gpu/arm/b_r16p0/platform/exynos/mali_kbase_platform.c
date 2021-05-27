@@ -276,12 +276,8 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	}
 #endif
 
-#ifdef CONFIG_CAL_IF
-	platform->gpu_dvfs_start_clock = cal_dfs_get_boot_freq(platform->g3d_cmu_cal_id);
-	GPU_LOG(DVFS_INFO, DUMMY, 0u, 0u, "get g3d start clock from ect : %d\n", platform->gpu_dvfs_start_clock);
-#else
 	gpu_update_config_data_int(np, "gpu_dvfs_start_clock", &platform->gpu_dvfs_start_clock);
-#endif
+
 	gpu_update_config_data_int_array(np, "gpu_dvfs_table_size", of_data_int_array, 2);
 	for (i = 0; i < G3D_MAX_GOVERNOR_NUM; i++) {
 		gpu_dvfs_update_start_clk(i, platform->gpu_dvfs_start_clock);
@@ -354,7 +350,7 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 #endif
 
 	platform->gpu_dss_freq_id = 0;
-	gpu_update_config_data_int(np, "gpu_ess_id_type", &platform->gpu_dss_freq_id);
+	gpu_update_config_data_int(np, "gpu_dss_id_type", &platform->gpu_dss_freq_id);
 
 	return 0;
 }
