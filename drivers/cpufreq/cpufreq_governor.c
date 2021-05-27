@@ -139,7 +139,7 @@ void dbs_check_cpu(struct dbs_data *dbs_data, int cpu)
 		 * - during long idle intervals
 		 * - explicitly set to zero
 		 */
-		if (unlikely(wall_time > (2 * sampling_rate) &&
+		if (unlikely(wall_time > (sampling_rate) &&
 			     j_cdbs->prev_load)) {
 			load = j_cdbs->prev_load;
 
@@ -216,7 +216,7 @@ static bool need_load_eval(struct cpu_common_dbs_info *shared,
 		s64 delta_us = ktime_us_delta(time_now, shared->time_stamp);
 
 		/* Do nothing if we recently have sampled */
-		if (delta_us < (s64)(sampling_rate / 2))
+		if (delta_us < (s64)(sampling_rate))
 			return false;
 		else
 			shared->time_stamp = time_now;
