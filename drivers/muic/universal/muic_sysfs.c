@@ -519,20 +519,15 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 	union power_supply_propval psy_val;
 #endif
 
-	if (!strncmp(buf, "true", 1)) {
-		pdata->afc_disable = true;
+	/* Disable AFC */
+	//if (!strncasecmp(buf, "1", 1))
+		//pdata->afc_disable = true;
 
-	} else if (!strncmp(buf, "false", 2)) {
+	/* Enable AFC */
+	if (!strncasecmp(buf, "0", 1))
 		pdata->afc_disable = false;
-
-	} else if (sysfs_streq(buf, "1")) {
-		pdata->afc_disable = true;
-
-	} else if (sysfs_streq(buf, "0")) {
-		pdata->afc_disable = false;
-
-	} else {
-		pr_warn("%s:%s invalid value, use \"1\" to disable AFC or \"0\" to enable it.\n", MUIC_DEV_NAME, __func__);
+	else {
+		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
 		return -EINVAL;
 	}
 
@@ -607,7 +602,7 @@ static DEVICE_ATTR(apo_factory, 0664,
 		muic_set_apo_factory);
 static DEVICE_ATTR(vbus_value, 0444, muic_show_vbus_value, NULL);
 #if defined(CONFIG_MUIC_HV_MAX77854) || defined(CONFIG_MUIC_HV_MAX77865)
-static DEVICE_ATTR(disable_afc, 0664,
+static DEVICE_ATTR(afc_disable, 0664,
 		muic_show_afc_disable, muic_set_afc_disable);
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 static DEVICE_ATTR(afc_set_voltage, 0220,
@@ -632,7 +627,7 @@ static struct attribute *muic_attributes[] = {
 	&dev_attr_apo_factory.attr,
 	&dev_attr_vbus_value.attr,
 #if defined(CONFIG_MUIC_HV_MAX77854) || defined(CONFIG_MUIC_HV_MAX77865)
-	&dev_attr_disable_afc.attr,
+	&dev_attr_afc_disable.attr,
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 	&dev_attr_afc_set_voltage.attr,
 #endif

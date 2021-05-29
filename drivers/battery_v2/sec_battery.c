@@ -65,7 +65,9 @@ static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
 static unsigned int batt_max_temp = 40; /* °C */
 
-#define CHARGER_CONTROL_VERSION		"2.8"
+extern void set_afc_disable(bool);
+
+#define CHARGER_CONTROL_VERSION		"2.9"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -4026,6 +4028,7 @@ static void sec_bat_monitor_work(
 		enable_blue_led(false);
 		batt_level = 0;
 		afc_init = false;
+		set_afc_disable(false); /* AFC auto fix */
 	} else {
 		is_charger = true;
 	}

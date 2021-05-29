@@ -125,6 +125,7 @@ enum act_function_num {
 };
 
 static struct hv_data hv_afc;
+static struct hv_data *_phv = NULL;
 
 /* afc_condition_checklist[ATTACHED_DEV_TA_MUIC] */
 muic_afc_data_t ta_to_prepare = {
@@ -2420,6 +2421,7 @@ void hv_initialize(muic_data_t *pmuic, struct hv_data **pphv)
 	hv_afc.pmuic = pmuic;
 
 	*pphv = &hv_afc;
+	_phv = &hv_afc;
 }
 
 void hv_clear_hvcontrol(struct hv_data *phv)
@@ -2543,7 +2545,7 @@ void hv_do_detach(struct hv_data *phv)
  */
 void hv_set_afc_by_user(struct hv_data *phv, bool onoff)
 {
-	pr_info("%s:%s onof(%d)\n", __func__, MUIC_HV_DEV_NAME, onoff);
+	pr_info("%s:%s onoff(%d)\n", __func__, MUIC_HV_DEV_NAME, onoff);
 
 	if (!phv) {
 		pr_err("%s:%s: hv is not ready.\n", __func__, MUIC_HV_DEV_NAME);
@@ -2575,4 +2577,20 @@ void hv_muic_chgdet_ready(struct hv_data *phv)
 	pr_info("%s:%s HVCTL2:[0x%02x]->[0x%02x]\n", MUIC_HV_DEV_NAME, __func__, before, after);
 
 	mdelay(80);
+}
+
+void set_afc_disable(bool true)
+{
+	if (!_phv) {
+		pr_err("%s: _phv is not ready.\n", __func__);
+		return;
+	}
+
+	if (true) {
+		_phv->afc_disable = true;
+		_phv->pmuic->pdata->afc_disable = true;
+	} else {
+		_phv->afc_disable = false;
+		_phv->pmuic->pdata->afc_disable = false;
+	}
 }
