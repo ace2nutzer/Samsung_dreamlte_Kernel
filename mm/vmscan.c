@@ -145,11 +145,11 @@ struct scan_control {
  * From 0 .. 200.  Higher means more swappy.
  */
 #if IS_ENABLED(CONFIG_ZRAM) && IS_ENABLED(CONFIG_INCREASE_MAXIMUM_SWAPPINESS)
-int vm_swappiness = 150;
+int vm_swappiness = 200;
 #elif IS_ENABLED(CONFIG_ZRAM)
 int vm_swappiness = 100;
 #else
-int vm_swappiness = 50;
+int vm_swappiness = 60;
 #endif
 /*
  * The total number of pages which are beyond the high watermark within all
