@@ -248,10 +248,9 @@ static int gpu_dvfs_governor_booster(struct exynos_context *platform, int utiliz
 
 static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utilization)
 {
+	DVFS_ASSERT(platform);
 	int max_clock_lev = gpu_dvfs_get_level(platform->gpu_max_clock);
 	int min_clock_lev = gpu_dvfs_get_level(platform->gpu_min_clock);
-
-	DVFS_ASSERT(platform);
 
 	if ((platform->step > max_clock_lev) && (utilization >= platform->table[platform->step].max_threshold)) {
 		if (platform->table[platform->step].clock * utilization >=
@@ -297,22 +296,33 @@ static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utiliz
 
 static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization)
 {
+	DVFS_ASSERT(platform);
 	int max_clock_lev = gpu_dvfs_get_level(platform->gpu_max_clock);
 	int min_clock_lev = gpu_dvfs_get_level(platform->gpu_min_clock);
-
-	DVFS_ASSERT(platform);
+	int max_lock_lev = gpu_dvfs_get_level(platform->user_max_lock_input);
 
 	/* Check for frequency increase */
 	if (utilization >= gpu_up_threshold) {
+
+		/* DVFS */
+		if (platform->step == max_lock_lev)
+			return;
 
 		/* if we are already at full speed then break out early */
 		if (platform->step == max_clock_lev)
 			return 0;
 
-		if (!gpu_boost)
+		if (!gpu_boost) {
 			platform->step--;
-		else
+			if (platform->step < max_clock_lev)
+				platform->step = max_clock_lev;
+		} else {
 			platform->step = max_clock_lev;
+		}
+
+		/* DVFS */
+		if (platform->step < max_lock_lev)
+			platform->step = max_lock_lev;
 
 		return 0;
 	}
@@ -324,8 +334,15 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 		return 0;
 
 	/* Check for frequency decrease */
-	if (utilization <= gpu_down_threshold)
+	if (utilization < gpu_down_threshold)
 		platform->step++;
+
+	if (platform->step > min_clock_lev)
+		platform->step = min_clock_lev;
+
+	/* DVFS */
+	if (platform->step < max_lock_lev)
+		platform->step = max_lock_lev;
 
 	return 0;
 }

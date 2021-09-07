@@ -358,7 +358,7 @@ static int cpufreq_governor_init(struct cpufreq_policy *policy,
 	/* Bring kernel and HW constraints together */
 	dbs_data->min_sampling_rate = max(dbs_data->min_sampling_rate,
 					  MIN_LATENCY_MULTIPLIER * latency);
-	set_sampling_rate(dbs_data, max(dbs_data->min_sampling_rate,
+	set_sampling_rate(dbs_data, max(dbs_data->min_sampling_rate * 5,
 					latency * LATENCY_MULTIPLIER));
 
 	if (!have_governor_per_policy())

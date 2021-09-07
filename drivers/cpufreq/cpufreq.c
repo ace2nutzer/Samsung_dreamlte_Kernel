@@ -809,8 +809,9 @@ static ssize_t store_user_scaling_max_freq
 			cpu0_max_freq = temp;
 		else
 			cpu4_max_freq = temp;
-	} else
+	} else {
 		goto err;
+	}
 
 #if IS_ENABLED(CONFIG_A2N)
 	a2n_allow = false;
