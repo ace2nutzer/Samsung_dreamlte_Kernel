@@ -28,8 +28,9 @@ config SECURITY_PERF_EVENTS_RESTRICT
 	  changed.
 
 config A2N
-	bool "A2N module"
+	bool
 	depends on SYSFS
+	default y
 	help
 	  To prevent manipulation of customs sysfs interfaces by
 	  3rd-party apps.
