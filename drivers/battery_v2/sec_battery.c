@@ -52,7 +52,7 @@ static int charging_curr = 0;
 static int batt_temp = 0;
 static bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
-static bool water_detect = true;
+bool water_detect = true;
 #endif
 static bool is_charger = false;
 static bool afc_init = false;

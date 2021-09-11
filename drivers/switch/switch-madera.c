@@ -64,6 +64,8 @@
 			 (X) : ((X) + 50) / 100)
 #define MADERA_OHM_TO_HOHM(X)	((X) >= (INT_MAX / 100) ? INT_MAX : (X) * 100)
 
+extern bool water_detect;
+
 struct madera_micd_bias {
 	unsigned int bias;
 	bool enabled;
@@ -1990,11 +1992,19 @@ int madera_hpdet_reading(struct madera_extcon_info *info, int val)
 }
 EXPORT_SYMBOL_GPL(madera_hpdet_reading);
 
+static void madera_hpdet_moisture_stop(struct madera_extcon_info *info);
+
 static int madera_hpdet_moisture_start(struct madera_extcon_info *info)
 {
 	struct madera *madera = info->madera;
 	unsigned int hpd_sense, hpd_gnd, val;
 	int ret;
+
+	if (!water_detect) {
+		madera_hpdet_moisture_stop(info);
+		dev_info(madera->dev, "Moisture detection disabled by user\n");
+		return ret;
+	}
 
 	dev_info(madera->dev, "Start moisture det\n");
 
@@ -2097,6 +2107,9 @@ static int madera_hpdet_moisture_reading(struct madera_extcon_info *info,
 {
 	struct madera *madera = info->madera;
 	int debounce_lim = info->pdata->moisture_debounce;
+
+	if (!water_detect)
+		return 0;
 
 	val = MADERA_HOHM_TO_OHM(val);  /* Extra precision not required. */
 
