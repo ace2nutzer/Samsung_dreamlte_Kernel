@@ -63,11 +63,11 @@ static unsigned int batt_care = 101; /* disabled */
 static bool battery_idle = false;
 static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
-static unsigned int batt_max_temp = 40; /* °C */
+static unsigned int batt_max_temp = 35; /* °C */
 
 extern void set_afc_disable(bool);
 
-#define CHARGER_CONTROL_VERSION		"2.9"
+#define CHARGER_CONTROL_VERSION		"3.0"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -1621,7 +1621,7 @@ static ssize_t batt_max_temp_store(struct kobject *kobj,
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp < 35 || tmp > 45) {
+		if (tmp < 30 || tmp > 45) {
 			pr_err("[sec_batt] Invaild cmd\n");
 			goto err;
 		}
