@@ -399,7 +399,7 @@ struct cfs_rq {
 #endif
 	atomic_long_t removed_load_avg, removed_util_avg;
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	unsigned long sysload_avg_ratio;
 #endif
 
@@ -661,7 +661,7 @@ struct rq {
 	int active_balance;
 	int push_cpu;
 	struct cpu_stop_work active_balance_work;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	struct task_struct *migrate_task;
 	u64 hmp_last_up_migration;
 	u64 hmp_last_down_migration;
@@ -937,7 +937,7 @@ static inline unsigned int group_first_cpu(struct sched_group *group)
 
 extern int group_balance_cpu(struct sched_group *sg);
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 extern struct list_head hmp_domains;
 DECLARE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
 #define hmp_cpu_domain(cpu)	(per_cpu(hmp_cpu_domain, (cpu)))

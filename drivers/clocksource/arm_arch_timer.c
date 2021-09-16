@@ -277,11 +277,8 @@ static void __arch_timer_setup(unsigned type,
 		clk->features |= CLOCK_EVT_FEAT_DYNIRQ;
 		clk->name = "arch_mem_timer";
 		clk->rating = 400;
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-		clk->cpumask = &hmp_slow_cpu_mask;
-#else
 		clk->cpumask = cpu_all_mask;
-#endif
+
 		if (arch_timer_mem_use_virtual) {
 			clk->set_state_shutdown = arch_timer_shutdown_virt_mem;
 			clk->set_next_event =
@@ -292,6 +289,10 @@ static void __arch_timer_setup(unsigned type,
 				arch_timer_set_next_event_phys_mem;
 		}
 	}
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	clk->cpumask = &hmp_slow_cpu_mask;
+#endif
 
 	clk->set_state_shutdown(clk);
 

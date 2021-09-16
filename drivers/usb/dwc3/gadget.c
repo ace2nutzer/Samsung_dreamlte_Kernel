@@ -78,7 +78,7 @@ static void dwc3_gadget_cable_connect(struct dwc3 *dwc, bool connect)
 extern int argos_irq_affinity_setup_label(unsigned int irq, const char *label,
                  struct cpumask *affinity_cpu_mask,
                  struct cpumask *default_cpu_mask);
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 extern struct cpumask hmp_slow_cpu_mask;
 static inline struct cpumask *get_default_cpu_mask(void)
 {
@@ -2022,11 +2022,7 @@ static int set_cpu_core_from_usb_irq(int enable)
 		if (!alloc_cpumask_var(&new_value, GFP_KERNEL))
 			return -ENOMEM;
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-		cpumask_copy(new_value, &hmp_slow_cpu_mask);
-#else
 		cpumask_setall(new_value);
-#endif
 
 		if (!cpumask_intersects(new_value, cpu_online_mask)) {
 			err = irq_select_affinity_usr(irq, new_value);

@@ -1519,7 +1519,7 @@ static int exynos_isp_cooling_register(struct exynos_tmu_data *data)
 static int exynos_isp_cooling_register(struct exynos_tmu_data *data) {return 0;}
 #endif
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 extern struct cpumask hmp_fast_cpu_mask;
 #endif
 
@@ -1536,7 +1536,7 @@ static int exynos_tmu_cpus_notifier(struct notifier_block *nb,
 
 
 	cpumask_copy(&mask, data);
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	cpumask_and(&mask, &mask, &hmp_fast_cpu_mask);
 #endif
 	big_cpu_cnt = cpumask_weight(&mask);

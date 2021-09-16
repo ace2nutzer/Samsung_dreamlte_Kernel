@@ -2172,7 +2172,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->se.avg.load_avg = 0;
 	p->se.avg.util_sum = 0;
 	p->se.avg.util_avg = 0;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	p->se.avg.hmp_load_sum = 0;
 	p->se.avg.hmp_load_avg = 0;
 	p->se.avg.hmp_last_up_migration = 0;
@@ -3859,14 +3859,15 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 
 	if (dl_prio(p->prio))
 		p->sched_class = &dl_sched_class;
-	else if (rt_prio(p->prio)) {
+	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
-#ifdef CONFIG_SCHED_HMP
-		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
-			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
-#endif
-	} else
+	else
 		p->sched_class = &fair_sched_class;
+
+#if defined(CONFIG_SCHED_HMP)
+	if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
+		do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
+#endif
 }
 
 static void

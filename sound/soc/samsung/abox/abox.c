@@ -3099,9 +3099,7 @@ EXPORT_SYMBOL(abox_hw_params_fixup_helper);
 static struct pm_qos_request abox_pm_qos_int;
 static struct pm_qos_request abox_pm_qos_mif;
 static struct pm_qos_request abox_pm_qos_lit;
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 static struct pm_qos_request abox_pm_qos_big;
-#endif
 
 unsigned int abox_get_requiring_int_freq_in_khz(void)
 {
@@ -3428,7 +3426,6 @@ int abox_request_lit_freq(struct device *dev, struct abox_data *data,
 	return 0;
 }
 
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 static void abox_change_big_freq_work_func(struct work_struct *work)
 {
 	struct abox_data *data = container_of(work, struct abox_data,
@@ -3490,7 +3487,6 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 
 	return 0;
 }
-#endif
 
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 static void abox_change_hmp_boost_work_func(struct work_struct *work)
@@ -5380,9 +5376,7 @@ static int samsung_abox_probe(struct platform_device *pdev)
 	INIT_WORK(&data->change_cpu_gear_work, abox_change_cpu_gear_work_func);
 	INIT_WORK(&data->change_mif_freq_work, abox_change_mif_freq_work_func);
 	INIT_WORK(&data->change_lit_freq_work, abox_change_lit_freq_work_func);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	INIT_WORK(&data->change_big_freq_work, abox_change_big_freq_work_func);
-#endif
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 	INIT_WORK(&data->change_hmp_boost_work,
 			abox_change_hmp_boost_work_func);
@@ -5572,9 +5566,7 @@ static int samsung_abox_probe(struct platform_device *pdev)
 	pm_qos_add_request(&abox_pm_qos_int, PM_QOS_DEVICE_THROUGHPUT, 0);
 	pm_qos_add_request(&abox_pm_qos_mif, PM_QOS_BUS_THROUGHPUT, 0);
 	pm_qos_add_request(&abox_pm_qos_lit, PM_QOS_CLUSTER0_FREQ_MIN, 0);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	pm_qos_add_request(&abox_pm_qos_big, PM_QOS_CLUSTER1_FREQ_MIN, 0);
-#endif
 
 	abox_gic_register_irq_handler(data->pdev_gic, abox_irq_handler, pdev);
 
@@ -5636,9 +5628,8 @@ static int samsung_abox_remove(struct platform_device *pdev)
 	pm_qos_remove_request(&abox_pm_qos_int);
 	pm_qos_remove_request(&abox_pm_qos_mif);
 	pm_qos_remove_request(&abox_pm_qos_lit);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	pm_qos_remove_request(&abox_pm_qos_big);
-#endif
+
 	snd_soc_unregister_codec(dev);
 	iommu_unmap(data->iommu_domain, IOVA_DRAM_FIRMWARE, DRAM_FIRMWARE_SIZE);
 #ifdef EMULATOR

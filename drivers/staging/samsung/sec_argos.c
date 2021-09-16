@@ -31,10 +31,6 @@
 #define TYPE_SHIFT 4
 #define TYPE_MASK_BIT ((1 << TYPE_SHIFT) - 1)
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-extern struct cpumask hmp_slow_cpu_mask;
-#endif
-
 static DEFINE_SPINLOCK(argos_irq_lock);
 static DEFINE_SPINLOCK(argos_task_lock);
 
@@ -319,11 +315,6 @@ int argos_task_affinity_apply(int dev_num, bool enable)
 			}
 			mask = this->default_cpu_mask;
 		}
-
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-		if (cpumask_equal(cpu_all_mask, mask))
-			cpumask_copy(mask, &hmp_slow_cpu_mask);
-#endif
 
 		result = set_cpus_allowed_ptr(this->p, mask);
 

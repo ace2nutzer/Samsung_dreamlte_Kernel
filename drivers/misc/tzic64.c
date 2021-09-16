@@ -41,10 +41,6 @@
 #include "tzdev/tz_cdev.h"
 #endif /* CONFIG_TZDEV */
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-extern struct cpumask hmp_slow_cpu_mask;
-#endif
-
 static int gotoCpu0(void);
 static int gotoAllCpu(void) __attribute__ ((unused));
 
@@ -435,13 +431,9 @@ static int gotoCpu0(void)
 static int gotoAllCpu(void)
 {
 	int ret = 0;
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	struct cpumask mask = CPU_MASK_ALL;
 
 	ret = set_cpus_allowed_ptr(current, &mask);
-#else
-	ret = set_cpus_allowed_ptr(current, &hmp_slow_cpu_mask);
-#endif
 	if (0 != ret)
 		LOG(KERN_INFO "set_cpus_allowed_ptr=%d.\n", ret);
 

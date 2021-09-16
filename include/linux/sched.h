@@ -177,7 +177,7 @@ extern void get_iowait_load(unsigned long *nr_waiters, unsigned long *load);
 #ifdef CONFIG_CPU_QUIET
 extern u64 nr_running_integral(unsigned int cpu);
 #endif
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 extern int register_hmp_task_migration_notifier(struct notifier_block *nb);
 #define HMP_UP_MIGRATION       0
 #define HMP_DOWN_MIGRATION     1
@@ -1250,13 +1250,13 @@ extern void wake_up_if_idle(int cpu);
 # define SD_INIT_NAME(type)
 #endif
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 struct hmp_domain {
 	struct cpumask cpus;
 	struct cpumask possible_cpus;
 	struct list_head hmp_domains;
 };
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 #define HMP_BOOSTING_ENABLE 	1
 #define HMP_BOOSTING_DISABLE	0
 #ifdef CONFIG_HMP_VARIABLE_SCALE
@@ -1329,7 +1329,7 @@ struct sched_avg {
 	u64 last_update_time, load_sum;
 	u32 util_sum, period_contrib;
 	unsigned long load_avg, util_avg;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	u64 hmp_load_sum, hmp_load_avg;
 	u64 hmp_last_up_migration;
 	u64 hmp_last_down_migration;

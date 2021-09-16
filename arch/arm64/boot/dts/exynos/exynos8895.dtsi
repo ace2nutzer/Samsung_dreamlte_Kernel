@@ -185,12 +185,12 @@
 		#size-cells = <0>;
 
 		hmp {
-			up_threshold = <461>;
-			down_threshold = <205>;
-			semiboost_up_threshold = <461>;
-			semiboost_down_threshold = <205>;
+			up_threshold = <16>;
+			down_threshold = <4>;
+			semiboost_up_threshold = <16>;
+			semiboost_down_threshold = <4>;
 			bootboost-duration-us = <40000000>;
-			down_compensation_timeout = <30>;               /* ms */
+			down_compensation_timeout = <40>;               /* ms */
 			down_compensation_high_freq = <1690000>;        /* min qos lock for little cpu */
 			down_compensation_mid_freq = <1690000>;          /* min qos lock for little cpu */
 			down_compensation_low_freq = <1690000>;          /* min qos lock for little cpu */

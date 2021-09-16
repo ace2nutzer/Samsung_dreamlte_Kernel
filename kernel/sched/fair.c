@@ -49,7 +49,7 @@
 #include "sched.h"
 #include "tune.h"
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 LIST_HEAD(hmp_domains);
 #endif
 
@@ -708,7 +708,7 @@ void init_entity_runnable_average(struct sched_entity *se)
 	trace_sched_entity_initial_util(0, sa->util_avg, sa->util_sum);
 
 	/* when this task enqueue'ed, it will contribute to its cfs_rq's load_avg */
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	sa->hmp_load_avg = p->se.avg.hmp_load_avg;
 	sa->hmp_load_sum = p->se.avg.hmp_load_sum;
 #endif
@@ -2667,7 +2667,7 @@ unsigned long exynos_scale_freq_capacity(struct sched_domain *sd, int cpu)
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
 #endif /* CONFIG_HMP_VARIABLE_SCALE */
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 /*
  * Migration thresholds should be in the range [0..1023]
  * hmp_up_threshold: min. load required for migrating tasks to a faster cpu
@@ -2676,11 +2676,11 @@ unsigned long exynos_scale_freq_capacity(struct sched_domain *sd, int cpu)
  * tweaking suit particular needs.
  */
 
-unsigned int hmp_up_threshold = 461;
-unsigned int hmp_down_threshold = 205;
+unsigned int hmp_up_threshold = 16;
+unsigned int hmp_down_threshold = 4;
 
-unsigned int hmp_semiboost_up_threshold = 461;
-unsigned int hmp_semiboost_down_threshold = 205;
+unsigned int hmp_semiboost_up_threshold = 16;
+unsigned int hmp_semiboost_down_threshold = 4;
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 /* Ex: 256 = /4, 512 = /2, 1024 = x1, 1536 = x1.5, 2048 = x2 */
@@ -2939,7 +2939,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 		scaled_delta_w = cap_scale(delta_w, scale_freq);
 		if (weight) {
 			sa->load_sum += weight * scaled_delta_w;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 			sa->hmp_load_sum += scaled_delta_w;
 #endif
 			if (cfs_rq) {
@@ -2967,7 +2967,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 		delta %= 1024;
 
 		sa->load_sum = decay_load(sa->load_sum, periods + 1);
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		sa->hmp_load_sum = decay_load(sa->hmp_load_sum, periods + 1);
 #endif
 		if (cfs_rq) {
@@ -2981,7 +2981,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 		contrib = cap_scale(contrib, scale_freq);
 		if (weight) {
 			sa->load_sum += weight * contrib;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 			sa->hmp_load_sum += contrib;
 #endif
 			if (cfs_rq)
@@ -3005,7 +3005,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 	scaled_delta = cap_scale(delta, scale_freq);
 	if (weight) {
 		sa->load_sum += weight * scaled_delta;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		sa->hmp_load_sum += scaled_delta;
 #endif
 
@@ -3019,7 +3019,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 
 	if (decayed) {
 		sa->load_avg = div_u64(sa->load_sum, LOAD_AVG_MAX);
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		sa->hmp_load_avg = sa->hmp_load_sum * scale_load_down(NICE_0_LOAD);
 		sa->hmp_load_avg = div_u64(sa->hmp_load_avg, LOAD_AVG_MAX);
 #endif
@@ -3027,7 +3027,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 			cfs_rq->runnable_load_avg =
 				div_u64(cfs_rq->runnable_load_sum, LOAD_AVG_MAX);
 		}
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		else {
 			if(!hmp_cpu_is_fastest(cpu) &&
 				sa->hmp_load_avg > hmp_up_threshold)
@@ -3151,7 +3151,7 @@ update_cfs_rq_load_avg(u64 now, struct cfs_rq *cfs_rq, bool update_freq)
 		s64 r = atomic_long_xchg(&cfs_rq->removed_load_avg, 0);
 		sa->load_avg = max_t(long, sa->load_avg - r, 0);
 		sa->load_sum = max_t(s64, sa->load_sum - r * LOAD_AVG_MAX, 0);
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		sa->hmp_load_avg = max_t(long, sa->hmp_load_avg - r, 0);
 #endif
 		removed_load = 1;
@@ -3247,9 +3247,11 @@ skip_aging:
 	cfs_rq->avg.load_sum += se->avg.load_sum;
 	cfs_rq->avg.util_avg += se->avg.util_avg;
 	cfs_rq->avg.util_sum += se->avg.util_sum;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	cfs_rq->avg.hmp_load_avg += se->avg.hmp_load_avg;
 	cfs_rq->avg.hmp_load_sum += se->avg.hmp_load_sum;
+#endif
+#if defined(CONFIG_SCHED_HMP)
 	trace_sched_rq_runnable_ratio(cpu_of(rq_of(cfs_rq)), cfs_rq->avg.hmp_load_avg);
 #endif
 
@@ -3274,12 +3276,13 @@ static void detach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *s
 	cfs_rq->avg.load_sum = max_t(s64,  cfs_rq->avg.load_sum - se->avg.load_sum, 0);
 	cfs_rq->avg.util_avg = max_t(long, cfs_rq->avg.util_avg - se->avg.util_avg, 0);
 	cfs_rq->avg.util_sum = max_t(s32,  cfs_rq->avg.util_sum - se->avg.util_sum, 0);
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	cfs_rq->avg.hmp_load_avg = max_t(long, cfs_rq->avg.hmp_load_avg - se->avg.hmp_load_avg, 0);
 	cfs_rq->avg.hmp_load_sum = max_t(s64,  cfs_rq->avg.hmp_load_sum - se->avg.hmp_load_sum, 0);
+#endif
+#if defined(CONFIG_SCHED_HMP)
 	trace_sched_rq_runnable_ratio(cpu_of(rq_of(cfs_rq)), cfs_rq->avg.hmp_load_avg);
 #endif
-
 	cfs_rq_util_change(cfs_rq);
 }
 
@@ -5483,7 +5486,7 @@ done:
 	return target;
 }
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 /*
  * Heterogenous multiprocessor (HMP) optimizations
  *
@@ -5493,7 +5496,7 @@ done:
  * fastest domain first.
  */
 DEFINE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
-static const int hmp_max_tasks = 5;
+static const int hmp_max_tasks = 8;
 
 extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
 
@@ -5558,7 +5561,7 @@ static void hmp_offline_cpu(int cpu)
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
 }
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 /* must hold runqueue lock for queue se is currently on */
 
 static struct sched_entity *hmp_get_heaviest_task(struct sched_entity* se, int migrate_up)
@@ -5655,8 +5658,8 @@ static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 #define BOOT_BOOST_DURATION 40000000 /* microseconds */
 #define YIELD_CORRECTION_TIME 10000000 /* nanoseconds */
 
-unsigned int hmp_next_up_threshold = 0;
-unsigned int hmp_next_down_threshold = 102400;
+unsigned int hmp_next_up_threshold = 8192;
+unsigned int hmp_next_down_threshold = 8192;
 
 static inline int hmp_boost(void)
 {
@@ -6711,8 +6714,8 @@ static int cpu_util(int cpu)
 }
 #endif
 
-
-#ifdef CONFIG_SCHED_HMP_CUSTOM
+#if 0
+#ifdef defined(CONFIG_SCHED_HMP_CUSTOM)
 #define HMP_DATA_SYSFS_MAX 3
 static int hmp_wakeup_to_idle_cpu;
 static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
@@ -6838,6 +6841,7 @@ static int hmp_attr_init(void)
 }
 late_initcall(hmp_attr_init);
 #endif
+#endif
 
 /*
  * select_task_rq_fair: Select target runqueue for the waking task in domains
@@ -6859,7 +6863,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	int new_cpu = prev_cpu;
 	int want_affine = 0;
 	int sync = wake_flags & WF_SYNC;
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	int thread_pid;
 #endif
 
@@ -6941,7 +6945,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	}
 	rcu_read_unlock();
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	if (hmp_family_boost(p) && p->parent && p->parent->pid > 2) {
 		int lowest_ratio = 0;
 		thread_pid = hmp_is_family_in_fastest_domain(p->group_leader);
@@ -7371,7 +7375,7 @@ static void yield_task_fair(struct rq *rq)
 	if (curr->policy != SCHED_BATCH) {
 		update_rq_clock(rq);
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		if (hmp_aggressive_yield && cfs_rq->curr)
 			cfs_rq->curr->exec_start -= YIELD_CORRECTION_TIME;
 #endif
@@ -7560,7 +7564,7 @@ struct lb_env {
 	struct list_head	tasks;
 };
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 #ifdef MOVETASK_ONEPATH
 /*
  * move_task - move a task from one runqueue to another runqueue.
@@ -9497,7 +9501,7 @@ static struct {
 static inline int find_new_ilb(int call_cpu)
 {
 	int ilb = cpumask_first(nohz.idle_cpus_mask);
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	/* restrict nohz balancing to occur in the same hmp domain */
 	ilb = cpumask_first_and(nohz.idle_cpus_mask,
 			&((struct hmp_domain *)hmp_cpu_domain(call_cpu))->cpus);
@@ -9843,7 +9847,7 @@ static inline bool nohz_kick_needed(struct rq *rq)
 	if (time_before(now, nohz.next_balance))
 		return false;
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	/*
 	 * Bail out if there are no nohz CPUs in our
 	 * HMP domain, since we will move tasks between
@@ -9896,7 +9900,7 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle) { }
 #endif
 
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 /* Check if task should migrate to a faster cpu */
 static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se)
 {
@@ -9959,6 +9963,10 @@ static unsigned int hmp_down_migration(int cpu, struct sched_entity *se)
 {
 	struct task_struct *p = task_of(se);
 	u64 now;
+
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	return 0;
+#endif
 
 	if (hmp_cpu_is_slowest(cpu))
 		return 0;
@@ -10542,7 +10550,7 @@ void trigger_load_balance(struct rq *rq, int cpu)
 
 static void rq_online_fair(struct rq *rq)
 {
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	hmp_online_cpu(rq->cpu);
 #endif
 	update_sysctl();
@@ -10552,7 +10560,7 @@ static void rq_online_fair(struct rq *rq)
 
 static void rq_offline_fair(struct rq *rq)
 {
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	hmp_offline_cpu(rq->cpu);
 #endif
 	update_sysctl();
@@ -11065,7 +11073,7 @@ __init void init_sched_fair_class(void)
 	cpu_notifier(sched_ilb_notifier, 0);
 #endif
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	hmp_cpu_mask_setup();
 #endif
 #endif /* SMP */
@@ -11228,7 +11236,7 @@ core_initcall(register_sched_cpufreq_notifier);
 
 #endif /* CONFIG_HMP_FREQUENCY_INVARIANT_SCALE */
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 static int __init hmp_param_init(void)
 {
 #if defined(CONFIG_OF)

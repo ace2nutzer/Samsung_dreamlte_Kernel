@@ -38,7 +38,7 @@ enum {
 	AUD_PWR_AFTR,
 };
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 #define USE_EXYNOS_AUD_SCHED
 enum {
 	AUD_MODE_DEFAULT = 0,

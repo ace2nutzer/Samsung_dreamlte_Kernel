@@ -388,7 +388,7 @@ static void update_siblings_masks(unsigned int cpuid)
 	}
 }
 
-#if defined(CONFIG_SCHED_HMP) || (CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 void __init arch_get_fast_and_slow_cpus(struct cpumask *fast,
 					struct cpumask *slow)
 {
