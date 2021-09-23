@@ -2244,8 +2244,8 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kob
 
 	sprintf(buf, "%s\n", gpu_dvfs_debug ? "1" : "0");
 	sprintf(buf, "%s[check_delay]\t%u ms\n",buf, gpu_dvfs_check_delay);
-	sprintf(buf, "%s[gpu_max_clock]\t%u ms\n",buf, platform->gpu_max_clock);
-	sprintf(buf, "%s[gpu_dvfs_limit]\t%u ms\n",buf, platform->user_max_lock_input);
+	sprintf(buf, "%s[gpu_max_clock]\t%u KHz\n",buf, platform->gpu_max_clock);
+	sprintf(buf, "%s[gpu_dvfs_limit]\t%u KHz\n",buf, platform->user_max_lock_input);
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_SHUTDOWN_TEMP);
 	return strlen(buf);
 }
@@ -2362,7 +2362,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 		if (gpu_temp > GPU_DVFS_SHUTDOWN_TEMP) {
 			if (!power_off_triggered) {
 				power_off_triggered = true;
-				pr_warn("%s: Critical temp reached: %d °C !!! - shutting down ...\n", __func__, gpu_temp);
+				pr_warn("%s: Critical temp reached: %d C !!! - shutting down ...\n", __func__, gpu_temp);
 				mutex_lock(&poweroff_lock);
 				/*
 				 * Queue a backup emergency shutdown in the event of
@@ -2378,7 +2378,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 		if (gpu_dvfs_debug) {
 			if (gpu_temp > gpu_dvfs_peak_temp) {
 				gpu_dvfs_peak_temp = gpu_temp;
-				pr_info("%s: peak_temp: %u %s\n", __func__, gpu_dvfs_peak_temp, "°C");
+				pr_info("%s: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
 			}
 		}
 

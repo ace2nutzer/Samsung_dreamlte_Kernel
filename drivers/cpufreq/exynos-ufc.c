@@ -791,7 +791,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 		if (cpu_temp > CPU_DVFS_SHUTDOWN_TEMP) {
 			if (!power_off_triggered) {
 				power_off_triggered = true;
-				pr_warn("%s: Critical temp reached: %d °C !!! - shutting down ...\n", __func__ , cpu_temp);
+				pr_warn("%s: Critical temp reached: %d C !!! - shutting down ...\n", __func__ , cpu_temp);
 				mutex_lock(&poweroff_lock);
 				/*
 				 * Queue a backup emergency shutdown in the event of
@@ -807,7 +807,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 		if (cpu_dvfs_debug) {
 			if (cpu_temp > cpu_dvfs_peak_temp) {
 				cpu_dvfs_peak_temp = cpu_temp;
-				pr_info("%s: peak_temp: %u %s\n", __func__, cpu_dvfs_peak_temp, "°C");
+				pr_info("%s: peak_temp: %u C\n", __func__, cpu_dvfs_peak_temp);
 			}
 		}
 
