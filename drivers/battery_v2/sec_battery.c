@@ -50,7 +50,7 @@ static unsigned int wc_in_curr_9v = 0;
 static unsigned int input_volt = 0;
 static int charging_curr = 0;
 static int batt_temp = 0;
-static bool water_detected = false;
+bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
 bool water_detect = true;
 #endif

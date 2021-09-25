@@ -39,6 +39,7 @@ extern unsigned int lpcharge;
 #endif
 
 extern bool water_detect;
+extern bool water_detected;
 
 extern struct pdic_notifier_struct pd_noti;
 ////////////////////////////////////////////////////////////////////////////////
@@ -546,16 +547,6 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 	uint32_t R_len;
 	uint16_t REG_ADD;
 
-	pr_info("%s\n",__func__);
-	/* read reg for water and dry state */
-	REG_ADD = 0x60;
-	R_len = 4;
-	usbpd_data->s2mm005_i2c_err = s2mm005_read_byte(i2c, REG_ADD, Lp_DATA->BYTE, R_len);
-	dev_info(&i2c->dev, "%s: WATER reg:0x%02X WATER=%d DRY=%d\n", __func__,
-		Lp_DATA->BYTE[0],
-		Lp_DATA->BITS.WATER_DET,
-		Lp_DATA->BITS.RUN_DRY);
-
 	if (!water_detect) {
 		/* force dry case */
 		Lp_DATA->BITS.BOOTING_RUN_DRY = 1;
@@ -570,6 +561,16 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 			0/*attach*/, 0, 0);
 		return;
 	}
+
+	pr_info("%s\n",__func__);
+	/* read reg for water and dry state */
+	REG_ADD = 0x60;
+	R_len = 4;
+	usbpd_data->s2mm005_i2c_err = s2mm005_read_byte(i2c, REG_ADD, Lp_DATA->BYTE, R_len);
+	dev_info(&i2c->dev, "%s: WATER reg:0x%02X WATER=%d DRY=%d\n", __func__,
+		Lp_DATA->BYTE[0],
+		Lp_DATA->BITS.WATER_DET,
+		Lp_DATA->BITS.RUN_DRY);
 
 	if (!usbpd_data->water_detect_support) {
 		dev_info(&i2c->dev, "%s: It does not support water detection\n", __func__);
@@ -624,6 +625,7 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 
 	/* check for dry case */
 	if (Lp_DATA->BITS.RUN_DRY && !usbpd_data->run_dry) {
+		water_detected = false;
 		dev_info(&i2c->dev, "== WATER RUN-DRY DETECT ==\n");
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,
@@ -634,6 +636,7 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 
 	/* check for water case */
 	if ((Lp_DATA->BITS.WATER_DET & !usbpd_data->water_det)) {
+		water_detected = true;
 		dev_info(&i2c->dev, "== WATER DETECT ==\n");
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,
@@ -663,10 +666,10 @@ void process_cc_attach(void * data,u8 *plug_attach_done)
 	// Check for moisture
 	process_cc_water(usbpd_data, &Lp_DATA);
 
-	if (usbpd_data->water_det) {
+	if (usbpd_data->water_det && water_detect) {
 		/* Moisture detection is only handled in the disconnected state(LPM). */
 		return;
-	} else if(!usbpd_data->run_dry || !usbpd_data->booting_run_dry) {
+	} else if ((!usbpd_data->run_dry || !usbpd_data->booting_run_dry) && water_detect) {
 		dev_info(&i2c->dev, " Water? No Dry\n");
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,

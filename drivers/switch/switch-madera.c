@@ -65,6 +65,7 @@
 #define MADERA_OHM_TO_HOHM(X)	((X) >= (INT_MAX / 100) ? INT_MAX : (X) * 100)
 
 extern bool water_detect;
+extern bool water_detected;
 
 struct madera_micd_bias {
 	unsigned int bias;
@@ -2132,11 +2133,14 @@ static int madera_hpdet_moisture_reading(struct madera_extcon_info *info,
 			info->moisture_count = 0;
 		}
 
+		water_detected = true;
 		info->madera->moisture_detected = true;
 		dev_warn(madera->dev,
 			 "Jack detection due to moisture, ignoring\n");
 		madera_jds_set_state(info, NULL);
 	}
+
+	water_detected = false;
 
 	return 0;
 }
