@@ -191,9 +191,9 @@
 			semiboost_down_threshold = <4>;
 			bootboost-duration-us = <40000000>;
 			down_compensation_timeout = <40>;               /* ms */
-			down_compensation_high_freq = <1690000>;        /* min qos lock for little cpu */
-			down_compensation_mid_freq = <1690000>;          /* min qos lock for little cpu */
-			down_compensation_low_freq = <1690000>;          /* min qos lock for little cpu */
+			down_compensation_high_freq = <0>;        /* min qos lock for little cpu */
+			down_compensation_mid_freq = <0>;          /* min qos lock for little cpu */
+			down_compensation_low_freq = <0>;          /* min qos lock for little cpu */
 			hmp_up_compst_ratio = <512>;
 			hmp_down_compst_ratio = <2048>;
 			little-id = <1>;
@@ -3451,7 +3451,7 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <598000 598000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3462,7 +3462,7 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <598000 598000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3473,7 +3473,7 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <598000 598000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};

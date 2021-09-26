@@ -6714,11 +6714,10 @@ static int cpu_util(int cpu)
 }
 #endif
 
-#if 0
-#ifdef defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP_CUSTOM)
 #define HMP_DATA_SYSFS_MAX 3
 static int hmp_wakeup_to_idle_cpu;
-static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
+//static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 
 static int hmp_wakeup_to_idle_cpu_from_sysfs(int value)
 {
@@ -6840,7 +6839,6 @@ static int hmp_attr_init(void)
 	return 0;
 }
 late_initcall(hmp_attr_init);
-#endif
 #endif
 
 /*
