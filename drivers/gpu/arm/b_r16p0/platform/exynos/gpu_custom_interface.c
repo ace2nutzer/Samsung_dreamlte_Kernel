@@ -1703,14 +1703,8 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &val);
-		if (val == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -1731,15 +1725,9 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 	}
 
 err:
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 
 out:
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 }
 
@@ -1755,14 +1743,8 @@ static ssize_t set_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribut
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &val);
-		if (val == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -1778,15 +1760,9 @@ static ssize_t set_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribut
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 
 out:
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 }
 
@@ -1808,14 +1784,8 @@ static ssize_t set_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_a
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &input);
-		if (input == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -1828,17 +1798,10 @@ static ssize_t set_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_a
 
 	/* update gpu_down_threshold */
 	calc_gpu_down_threshold();
-
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 }
 
@@ -1857,14 +1820,8 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &val);
-		if (val == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -1885,15 +1842,9 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 
 out:
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 }
 
@@ -2203,14 +2154,8 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &tmp);
-		if (tmp == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -2226,15 +2171,9 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 
 out:
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 }
 

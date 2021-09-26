@@ -448,14 +448,8 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &input);
-		if (input == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -472,17 +466,10 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 
 	/* update down_threshold */
 	update_down_threshold(od_tuners);
-
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 }
 
@@ -551,14 +538,8 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		sscanf(buf, "%u", &input);
-		if (input == a2n) {
-			a2n_allow = true;
-			return count;
-		} else {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
 	}
 #endif
 
@@ -575,16 +556,10 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 	od_tuners->boost_resume = input;
 #endif
 
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return count;
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return -EINVAL;
 }
 

@@ -734,10 +734,6 @@ static ssize_t store_user_scaling_min_freq
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
-		if (temp == a2n) {
-			a2n_allow = true;
-			return count;
-		}
 		if ((temp != 455000) && (temp != 598000) && (temp != 741000)) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			goto err;
@@ -762,16 +758,10 @@ static ssize_t store_user_scaling_min_freq
 	} else
 		goto err;
 
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return ret ? ret : count;
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return ret ? ret : count;
 }
 
@@ -784,10 +774,6 @@ static ssize_t store_user_scaling_max_freq
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
-		if (temp == a2n) {
-			a2n_allow = true;
-			return count;
-		}
 		if ((temp != 2314000) && (temp != 1690000)) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			goto err;
@@ -813,16 +799,10 @@ static ssize_t store_user_scaling_max_freq
 		goto err;
 	}
 
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return ret ? ret : count;
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
-#if IS_ENABLED(CONFIG_A2N)
-	a2n_allow = false;
-#endif
 	return ret ? ret : count;
 }
 

@@ -8,5 +8,4 @@
  * published by the Free Software Foundation.
  */
 
-extern unsigned int a2n;
 extern bool a2n_allow;
