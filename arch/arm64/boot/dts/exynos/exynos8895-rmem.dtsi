@@ -21,12 +21,12 @@
 			compatible = "exynos8895,dram_test";
 			reg = <0x0 0x80002000 0x2000>;
 		};
-
+*/
 		tima_mem: tima_region@0xB1000000 {
 			compatible = "removed-dma-pool";
 			reg = <0x0 0xB1000000 0x200000>;
 		};
-
+/*
 		seclog_mem {
 			compatible = "exynos8895,seclog";
 			reg = <0x0 0xC0000000 0x10000>;
@@ -61,7 +61,7 @@
 		};
 
 		tui {
-			// ALIGN(ALIGN(1440*2990*4, 256KB) * 3, 4MB)
+			/* ALIGN(ALIGN(1440*2990*4, 256KB) * 3, 4MB) */
 			compatible = "exynos8890-ion,tui";
 			ion,reusable;
 			reg = <0x0 0xE7400000 0x3400000>;
