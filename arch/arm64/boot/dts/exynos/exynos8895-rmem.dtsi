@@ -45,12 +45,12 @@
 			reg = <0x0 0xD0000000 0x1400000>;
 			id = <11>;
 		};
-/*
+
 		abox_rmem: abox_rmem@0xEA800000 {
 			compatible = "exynos,abox_rmem";
 			reg = <0x0 0xEA800000 0x400000>;
 		};
-*/
+
 		video_stream {
 			compatible = "exynos8890-ion,vstream";
 			ion,secure;
