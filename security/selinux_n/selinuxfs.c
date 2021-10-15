@@ -45,9 +45,7 @@
 #include <linux/security/Iccc_Interface.h>
 #endif
 
-#include <linux/moduleparam.h>
 static bool fake_enforce = false;
-module_param(fake_enforce, bool, 0644);
 
 /* Policy capability filenames */
 static char *policycap_names[] = {
@@ -176,6 +174,17 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 	length = -EFAULT;
 	if (copy_from_user(page, buf, count))
 		goto out;
+
+	length = -EINVAL;
+	if (sscanf(page, "%d", &new_value) != 1)
+		goto out;
+
+	if (new_value == 2)
+		fake_enforce = true;
+	else
+		fake_enforce = false;
+
+	new_value = 0;
 
 // [ SEC_SELINUX_PORTING_COMMON
 #ifdef CONFIG_ALWAYS_ENFORCE
