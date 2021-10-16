@@ -28,14 +28,20 @@ bool sleep_mode = false;
 /* Charger Control */
 #ifdef CONFIG_CAMERA_DREAM2
 static bool is_s8_plus = true;
-static unsigned int ac_curr_max = 2300;
-static unsigned int usbpd_curr_max = 2300;
-static unsigned int usbcd_curr_max = 2300;
+static unsigned int ac_curr_max = 1800;
+static unsigned int usbpd_curr_max = 1800;
+static unsigned int usbcd_curr_max = 1800;
+static unsigned int lpm_ac_curr_max = 2300;
+static unsigned int lpm_usbpd_curr_max = 2300;
+static unsigned int lpm_usbcd_curr_max = 2300;
 #else
 static bool is_s8_plus = false;
-static unsigned int ac_curr_max = 2000;
-static unsigned int usbpd_curr_max = 2000;
-static unsigned int usbcd_curr_max = 2000;
+static unsigned int ac_curr_max = 1500;
+static unsigned int usbpd_curr_max = 1500;
+static unsigned int usbcd_curr_max = 1500;
+static unsigned int lpm_ac_curr_max = 2000;
+static unsigned int lpm_usbpd_curr_max = 2000;
+static unsigned int lpm_usbcd_curr_max = 2000;
 #endif
 static unsigned int wc_curr_max = 1000;
 static unsigned int usb3_curr_max = 900;
@@ -64,6 +70,7 @@ static bool battery_idle = false;
 static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
 static unsigned int batt_max_temp = 35; /* °C */
+static unsigned int lpm_batt_max_temp = 40; /* LPM */
 
 extern void set_afc_disable(bool);
 
@@ -4568,6 +4575,14 @@ static void sec_bat_cable_work(struct work_struct *work)
 				queue_delayed_work(battery->monitor_wqueue,
 					&battery->timetofull_work, msecs_to_jiffies(work_delay));
 			}
+
+			/* Set charging current for LPM */
+			pr_info("[%s] a2n: charger control in LPM mode\n",__func__);
+			batt_max_temp = lpm_batt_max_temp;
+			ac_curr_max = lpm_ac_curr_max;
+			usbpd_curr_max = lpm_usbpd_curr_max;
+			usbcd_curr_max = lpm_usbcd_curr_max;
+
 		}
 #endif
 	}
