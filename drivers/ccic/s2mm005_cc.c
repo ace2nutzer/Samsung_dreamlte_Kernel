@@ -559,6 +559,7 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,
 			0/*attach*/, 0, 0);
+		dev_info(&i2c->dev, "%s: Moisture detection disabled by user !!!\n", __func__);
 		return;
 	}
 

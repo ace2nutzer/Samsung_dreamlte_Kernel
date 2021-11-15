@@ -2001,12 +2001,6 @@ static int madera_hpdet_moisture_start(struct madera_extcon_info *info)
 	unsigned int hpd_sense, hpd_gnd, val;
 	int ret;
 
-	if (!water_detect) {
-		madera_hpdet_moisture_stop(info);
-		dev_info(madera->dev, "Moisture detection disabled by user\n");
-		return ret;
-	}
-
 	dev_info(madera->dev, "Start moisture det\n");
 
 	/* Make sure we keep the device enabled during the measurement */
@@ -2109,14 +2103,17 @@ static int madera_hpdet_moisture_reading(struct madera_extcon_info *info,
 	struct madera *madera = info->madera;
 	int debounce_lim = info->pdata->moisture_debounce;
 
-	if (!water_detect)
-		return 0;
-
 	val = MADERA_HOHM_TO_OHM(val);  /* Extra precision not required. */
+
+	if (!water_detect) {
+		val = 0;
+		dev_info(madera->dev, "Moisture detection disabled by user !!!\n");
+	}
 
 	if (val < 0) {
 		return val;
 	} else if (val < info->pdata->moisture_imp) {
+		water_detected = false;
 		if (info->pdata->micd_software_compare)
 			madera_jds_set_state(info, &madera_micd_adc_mic);
 		else
@@ -2139,8 +2136,6 @@ static int madera_hpdet_moisture_reading(struct madera_extcon_info *info,
 			 "Jack detection due to moisture, ignoring\n");
 		madera_jds_set_state(info, NULL);
 	}
-
-	water_detected = false;
 
 	return 0;
 }
