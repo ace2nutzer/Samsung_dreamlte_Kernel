@@ -44,6 +44,7 @@ static unsigned int lpm_usbpd_curr_max = 2000;
 static unsigned int lpm_usbcd_curr_max = 2000;
 #endif
 static unsigned int wc_curr_max = 1000;
+static unsigned int lpm_wc_curr_max = 1500;
 static unsigned int usb3_curr_max = 900;
 static unsigned int usb2_curr_max = 500;
 static unsigned int ac_in_curr_12v = 0;
@@ -70,7 +71,7 @@ static bool battery_idle = false;
 static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
 static unsigned int batt_max_temp = 35; /* °C */
-static unsigned int lpm_batt_max_temp = 40; /* LPM */
+static unsigned int lpm_batt_max_temp = 45; /* LPM */
 
 extern void set_afc_disable(bool);
 
@@ -4582,7 +4583,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 			ac_curr_max = lpm_ac_curr_max;
 			usbpd_curr_max = lpm_usbpd_curr_max;
 			usbcd_curr_max = lpm_usbcd_curr_max;
-
+			wc_curr_max = lpm_wc_curr_max;
 		}
 #endif
 	}
