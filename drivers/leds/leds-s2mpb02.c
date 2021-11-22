@@ -28,9 +28,9 @@
 #include <linux/a2n.h>
 #endif
 
-// Torch max_brightness
-// Range 10 - 15
-static unsigned int torch_max_brightness = 10;
+// Torch Brightness Control
+// Range 1 - 17
+static unsigned int torch_max_brightness = 5; // 100 mA by default
 
 extern struct class *camera_class; /*sys/class/camera*/
 struct device *s2mpb02_led_dev;
@@ -314,8 +314,7 @@ ssize_t s2mpb02_store(struct device *dev,
 			struct device_attribute *attr, const char *buf,
 			size_t count)
 {
-	int value = 0;
-	int ret = 0;
+	int value, ret, curr = 0;
 
 	if ((buf == NULL) || kstrtouint(buf, 10, &value)) {
 		return -1;
@@ -354,8 +353,9 @@ ssize_t s2mpb02_store(struct device *dev,
 	} else if (1001 <= value && value <= 1010) {
 		int brightness_value = value - 999; // -1001
 
-		if (brightness_value == 10)
+		if ((brightness_value == 5) || ((brightness_value == 10) && (torch_max_brightness >= 10)))
 			brightness_value = torch_max_brightness;
+
 /*
 		int torch_intensity = -1;
 
@@ -370,9 +370,29 @@ ssize_t s2mpb02_store(struct device *dev,
 		// Turn on Torch Step 40mA ~ 240mA
 		pr_info("[LED]%s , %d->%d(%dmA)\n", __func__, brightness_value, torch_intensity, (torch_intensity)*20);
 */
-		pr_info("[LED]%s ,torch brightness value %d (%dmA)\n", __func__, brightness_value, (brightness_value)*20);
-		global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = brightness_value; // torch_intensity
-		led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+
+		/* LED burning mode */
+		if (brightness_value > 15) {
+			brightness_value -= 13;
+			if (brightness_value == 3)
+				curr = 350;
+			else if (brightness_value == 4)
+				curr = 450;
+
+			pr_info("[LED]%s ,torch brightness value %d (%dmA)\n", __func__, brightness_value, curr);
+			/* set reserved reg. 0x63 for continuous flash on */
+			flash_config_factory = true;
+			ret = s2mpb02_write_reg(global_led_datas[S2MPB02_FLASH_LED_1]->i2c, 0x63, 0x5F);
+			if (ret < 0)
+				pr_info("[LED]%s , failed set flash register setting\n", __func__);
+
+			global_led_datas[S2MPB02_FLASH_LED_1]->data->brightness = brightness_value; // torch burning mode
+			led_set(global_led_datas[S2MPB02_FLASH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+		} else {
+			pr_info("[LED]%s ,torch brightness value %d (%dmA)\n", __func__, brightness_value, (brightness_value)*20);
+			global_led_datas[S2MPB02_TORCH_LED_1]->data->brightness = brightness_value; // torch_intensity
+			led_set(global_led_datas[S2MPB02_TORCH_LED_1], S2MPB02_LED_TURN_WAY_GPIO);
+		}
 
 	} else {
 		pr_info("[LED]%s , Invalid value:%d\n", __func__, value);
@@ -428,8 +448,8 @@ ssize_t torch_max_brightness_store(struct device *dev,
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp < 10 || tmp > 15) {
-			pr_err("[LED] %s, out of range 10 - 15.\n", __func__);
+		if (tmp < 1 || tmp > 17) {
+			pr_err("[LED] %s, out of range 1 - 17.\n", __func__);
 			goto err;
 		}
 		torch_max_brightness = tmp;
