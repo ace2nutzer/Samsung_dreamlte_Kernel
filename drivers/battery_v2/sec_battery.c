@@ -57,7 +57,6 @@ static unsigned int wc_in_curr_9v = 0;
 static unsigned int input_volt = 0;
 static int charging_curr = 0;
 static int batt_temp = 0;
-bool water_detected = false;
 #if defined(CONFIG_CCIC_WATER_DETECT)
 bool water_detect = true;
 #endif
@@ -1360,7 +1359,6 @@ SEC_BAT_ATTR_RO(batt_temp);
 static ssize_t water_detection_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sWater detected:   \t%s \n\n", buf, water_detected ? "YES" : "NO");
 	sprintf(buf, "%sWater detection:   \t%s \n", buf, water_detect ? "ENABLED" : "DISABLED");
 
 	return strlen(buf);
@@ -3971,7 +3969,6 @@ static void sec_bat_monitor_work(
 		charging_curr = 0;
 		input_volt = 0;
 		battery->aicl_current = 0; /* reset aicl current */
-		water_detected = false;
 		battery_idle = false;
 		enable_blue_led(false);
 		batt_level = 0;
@@ -7398,7 +7395,6 @@ static int sec_ac_get_property(struct power_supply *psy,
 			case POWER_SUPPLY_EXT_PROP_WATER_DETECT:
 				if (battery->misc_event & (BATT_MISC_EVENT_UNDEFINED_RANGE_TYPE |
 					BATT_MISC_EVENT_HICCUP_TYPE)) {
-					water_detected = true;
 					if (water_detect) {
 						val->intval = 1;
 						pr_info("%s: Water Detect\n", __func__);
@@ -7409,7 +7405,6 @@ static int sec_ac_get_property(struct power_supply *psy,
 				} else
 #endif
 					val->intval = 0;
-				water_detected = false;
 				break;
 			default:
 				return -EINVAL;

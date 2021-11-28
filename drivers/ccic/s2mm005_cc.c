@@ -39,7 +39,6 @@ extern unsigned int lpcharge;
 #endif
 
 extern bool water_detect;
-extern bool water_detected;
 
 extern struct pdic_notifier_struct pd_noti;
 ////////////////////////////////////////////////////////////////////////////////
@@ -626,7 +625,6 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 
 	/* check for dry case */
 	if (Lp_DATA->BITS.RUN_DRY && !usbpd_data->run_dry) {
-		water_detected = false;
 		dev_info(&i2c->dev, "== WATER RUN-DRY DETECT ==\n");
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,
@@ -637,7 +635,6 @@ void process_cc_water(void * data, LP_STATE_Type *Lp_DATA)
 
 	/* check for water case */
 	if ((Lp_DATA->BITS.WATER_DET & !usbpd_data->water_det)) {
-		water_detected = true;
 		dev_info(&i2c->dev, "== WATER DETECT ==\n");
 		ccic_event_work(usbpd_data,
 			CCIC_NOTIFY_DEV_BATTERY, CCIC_NOTIFY_ID_WATER,
