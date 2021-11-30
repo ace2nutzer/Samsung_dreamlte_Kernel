@@ -795,7 +795,7 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
 		 */
 		is_lru = PageLRU(page);
 		if (!is_lru) {
-#ifdef CONFIG_ZSMALLOC_MIGRATION_SUPPORT
+#if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 			/*
 			 * __PageMovable can return false positive so we need
 			 * to verify it under page_lock.
@@ -857,7 +857,7 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
 		/* Successfully isolated */
 		del_page_from_lru_list(page, lruvec, page_lru(page));
 
-#ifdef CONFIG_ZSMALLOC_MIGRATION_SUPPORT
+#if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 isolate_success:
 #endif
 		list_add(&page->lru, migratelist);

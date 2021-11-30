@@ -1158,20 +1158,23 @@ compress_again:
 		handle = zs_malloc(zram->mem_pool, comp_len,
 				__GFP_KSWAPD_RECLAIM |
 				__GFP_NOWARN |
-#ifdef CONFIG_ZSMALLOC_MIGRATION_SUPPORT
-				__GFP_MOVABLE |
+				__GFP_HIGHMEM
+#ifdef CONFIG_ZRAM_MIGRATION_SUPPORT
+				| __GFP_MOVABLE);
+#else
+				);
 #endif
-				__GFP_HIGHMEM);
-
 	if (!handle) {
 		zcomp_stream_put(zram->comp);
 		atomic64_inc(&zram->stats.writestall);
 		handle = zs_malloc(zram->mem_pool, comp_len,
 				GFP_NOIO |
-#ifdef CONFIG_ZSMALLOC_MIGRATION_SUPPORT
-				__GFP_MOVABLE |
+				__GFP_HIGHMEM
+#ifdef CONFIG_ZRAM_MIGRATION_SUPPORT
+				| __GFP_MOVABLE);
+#else
+				);
 #endif
-				__GFP_HIGHMEM);
 		if (handle)
 			goto compress_again;
 		return -ENOMEM;
