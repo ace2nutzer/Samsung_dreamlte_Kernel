@@ -23,6 +23,9 @@
 #if defined(CONFIG_ZSWAP)
 extern u64 zswap_pool_pages;
 extern atomic_t zswap_stored_pages;
+#elif defined(CONFIG_ZRAM)
+extern u64 zram_pool_pages;
+extern atomic64_t zram_stored_pages;
 #endif
 
 void task_mem(struct seq_file *m, struct mm_struct *mm)
@@ -95,24 +98,35 @@ unsigned long task_statm(struct mm_struct *mm,
 	return mm->total_vm;
 }
 
-#if defined(CONFIG_ZSWAP)
 void task_statlmkd(struct mm_struct *mm, unsigned long *size,
 			 unsigned long *resident, unsigned long *swapresident)
 {
+#if defined(CONFIG_ZSWAP)
 	int zswap_stored_pages_temp=0;
+#elif defined(CONFIG_ZRAM)
+	int zram_stored_pages_temp=0;
+#endif
 
 	*size = mm->total_vm;
 	*resident = get_mm_counter(mm, MM_FILEPAGES) +
 			get_mm_counter(mm, MM_ANONPAGES);
 
+#if defined(CONFIG_ZSWAP)
 	zswap_stored_pages_temp = atomic_read(&zswap_stored_pages);
 	if(zswap_stored_pages_temp) {
 		*swapresident = (int)zswap_pool_pages
 						* get_mm_counter(mm, MM_SWAPENTS)
 						/ zswap_stored_pages_temp;
 	}
-}
+#elif defined(CONFIG_ZRAM)
+	zram_stored_pages_temp = atomic64_read(&zram_stored_pages);
+	if(zram_stored_pages_temp) {
+		*swapresident = (int)zram_pool_pages
+						* get_mm_counter(mm, MM_SWAPENTS)
+						/ zram_stored_pages_temp;
+	}
 #endif
+}
 
 #ifdef CONFIG_NUMA
 /*

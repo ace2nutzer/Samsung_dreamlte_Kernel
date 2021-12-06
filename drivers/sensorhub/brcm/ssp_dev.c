@@ -626,7 +626,7 @@ void ssp_timestamp_sync_work_func(struct work_struct *work)
 	msg->options = AP2HUB_WRITE;
 	msg->buffer = (char *) kzalloc(sizeof(data->timestamp_offset), GFP_KERNEL);
 
-	pr_info("handle_timestamp_sync: %lld\n", data->timestamp_offset);
+	//pr_info("handle_timestamp_sync: %lld\n", data->timestamp_offset);
 	memcpy(msg->buffer, &(data->timestamp_offset), sizeof(data->timestamp_offset));
 
 	ssp_spi_sync(data, msg, 1000);

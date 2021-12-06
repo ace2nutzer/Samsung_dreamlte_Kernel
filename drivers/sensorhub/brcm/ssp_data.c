@@ -567,7 +567,7 @@ void ssp_batch_data_read_task(struct work_struct *work)
 
 		pos += buf_len;
 		residue -= buf_len;
-		pr_info("[SSP_BAT] read batch data (%5d / %5d)\n", pos, big->length);
+		//pr_info("[SSP_BAT] read batch data (%5d / %5d)\n", pos, big->length);
 	}
 
 	// TODO: Do not parse, jut put in to FIFO, and wake_up thread.

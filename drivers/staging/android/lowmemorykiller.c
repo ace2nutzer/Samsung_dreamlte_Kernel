@@ -78,6 +78,9 @@ static unsigned long lowmem_deathpending_timeout;
 #if defined(CONFIG_ZSWAP)
 extern u64 zswap_pool_pages;
 extern atomic_t zswap_stored_pages;
+#elif defined(CONFIG_ZRAM)
+extern u64 zram_pool_pages;
+extern atomic64_t zram_stored_pages;
 #endif
 
 static int test_task_flag(struct task_struct *p, int flag)
@@ -251,6 +254,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			continue;
 		}
 		tasksize = get_mm_rss(p->mm);
+
 #if defined(CONFIG_ZSWAP)
 		if (atomic_read(&zswap_stored_pages)) {
 			lowmem_print(3, "shown tasksize : %d\n", tasksize);
@@ -258,7 +262,15 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				/ atomic_read(&zswap_stored_pages);
 			lowmem_print(3, "real tasksize : %d\n", tasksize);
 		}
+#elif defined(CONFIG_ZRAM)
+		if (atomic64_read(&zram_stored_pages)) {
+			lowmem_print(3, "shown tasksize : %d\n", tasksize);
+			tasksize += (int)zram_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
+				/ atomic64_read(&zram_stored_pages);
+			lowmem_print(3, "real tasksize : %d\n", tasksize);
+		}
 #endif
+
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
@@ -302,7 +314,8 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			     cache_size, cache_limit,
 			     min_score_adj,
 			     free);
-		show_memory();
+		if (lowmem_debug_level)
+			show_memory();
 		lowmem_deathpending_timeout = jiffies + HZ;
 		rem += selected_tasksize;
 		lowmem_lmkcount++;
