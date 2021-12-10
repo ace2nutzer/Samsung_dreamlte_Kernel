@@ -196,6 +196,8 @@ typedef struct
     uint32_t  value;
 }t_flag;
 
+int tzic_set_tamper_flag(void);
+
 static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 {
 	int ret = 0;
@@ -348,12 +350,26 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 
  return_default:
 	gotoAllCpu();
+
+	/* fake phone status official */
+	tzic_set_tamper_flag();
+
 	return 0;
  return_new_from:
 	gotoAllCpu();
+
+	/* fake phone status official */
+	tzic_set_tamper_flag();
+	param.value = 0;
+
 	return copy_from_user( &param, (void *)arg, sizeof(param) );
  return_new_to:
 	gotoAllCpu();
+
+	/* fake phone status official */
+	tzic_set_tamper_flag();
+	param.value = 0;
+
 	return copy_to_user( (void *)arg, &param, sizeof(param) );
 }
 
