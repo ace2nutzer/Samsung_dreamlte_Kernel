@@ -69,7 +69,6 @@
 #define DEF_FREQUENCY_STEP_CL1_17              (2808000)
 
 static unsigned int down_threshold = 0;
-extern unsigned int cpu4_dvfs_limit;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 static unsigned int up_threshold_suspend = 95;
@@ -97,12 +96,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 
 	/* Check for frequency increase */
 	if (load >= od_tuners->up_threshold) {
-
-		/* DVFS */
-		if (cpu != 0) {
-			if (policy->cur == cpu4_dvfs_limit)
-				return;
-		}
 
 		/* if we are already at full speed then break out early */
 		if (policy->cur == policy->max)
@@ -179,12 +172,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 		} else {
 			/* Boost */
 			requested_freq = policy->max;
-		}
-
-		/* DVFS */
-		if (cpu != 0) {
-			if (requested_freq > cpu4_dvfs_limit)
-				requested_freq = cpu4_dvfs_limit;
 		}
 
 		/* If switching to max speed, apply sampling_down_factor */
@@ -279,25 +266,10 @@ static void od_check_cpu(int cpu, unsigned int load)
 		if (requested_freq < policy->min)
 			requested_freq = policy->min;
 
-		/* DVFS */
-		if (cpu != 0) {
-			if (requested_freq > cpu4_dvfs_limit)
-				requested_freq = cpu4_dvfs_limit;
-		}
-
 		__cpufreq_driver_target(policy, requested_freq,
 				CPUFREQ_RELATION_L);
 
 		return;
-	}
-
-	/* DVFS */
-	if (cpu != 0) {
-		if (policy->cur > cpu4_dvfs_limit) {
-			requested_freq = cpu4_dvfs_limit;
-			__cpufreq_driver_target(policy, requested_freq,
-					CPUFREQ_RELATION_L);
-		}
 	}
 }
 
