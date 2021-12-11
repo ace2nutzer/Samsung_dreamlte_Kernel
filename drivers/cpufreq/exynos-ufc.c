@@ -20,6 +20,8 @@
 #include <linux/reboot.h>
 #include <linux/thermal.h>
 #include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/module.h>
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
@@ -44,11 +46,13 @@ static unsigned int cpu_dvfs_check_delay = 8;	/* ms */
 static struct pm_qos_request cpu_maxlock_cl1;
 unsigned int cpu4_dvfs_limit = 0;
 static unsigned int cpu_dvfs_down_temp = 0;
+static struct task_struct *cpu_dvfs_thread = NULL;
 
-#define CPU_DVFS_RANGE_TEMP_MIN		(45)	/* °C */
-#define CPU_DVFS_RANGE_TEMP_MAX		(95)	/* °C */
-#define CPU_DVFS_TJMAX						(100)	/* °C */
-#define CPU_DVFS_SHUTDOWN_TEMP		(112)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
+#define CPU_DVFS_TJMAX							(100)	/* °C */
+#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
+#define CPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
@@ -602,6 +606,10 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 	else
 		sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
 	sprintf(buf, "%s[tjmax]\t\t%d °C\n",buf, (int)CPU_DVFS_TJMAX);
+	sprintf(buf, "%s[dvfs_avoid_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_AVOID_SHUTDOWN_TEMP);
+	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_SHUTDOWN_TEMP);
+	sprintf(buf, "%s[cpu4_max_freq]\t%u KHz\n",buf, cpu4_max_freq);
+	sprintf(buf, "%s[cpu4_dvfs_limit]\t%u KHz\n",buf, cpu4_dvfs_limit);
 	return strlen(buf);
 }
 
@@ -626,6 +634,11 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 		goto out;
 	}
 
+	if (sysfs_streq(buf, "reset_peak")) {
+		cpu_dvfs_peak_temp = 0;
+		return count;
+	}
+
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
@@ -638,9 +651,6 @@ static ssize_t show_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr,
 {
 	sprintf(buf, "%s\n", cpu_dvfs_debug ? "1" : "0");
 	sprintf(buf, "%s[check_delay]\t%u ms\n",buf, cpu_dvfs_check_delay);
-	sprintf(buf, "%s[cpu4_max_freq]\t%u KHz\n",buf, cpu4_max_freq);
-	sprintf(buf, "%s[cpu4_dvfs_limit]\t%u KHz\n",buf, cpu4_dvfs_limit);
-	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_SHUTDOWN_TEMP);
 	return strlen(buf);
 }
 
@@ -669,23 +679,16 @@ static ssize_t store_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr
 		return count;
 	}
 
-	if (sysfs_streq(buf, "reset_peak")) {
-		cpu_dvfs_peak_temp = 0;
-		return count;
-	}
-
 	pr_warn("%s: invalid input\n", __func__);
 	return -EINVAL;
 }
 
 static int cpu_dvfs_check_thread(void *nothing)
 {
-	bool power_off_triggered = false;
-
-	while (!power_off_triggered) {
-		schedule_timeout_interruptible(msecs_to_jiffies(500));
+	while (!kthread_should_stop()) {
 		if (!cpu4_max_freq) {
 			pr_warn("%s: cpufreq driver not ready !\n", __func__);
+			msleep(msecs_to_jiffies(80));
 			continue;
 		}
 		break;
@@ -695,8 +698,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 	cpu_dvfs_down_temp = (cpu_dvfs_max_temp - 5);
 	pr_info("cpu_dvfs: DVFS thread started successfully.\n");
 
-	while (!power_off_triggered) {
-		schedule_timeout_interruptible(msecs_to_jiffies(cpu_dvfs_check_delay));
+	while (!kthread_should_stop()) {
 
 		cpu_temp = get_cpu_temp();
 
@@ -777,19 +779,24 @@ static int cpu_dvfs_check_thread(void *nothing)
 		}
 
 		if (cpu_temp > CPU_DVFS_SHUTDOWN_TEMP) {
-			if (!power_off_triggered) {
-				power_off_triggered = true;
-				pr_warn("%s: Critical temp reached: %d C !!! - shutting down ...\n", __func__ , cpu_temp);
-				mutex_lock(&poweroff_lock);
-				/*
-				 * Queue a backup emergency shutdown in the event of
-				 * orderly_poweroff failure
-				 */
-				thermal_emergency_poweroff();
-				orderly_poweroff(true);
-				mutex_unlock(&poweroff_lock);
-			}
+			cpu4_dvfs_limit = FREQ_STEP_0;
+			pm_qos_update_request(&cpu_maxlock_cl1, cpu4_dvfs_limit);
+			pr_warn("%s: Shutdown temp reached: %d C !!! - shutting down ...\n", __func__ , cpu_temp);
+			mutex_lock(&poweroff_lock);
+			/*
+			 * Queue a backup emergency shutdown in the event of
+			 * orderly_poweroff failure
+			 */
+			thermal_emergency_poweroff();
+			orderly_poweroff(true);
+			mutex_unlock(&poweroff_lock);
 			break;
+		}
+
+		if (cpu_temp > CPU_DVFS_AVOID_SHUTDOWN_TEMP) {
+			cpu4_dvfs_limit = FREQ_STEP_0;
+			pm_qos_update_request(&cpu_maxlock_cl1, cpu4_dvfs_limit);
+			pr_warn("%s: Critical temp reached: %d C !!! - Throttle BIG CPU to min_freq for now ...\n", __func__ , cpu_temp);
 		}
 
 		if (cpu_dvfs_debug) {
@@ -799,6 +806,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 			}
 		}
 
+		msleep(msecs_to_jiffies(cpu_dvfs_check_delay));
 		continue;
 	}
 
@@ -975,13 +983,12 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 	return 0;
 }
 
-static int __init exynos_ufc_init(void)
+static int __init cpu_dvfs_init(void)
 {
 	struct device_node *dn = NULL;
 	const char *buf;
 	struct exynos_cpufreq_domain *domain;
 	int ret = 0;
-	struct task_struct *cpu_dvfs_thread;
 
 	mutex_init(&poweroff_lock);
 
@@ -1046,4 +1053,15 @@ exit:
 	mutex_destroy(&poweroff_lock);
 	return ret;
 }
-late_initcall(exynos_ufc_init);
+
+static void __exit cpu_dvfs_exit(void)
+{
+	pr_info("%s: exit.\n", __func__);
+	kthread_stop(cpu_dvfs_thread);
+}
+
+module_init(cpu_dvfs_init);
+module_exit(cpu_dvfs_exit);
+
+MODULE_DESCRIPTION("CPU DVFS driver for exynos8895");
+MODULE_LICENSE("GPL v2");
