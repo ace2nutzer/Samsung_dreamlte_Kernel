@@ -52,11 +52,13 @@ static int gpu_temp = 0;
 static bool gpu_dvfs_debug = false;
 static unsigned int gpu_dvfs_check_delay = 8;	/* ms */
 static unsigned int gpu_dvfs_down_temp = 0;
+static struct task_struct *gpu_dvfs_thread = NULL;
 
-#define GPU_DVFS_RANGE_TEMP_MIN		(45)	/* °C */
-#define GPU_DVFS_RANGE_TEMP_MAX		(95)	/* °C */
-#define GPU_DVFS_TJMAX						(100)	/* °C */
-#define GPU_DVFS_SHUTDOWN_TEMP		(112)	/* °C */
+#define GPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
+#define GPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
+#define GPU_DVFS_TJMAX							(100)	/* °C */
+#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
+#define GPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
 
 #define FREQ_STEP_0	260000
 #define FREQ_STEP_1	338000
@@ -2138,6 +2140,8 @@ static ssize_t show_kernel_sysfs_gpu_temp(struct kobject *kobj, struct kobj_attr
 
 static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
+	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+
 	sprintf(buf, "%s[gpu_temp]\t%d °C\n",buf, gpu_temp);
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, gpu_dvfs_max_temp);
 	if (!gpu_dvfs_debug)
@@ -2145,6 +2149,10 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 	else
 		sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
 	sprintf(buf, "%s[tjmax]\t\t%d °C\n",buf, (int)GPU_DVFS_TJMAX);
+	sprintf(buf, "%s[dvfs_avoid_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_AVOID_SHUTDOWN_TEMP);
+	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_SHUTDOWN_TEMP);
+	sprintf(buf, "%s[gpu_max_clock]\t%u KHz\n",buf, platform->gpu_max_clock);
+	sprintf(buf, "%s[gpu_dvfs_limit]\t%u KHz\n",buf, platform->user_max_lock_input);
 	return strlen(buf);
 }
 
@@ -2169,6 +2177,11 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 		goto out;
 	}
 
+	if (sysfs_streq(buf, "reset_peak")) {
+		gpu_dvfs_peak_temp = 0;
+		return count;
+	}
+
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
@@ -2179,13 +2192,8 @@ out:
 
 static ssize_t show_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-
 	sprintf(buf, "%s\n", gpu_dvfs_debug ? "1" : "0");
 	sprintf(buf, "%s[check_delay]\t%u ms\n",buf, gpu_dvfs_check_delay);
-	sprintf(buf, "%s[gpu_max_clock]\t%u KHz\n",buf, platform->gpu_max_clock);
-	sprintf(buf, "%s[gpu_dvfs_limit]\t%u KHz\n",buf, platform->user_max_lock_input);
-	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_SHUTDOWN_TEMP);
 	return strlen(buf);
 }
 
@@ -2214,11 +2222,6 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj
 		return count;
 	}
 
-	if (sysfs_streq(buf, "reset_peak")) {
-		gpu_dvfs_peak_temp = 0;
-		return count;
-	}
-
 	pr_warn("%s: invalid input\n", __func__);
 	return -EINVAL;
 }
@@ -2226,18 +2229,17 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj
 static int gpu_dvfs_check_thread(void *nothing)
 {
 	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-	unsigned int gpu_dvfs_limit = 0;
-	bool power_off_triggered = false;
+	static unsigned int gpu_dvfs_limit = 0;
 
-	while (!power_off_triggered) {
-		schedule_timeout_interruptible(msecs_to_jiffies(500));
-
+	while (!kthread_should_stop()) {
 		if (gpu_thermal_data == NULL) {
 			pr_warn("%s: gpu_thermal_data not ready !\n", __func__);
+			msleep(msecs_to_jiffies(80));
 			continue;
 		}
 		if (platform == NULL) {
 			pr_warn("%s: platform not ready !\n", __func__);
+			msleep(msecs_to_jiffies(80));
 			continue;
 		}
 		break;
@@ -2247,9 +2249,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 	gpu_dvfs_down_temp = (gpu_dvfs_max_temp - 5);
 	pr_info("gpu_dvfs: DVFS thread started successfully.\n");
 
-	while (!power_off_triggered) {
-		schedule_timeout_interruptible(msecs_to_jiffies(gpu_dvfs_check_delay));
-
+	while (!kthread_should_stop()) {
 		gpu_temp = gpu_thermal_data->tmu_read(gpu_thermal_data);
 
 		if (gpu_temp >= gpu_dvfs_max_temp) {
@@ -2299,19 +2299,26 @@ static int gpu_dvfs_check_thread(void *nothing)
 		}
 
 		if (gpu_temp > GPU_DVFS_SHUTDOWN_TEMP) {
-			if (!power_off_triggered) {
-				power_off_triggered = true;
-				pr_warn("%s: Critical temp reached: %d C !!! - shutting down ...\n", __func__, gpu_temp);
-				mutex_lock(&poweroff_lock);
-				/*
-				 * Queue a backup emergency shutdown in the event of
-				 * orderly_poweroff failure
-				 */
-				thermal_emergency_poweroff();
-				orderly_poweroff(true);
-				mutex_unlock(&poweroff_lock);
-			}
+			gpu_dvfs_limit = FREQ_STEP_0;
+			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
+			platform->user_max_lock_input = gpu_dvfs_limit;
+			pr_warn("%s: Shutdown temp reached: %d C !!! - Shutting down ...\n", __func__, gpu_temp);
+			mutex_lock(&poweroff_lock);
+			/*
+			 * Queue a backup emergency shutdown in the event of
+			 * orderly_poweroff failure
+			 */
+			thermal_emergency_poweroff();
+			orderly_poweroff(true);
+			mutex_unlock(&poweroff_lock);
 			break;
+		}
+
+		if (gpu_temp > GPU_DVFS_AVOID_SHUTDOWN_TEMP) {
+			gpu_dvfs_limit = FREQ_STEP_0;
+			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
+			platform->user_max_lock_input = gpu_dvfs_limit;
+			pr_warn("%s: Critical temp reached: %d C !!! - Throttle GPU to min_freq for now ...\n", __func__ , gpu_temp);
 		}
 
 		if (gpu_dvfs_debug) {
@@ -2321,6 +2328,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 			}
 		}
 
+		msleep(msecs_to_jiffies(gpu_dvfs_check_delay));
 		continue;
 	}
 
@@ -2670,7 +2678,6 @@ void gpu_remove_sysfs_file(struct device *dev)
 static int __init gpu_dvfs_init(void)
 {
 	int ret = 0;
-	struct task_struct *gpu_dvfs_thread;
 
 	mutex_init(&poweroff_lock);
 
@@ -2694,4 +2701,15 @@ err:
 	mutex_destroy(&poweroff_lock);
 	return ret;
 }
-late_initcall(gpu_dvfs_init);
+
+static void __exit gpu_dvfs_exit(void)
+{
+	pr_info("%s: exit.\n", __func__);
+	kthread_stop(gpu_dvfs_thread);
+}
+
+module_init(gpu_dvfs_init);
+module_exit(gpu_dvfs_exit);
+
+MODULE_DESCRIPTION("GPU DVFS driver for exynos8895");
+MODULE_LICENSE("GPL v2");
