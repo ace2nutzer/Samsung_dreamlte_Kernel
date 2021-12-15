@@ -3,8 +3,9 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <asm/setup.h>
+#include <linux/slab.h>
 
-static char updated_command_line[COMMAND_LINE_SIZE];
+ static char updated_command_line[COMMAND_LINE_SIZE];
 
 static int cmdline_proc_show(struct seq_file *m, void *v)
 {
@@ -26,9 +27,11 @@ static const struct file_operations cmdline_proc_fops = {
 
 static void proc_cmdline_set(char *name, char *value)
 {
-	char flag_str[COMMAND_LINE_SIZE];
 	char *flag_substr;
 	char *flag_space_substr;
+	char *flag_str;
+
+	flag_str = kmalloc(COMMAND_LINE_SIZE, GFP_KERNEL);
 
 	scnprintf(flag_str, COMMAND_LINE_SIZE, "%s=", name);
 	flag_substr = strstr(updated_command_line, flag_str);
@@ -40,6 +43,8 @@ static void proc_cmdline_set(char *name, char *value)
 
 	// flag was not found, insert it
 	scnprintf(updated_command_line, COMMAND_LINE_SIZE, "%s %s=%s", updated_command_line, name, value);
+
+	kfree(flag_str);
 }
 
 static int __init proc_cmdline_init(void)
@@ -50,7 +55,7 @@ static int __init proc_cmdline_init(void)
 	proc_cmdline_set("androidboot.verifiedbootstate", "green");
 	proc_cmdline_set("androidboot.warranty_bit", "0");
 	proc_cmdline_set("androidboot.fmp_config", "1");
-	proc_cmdline_set("androidboot.selinux", "enforcing");
+	proc_cmdline_set("androidboot.selinux", "permissive");
 
 	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
 	return 0;
