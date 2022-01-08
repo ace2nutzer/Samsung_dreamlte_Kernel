@@ -1160,7 +1160,7 @@ static int abox_rdma_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	int id = data->id;
 	unsigned int lit, big;
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_HMP_VARIABLE_SCALE)
 	unsigned int hmp;
 #endif
 	int result;

@@ -572,11 +572,10 @@ config SCHED_HMP
 	  between cpus of different type (DISABLE_CPU_SCHED_DOMAIN_BALANCE).
 
 config SCHED_HMP_CUSTOM
-	bool "Custom HMP driver without task migration"
+	bool "Custom HMP driver"
 	depends on DISABLE_CPU_SCHED_DOMAIN_BALANCE && SCHED_MC && FAIR_GROUP_SCHED && !SCHED_AUTOGROUP
 	help
 	  Custom scheduler optimizations for heterogeneous platforms.
-	  This will try to manage only some essentials. No task migration at all since it's buggy.
 
 config SCHED_HMP_PRIO_FILTER
 	bool "(EXPERIMENTAL) Filter HMP migrations by task priority"
@@ -609,7 +608,7 @@ config HMP_SLOW_CPU_MASK
 
 config HMP_VARIABLE_SCALE
 	bool "Allows changing the load tracking scale through sysfs"
-	depends on SCHED_HMP
+	depends on SCHED_HMP || SCHED_HMP_CUSTOM
 	help
 	  When turned on, this option exports the thresholds and load average
 	  period value for the load tracking patches through sysfs.
