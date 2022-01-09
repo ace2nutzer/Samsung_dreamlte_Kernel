@@ -876,7 +876,7 @@
 		card-detect-delay = <200>;
 		data-timeout = <200>;
 		hto-timeout = <80>;
-		qos-int-level = <667000>;
+		qos-int-level = <400000>;
 		clock-frequency = <800000000>;
 		samsung,dw-mshc-sdr-timing = <3 0 2 0>;
 		samsung,dw-mshc-ddr-timing = <3 0 2 1>;

@@ -519,14 +519,14 @@
 						  1898000  1352000
 						  1794000  1352000
 						  1690000  1352000
-						  1456000        0
-						  1248000        0
-						  1053000        0
-						   949000        0
-						   832000        0
-						   715000        0
-						   598000        0
-						   455000        0
+						  1456000  1352000
+						  1248000  1352000
+						  1053000  1352000
+						   949000  1352000
+						   832000  1352000
+						   715000  1352000
+						   598000  1352000
+						   455000   845000
 						   >;
 				};
 				mif-skew {
@@ -580,7 +580,7 @@
 						  1066000  2093000
 						   962000  2093000
 						   858000  2093000
-						   741000  1014000 >;
+						   741000   845000 >;
 				};
 				mif-skew {
 					guidance;
@@ -877,7 +877,7 @@
 			"UFS_EMBD";
 
 		/* PM QoS for INT power domain */
-		ufs-pm-qos-int = <667000>;
+		ufs-pm-qos-int = <400000>;
 
 		/* DMA coherent callback, should be coupled with 'ufs-sys' */
 		dma-coherent;
@@ -2498,7 +2498,7 @@
 		use_delay_time = "false";
 		delay_time_list = "20";
 
-		freq_info = <2093000 1014000 1014000 1014000 2093000 2093000>;
+		freq_info = <2093000 845000 845000 845000 2093000 2093000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
@@ -2529,7 +2529,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <667000 178000 178000 178000 667000 667000>;
+		freq_info = <667000 267000 267000 267000 667000 667000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -3788,8 +3788,8 @@
 		mfc_qos_table {
 			mfc_qos_variant_0 {
 				thrd_mb = <0>;
-				freq_mfc = <178000>;
-				freq_int = <178000>;
+				freq_mfc = <267000>;
+				freq_int = <267000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3810,8 +3810,8 @@
 			};
 			mfc_qos_variant_2 {
 				thrd_mb = <535550>;
-				freq_mfc = <333000>;
-				freq_int = <333000>;
+				freq_mfc = <400000>;
+				freq_int = <400000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3832,8 +3832,8 @@
 			};
 			mfc_qos_variant_4 {
 				thrd_mb = <1884284>;
-				freq_mfc = <533000>;
-				freq_int = <533000>;
+				freq_mfc = <400000>;
+				freq_int = <400000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3843,8 +3843,8 @@
 			};
 			mfc_qos_variant_5 {
 				thrd_mb = <2713968>;
-				freq_mfc = <667000>;
-				freq_int = <667000>;
+				freq_mfc = <400000>;
+				freq_int = <400000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3854,8 +3854,8 @@
 			};
 			mfc_qos_variant_6 {
 				thrd_mb = <3267739>;
-				freq_mfc = <667000>;
-				freq_int = <667000>;
+				freq_mfc = <400000>;
+				freq_int = <400000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3865,8 +3865,8 @@
 			};
 			mfc_qos_variant_7 {
 				thrd_mb = <4517358>;
-				freq_mfc = <667000>;
-				freq_int = <667000>;
+				freq_mfc = <400000>;
+				freq_int = <400000>;
 				freq_mif = <0>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
