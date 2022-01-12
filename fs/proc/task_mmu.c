@@ -903,7 +903,7 @@ error_mm:
 	put_task_struct(task);
 
 error_task:
-	return 0;
+	return ret;
 }
 
 static int proc_pid_smaps_simple_open(struct inode *inode, struct file *file)

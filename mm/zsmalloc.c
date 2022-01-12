@@ -364,6 +364,9 @@ static unsigned long cache_alloc_handle(struct zs_pool *pool)
 #ifdef CONFIG_CMA
 			| __GFP_CMA
 #endif
+#ifdef CONFIG_RBIN
+			| __GFP_RBIN
+#endif
 			));
 }
 
@@ -378,6 +381,9 @@ static struct zspage *cache_alloc_zspage(struct zs_pool *pool, gfp_t flags)
 			flags & ~(__GFP_HIGHMEM|__GFP_MOVABLE
 #ifdef CONFIG_CMA
 			| __GFP_CMA
+#endif
+#ifdef CONFIG_RBIN
+			| __GFP_RBIN
 #endif
 			));
 };

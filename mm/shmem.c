@@ -1429,7 +1429,7 @@ static struct inode *shmem_get_inode(struct super_block *sb, const struct inode 
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 		inode->i_generation = get_seconds();
 		mapping_set_gfp_mask(inode->i_mapping,
-			mapping_gfp_mask(inode->i_mapping) & ~__GFP_CMA);
+			mapping_gfp_mask(inode->i_mapping) & ~(__GFP_CMA|__GFP_RBIN));
 		info = SHMEM_I(inode);
 		memset(info, 0, (char *)inode - (char *)info);
 		spin_lock_init(&info->lock);
