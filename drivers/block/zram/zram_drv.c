@@ -35,6 +35,14 @@
 
 #include "zram_drv.h"
 
+/*********************************
+* statistics
+**********************************/
+/* Number of memory pages used by the compressed pool */
+u64 zram_pool_pages;
+/* The number of compressed pages currently stored in zRam */
+atomic64_t zram_stored_pages = ATOMIC64_INIT(0);
+
 static DEFINE_IDR(zram_index_idr);
 /* idr index must be protected */
 static DEFINE_MUTEX(zram_index_mutex);
@@ -1234,6 +1242,8 @@ static void zram_free_page(struct zram *zram, size_t index)
 			&zram->stats.compr_data_size);
 out:
 	atomic64_dec(&zram->stats.pages_stored);
+	atomic64_dec(&zram_stored_pages);
+	zram_pool_pages = zs_get_total_pages(zram->mem_pool);
 	zram_set_handle(zram, index, 0);
 	zram_set_obj_size(zram, index, 0);
 	WARN_ON_ONCE(zram->table[index].flags &
@@ -1455,6 +1465,8 @@ out:
 
 	/* Update stats */
 	atomic64_inc(&zram->stats.pages_stored);
+	atomic64_inc(&zram_stored_pages);
+	zram_pool_pages = zs_get_total_pages(zram->mem_pool);
 	return ret;
 }
 
@@ -1543,16 +1555,15 @@ static void zram_bio_discard(struct zram *zram, u32 index,
  * Returns 1 if IO request was successfully submitted.
  */
 static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
-			int offset, bool is_write, struct bio *bio)
+			int offset, int rw, struct bio *bio)
 {
 	unsigned long start_time = jiffies;
-	int rw_acct = is_write ? REQ_OP_WRITE : REQ_OP_READ;
 	int ret;
 
-	generic_start_io_acct(rw_acct, bvec->bv_len >> SECTOR_SHIFT,
+	generic_start_io_acct(rw, bvec->bv_len >> SECTOR_SHIFT,
 			&zram->disk->part0);
 
-	if (!is_write) {
+	if (rw == READ) {
 		atomic64_inc(&zram->stats.num_reads);
 		ret = zram_bvec_read(zram, bvec, index, offset, bio);
 		flush_dcache_page(bvec->bv_page);
@@ -1561,14 +1572,14 @@ static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
 		ret = zram_bvec_write(zram, bvec, index, offset, bio);
 	}
 
-	generic_end_io_acct(rw_acct, &zram->disk->part0, start_time);
+	generic_end_io_acct(rw, &zram->disk->part0, start_time);
 
 	zram_slot_lock(zram, index);
 	zram_accessed(zram, index);
 	zram_slot_unlock(zram, index);
 
 	if (unlikely(ret < 0)) {
-		if (!is_write)
+		if (rw == READ)
 			atomic64_inc(&zram->stats.failed_reads);
 		else
 			atomic64_inc(&zram->stats.failed_writes);
@@ -1579,7 +1590,7 @@ static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
 
 static void __zram_make_request(struct zram *zram, struct bio *bio)
 {
-	int offset;
+	int offset, rw;
 	u32 index;
 	struct bio_vec bvec;
 	struct bvec_iter iter;
@@ -1588,12 +1599,13 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
 	offset = (bio->bi_iter.bi_sector &
 		  (SECTORS_PER_PAGE - 1)) << SECTOR_SHIFT;
 
-	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
+	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
 		zram_bio_discard(zram, index, offset, bio);
 		bio_endio(bio);
 		return;
 	}
 
+	rw = bio_data_dir(bio);
 	bio_for_each_segment(bvec, bio, iter) {
 		struct bio_vec bv = bvec;
 		unsigned int unwritten = bvec.bv_len;
@@ -1602,7 +1614,7 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
 			bv.bv_len = min_t(unsigned int, PAGE_SIZE - offset,
 							unwritten);
 			if (zram_bvec_rw(zram, &bv, index, offset,
-					op_is_write(bio_op(bio)), bio) < 0)
+					rw, bio) < 0)
 				goto out;
 
 			bv.bv_offset += bv.bv_len;
@@ -1658,7 +1670,7 @@ static void zram_slot_free_notify(struct block_device *bdev,
 }
 
 static int zram_rw_page(struct block_device *bdev, sector_t sector,
-		       struct page *page, bool is_write)
+		       struct page *page, int rw)
 {
 	int offset, ret;
 	u32 index;
@@ -1680,7 +1692,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
 	bv.bv_len = PAGE_SIZE;
 	bv.bv_offset = 0;
 
-	ret = zram_bvec_rw(zram, &bv, index, offset, is_write, NULL);
+	ret = zram_bvec_rw(zram, &bv, index, offset, rw, NULL);
 out:
 	/*
 	 * If I/O fails, just return error(ie, non-zero) without
@@ -1695,7 +1707,7 @@ out:
 
 	switch (ret) {
 	case 0:
-		page_endio(page, is_write, 0);
+		page_endio(page, rw, 0);
 		break;
 	case 1:
 		ret = 0;
