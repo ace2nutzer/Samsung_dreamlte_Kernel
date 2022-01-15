@@ -73,6 +73,7 @@ static unsigned int batt_max_temp = 35; /* °C */
 static unsigned int lpm_batt_max_temp = 45; /* LPM */
 
 extern void set_afc_disable(bool);
+extern unsigned int bootmode;
 
 #define CHARGER_CONTROL_VERSION		"3.0"
 
@@ -359,8 +360,6 @@ char *sec_bat_charge_mode_str[] = {
 	"Charging-Off",
 	"Buck-Off",
 };
-
-extern int bootmode;
 
 void sec_bat_set_misc_event(struct sec_battery_info *battery,
 	unsigned int misc_event_val, unsigned int misc_event_mask)

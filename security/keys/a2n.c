@@ -11,6 +11,8 @@
 
 static unsigned int a2n = 0;
 bool a2n_allow = false;
+extern unsigned int bootmode;
+extern unsigned int lpcharge;
 
 static int set_a2n_allow(const char *buf, struct kernel_param *kp)
 {
@@ -23,6 +25,12 @@ static int set_a2n_allow(const char *buf, struct kernel_param *kp)
 	}
 
 	sscanf(buf, "%u", &temp);
+
+	if ((temp == 1) && ((bootmode == 2) || (lpcharge))) {
+		a2n_allow = true;
+		pr_info("[%s] a2n: welcome !\n",__func__);
+		return 0;
+	}
 
 	if ((temp == a2n) && (a2n_allow))
 		return 0;
