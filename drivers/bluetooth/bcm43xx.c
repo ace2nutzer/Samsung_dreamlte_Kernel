@@ -79,8 +79,10 @@ int idle_ip_index;
 
 static int bcm43xx_bt_rfkill_set_power(void *data, bool blocked)
 {
+	static bool init = false;
+
 	/* rfkill_ops callback. Turn transmitter on when blocked is false */
-	if (!blocked) {
+	if (!blocked && init) {
 		pr_info("[BT] Bluetooth Power On.\n");
 
 #ifdef BT_LPM_ENABLE
@@ -99,6 +101,7 @@ static int bcm43xx_bt_rfkill_set_power(void *data, bool blocked)
 		msleep(100);
 
 	} else {
+		init = true;
 		pr_info("[BT] Bluetooth Power Off.\n");
 
 #ifdef BT_LPM_ENABLE
