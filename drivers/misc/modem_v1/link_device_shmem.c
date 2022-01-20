@@ -2463,6 +2463,7 @@ static char *shmem_get_srinfo_address(struct link_device *ld)
 	return base;
 }
 
+#ifdef CONFIG_CP_RAM_LOGGING
 /* not in use */
 static int shmem_ioctl(struct link_device *ld, struct io_device *iod,
 		       unsigned int cmd, unsigned long arg)
@@ -2544,6 +2545,7 @@ static int shmem_ioctl(struct link_device *ld, struct io_device *iod,
 
 	return 0;
 }
+#endif
 
 static void shmem_tx_state_handler(void *data)
 {
@@ -3427,7 +3429,9 @@ struct link_device *shmem_create_link_device(struct platform_device *pdev)
 	/*
 	Set up link device methods
 	*/
+#ifdef CONFIG_CP_RAM_LOGGING
 	ld->ioctl = shmem_ioctl;
+#endif
 
 	ld->init_comm = shmem_init_comm;
 	ld->terminate_comm = shmem_terminate_comm;
