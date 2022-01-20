@@ -49,6 +49,10 @@
 #include "sched.h"
 #include "tune.h"
 
+#if IS_ENABLED(CONFIG_A2N)
+#include <linux/a2n.h>
+#endif
+
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 LIST_HEAD(hmp_domains);
 #endif
@@ -2676,11 +2680,11 @@ unsigned long exynos_scale_freq_capacity(struct sched_domain *sd, int cpu)
  * tweaking suit particular needs.
  */
 
-unsigned int hmp_up_threshold = 16;
-unsigned int hmp_down_threshold = 4;
+unsigned int hmp_up_threshold = 128;
+unsigned int hmp_down_threshold = 32;
 
-unsigned int hmp_semiboost_up_threshold = 16;
-unsigned int hmp_semiboost_down_threshold = 4;
+unsigned int hmp_semiboost_up_threshold = 128;
+unsigned int hmp_semiboost_down_threshold = 32;
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 /* Ex: 256 = /4, 512 = /2, 1024 = x1, 1536 = x1.5, 2048 = x2 */
@@ -5934,31 +5938,50 @@ static int hmp_semiboost_period_from_sysfs(int value)
 /* max value for threshold is 1024 */
 static int hmp_up_threshold_from_sysfs(int value)
 {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		return -EINVAL;
+	}
+#endif
+
 	if ((value > 1024) || (value < 0))
 		return -EINVAL;
 
 	hmp_up_threshold = value;
-#endif
+
 	return 0;
 }
 
 static int hmp_semiboost_up_threshold_from_sysfs(int value)
 {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		return -EINVAL;
+	}
+#endif
+
 	if ((value > 1024) || (value < 0))
 		return -EINVAL;
 
 	hmp_semiboost_up_threshold = value;
-#endif
+
 	return 0;
 }
 
 static int hmp_down_threshold_from_sysfs(int value)
 {
 	int ret = 0;
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	unsigned long flags;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		return -EINVAL;
+	}
+#endif
+
 	raw_spin_lock_irqsave(&hmp_sysfs_lock, flags);
 
 	if ((value > 1024) || (value < 0)) {
@@ -5972,18 +5995,24 @@ static int hmp_down_threshold_from_sysfs(int value)
 	}
 
 	raw_spin_unlock_irqrestore(&hmp_sysfs_lock, flags);
-#endif
+
 	return ret;
 }
 
 static int hmp_semiboost_down_threshold_from_sysfs(int value)
 {
-#ifndef CONFIG_SCHED_HMP_CUSTOM
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		return -EINVAL;
+	}
+#endif
+
 	if ((value > 1024) || (value < 0))
 		return -EINVAL;
 
 	hmp_semiboost_down_threshold = value;
-#endif
+
 	return 0;
 }
 
