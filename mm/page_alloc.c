@@ -3079,13 +3079,13 @@ gfp_to_alloc_flags(gfp_t gfp_mask)
 #ifdef CONFIG_CMA
 #ifdef CONFIG_RBIN
 	if ((gfpflags_to_migratetype(gfp_mask) == MIGRATE_MOVABLE) &&
-		((gfp_mask & __GFP_RBIN) == __GFP_RBIN))
-		alloc_flags |= ALLOC_RBIN;
+			((gfp_mask & __GFP_RBIN) == __GFP_RBIN))
+			alloc_flags |= ALLOC_RBIN;
 	else
 #endif
 		if ((gfpflags_to_migratetype(gfp_mask) == MIGRATE_MOVABLE)
-			&& !!(gfp_mask & __GFP_CMA))
-			alloc_flags |= ALLOC_CMA;
+				&& !!(gfp_mask & __GFP_CMA))
+				alloc_flags |= ALLOC_CMA;
 #endif
 	return alloc_flags;
 }
