@@ -20,6 +20,7 @@
 #include <linux/backing-dev.h>
 #include <linux/swap.h>
 #include <linux/swapops.h>
+#include <linux/sched/mm.h>
 
 /*
  * Any behaviour which results in changes to the vma->vm_flags needs to
@@ -489,10 +490,27 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
 		return error;
 
 	write = madvise_need_mmap_write(behavior);
-	if (write)
+	if (write) {
 		down_write(&current->mm->mmap_sem);
-	else
+
+		/*
+		 * We may have stolen the mm from another process
+		 * that is undergoing core dumping.
+		 *
+		 * Right now that's io_ring, in the future it may
+		 * be remote process management and not "current"
+		 * at all.
+		 *
+		 * We need to fix core dumping to not do this,
+		 * but for now we have the mmget_still_valid()
+		 * model.
+		 */
+		if (!mmget_still_valid(current->mm))
+			goto out;
+
+	} else {
 		down_read(&current->mm->mmap_sem);
+	}
 
 	/*
 	 * If the interval [start,end) covers some unmapped address
