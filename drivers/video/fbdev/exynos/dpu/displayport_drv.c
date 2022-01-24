@@ -2343,27 +2343,8 @@ static void displayport_aux_sel(struct displayport_device *displayport)
 
 static void displayport_check_adapter_type(struct displayport_device *displayport)
 {
-	displayport->dex_adapter_type = DEX_FHD_SUPPORT;
-
-	if (displayport->ven_id != 0x04e8)
-		return;
-
-	switch(displayport->prod_id) {
-	case 0xa029: /* PAD */
-	case 0xa020: /* Station */
-	case 0xa02a:
-	case 0xa02b:
-	case 0xa02c:
-	case 0xa02d:
-	case 0xa02e:
-	case 0xa02f:
-	case 0xa030:
-	case 0xa031:
-	case 0xa032:
-	case 0xa033:
-		displayport->dex_adapter_type = DEX_WQHD_SUPPORT;
-		break;
-	};
+	/* Force QHD Support whatever adapter type */
+	displayport->dex_adapter_type = DEX_WQHD_SUPPORT;
 }
 
 #if defined(CONFIG_USB_TYPEC_MANAGER_NOTIFIER)
