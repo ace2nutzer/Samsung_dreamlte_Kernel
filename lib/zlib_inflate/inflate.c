@@ -396,7 +396,7 @@ int zlib_inflate(z_streamp strm, int flush)
             strm->adler = state->check = REVERSE(hold);
             INITBITS();
             state->mode = DICT;
-	    fallthrough;
+	    /* fall through */
         case DICT:
             if (state->havedict == 0) {
                 RESTORE();
@@ -404,10 +404,10 @@ int zlib_inflate(z_streamp strm, int flush)
             }
             strm->adler = state->check = zlib_adler32(0L, NULL, 0);
             state->mode = TYPE;
-	    fallthrough;
+	    /* fall through */
         case TYPE:
             if (flush == Z_BLOCK) goto inf_leave;
-	    fallthrough;
+	    /* fall through */
         case TYPEDO:
             INFLATE_TYPEDO_HOOK(strm, flush);
             if (state->last) {
@@ -446,7 +446,7 @@ int zlib_inflate(z_streamp strm, int flush)
             state->length = (unsigned)hold & 0xffff;
             INITBITS();
             state->mode = COPY;
-	    fallthrough;
+	    /* fall through */
         case COPY:
             copy = state->length;
             if (copy) {
@@ -480,7 +480,7 @@ int zlib_inflate(z_streamp strm, int flush)
 #endif
             state->have = 0;
             state->mode = LENLENS;
-	    fallthrough;
+	    /* fall through */
         case LENLENS:
             while (state->have < state->ncode) {
                 NEEDBITS(3);
@@ -501,7 +501,7 @@ int zlib_inflate(z_streamp strm, int flush)
             }
             state->have = 0;
             state->mode = CODELENS;
-	    fallthrough;
+	    /* fall through */
         case CODELENS:
             while (state->have < state->nlen + state->ndist) {
                 for (;;) {
@@ -575,7 +575,7 @@ int zlib_inflate(z_streamp strm, int flush)
                 break;
             }
             state->mode = LEN;
-	    fallthrough;
+	    /* fall through */
         case LEN:
             if (have >= 6 && left >= 258) {
                 RESTORE();
@@ -615,7 +615,7 @@ int zlib_inflate(z_streamp strm, int flush)
             }
             state->extra = (unsigned)(this.op) & 15;
             state->mode = LENEXT;
-	    fallthrough;
+	    /* fall through */
         case LENEXT:
             if (state->extra) {
                 NEEDBITS(state->extra);
@@ -623,7 +623,7 @@ int zlib_inflate(z_streamp strm, int flush)
                 DROPBITS(state->extra);
             }
             state->mode = DIST;
-	    fallthrough;
+	    /* fall through */
         case DIST:
             for (;;) {
                 this = state->distcode[BITS(state->distbits)];
@@ -649,7 +649,7 @@ int zlib_inflate(z_streamp strm, int flush)
             state->offset = (unsigned)this.val;
             state->extra = (unsigned)(this.op) & 15;
             state->mode = DISTEXT;
-	    fallthrough;
+	    /* fall through */
         case DISTEXT:
             if (state->extra) {
                 NEEDBITS(state->extra);
@@ -669,7 +669,7 @@ int zlib_inflate(z_streamp strm, int flush)
                 break;
             }
             state->mode = MATCH;
-	    fallthrough;
+	    /* fall through */
         case MATCH:
             if (left == 0) goto inf_leave;
             copy = out - left;
@@ -720,7 +720,7 @@ int zlib_inflate(z_streamp strm, int flush)
                 INITBITS();
             }
             state->mode = DONE;
-	    fallthrough;
+	    /* fall through */
         case DONE:
             ret = Z_STREAM_END;
             goto inf_leave;
