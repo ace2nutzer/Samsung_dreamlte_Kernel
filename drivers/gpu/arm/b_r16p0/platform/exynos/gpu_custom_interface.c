@@ -44,21 +44,22 @@
 #endif
 
 extern struct kbase_device *pkbdev;
+static struct exynos_context *platform = NULL;
 
 /* custom DVFS */
 static unsigned int gpu_dvfs_max_temp = 65;
 static unsigned int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;
 static bool gpu_dvfs_debug = false;
-static unsigned int gpu_dvfs_check_delay = 8;	/* ms */
-static unsigned int gpu_dvfs_down_temp = 0;
+static unsigned int gpu_dvfs_check_delay = 12;	/* ms */
+static unsigned int gpu_dvfs_limit = 0;
+static unsigned int gpu_dvfs_min_temp = 0;
 static struct task_struct *gpu_dvfs_thread = NULL;
 
 #define GPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
-#define GPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
 #define GPU_DVFS_TJMAX							(100)	/* °C */
-#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
-#define GPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
+#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(113)	/* °C */
+#define GPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
 
 #define FREQ_STEP_0	260000
 #define FREQ_STEP_1	338000
@@ -86,7 +87,6 @@ int gpu_pmqos_dvfs_min_lock(int level)
 {
 #ifdef CONFIG_MALI_DVFS
 	int clock;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform) {
 		GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "%s: platform context is not initialized\n", __func__);
@@ -106,7 +106,6 @@ static ssize_t show_clock(struct device *dev, struct device_attribute *attr, cha
 {
 	ssize_t ret = 0;
 	int clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -151,7 +150,6 @@ static ssize_t set_clock(struct device *dev, struct device_attribute *attr, cons
 #ifdef CONFIG_MALI_DVFS
 	static bool prev_dvfs_status = true;
 #endif /* CONFIG_MALI_DVFS */
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -201,7 +199,6 @@ static ssize_t set_clock(struct device *dev, struct device_attribute *attr, cons
 static ssize_t show_vol(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -222,7 +219,6 @@ static ssize_t show_vol(struct device *dev, struct device_attribute *attr, char 
 static ssize_t show_power_state(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -265,7 +261,6 @@ static int gpu_get_asv_table(struct exynos_context *platform, char *buf, size_t 
 static ssize_t show_asv_table(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -304,7 +299,6 @@ static int gpu_get_dvfs_table(struct exynos_context *platform, char *buf, size_t
 static ssize_t show_dvfs_table(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -326,7 +320,6 @@ static ssize_t show_time_in_state(struct device *dev, struct device_attribute *a
 {
 	ssize_t ret = 0;
 	int i;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -358,7 +351,6 @@ static ssize_t set_time_in_state(struct device *dev, struct device_attribute *at
 static ssize_t show_utilization(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -379,7 +371,6 @@ static ssize_t show_utilization(struct device *dev, struct device_attribute *att
 static ssize_t show_perf(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -401,7 +392,6 @@ static ssize_t show_perf(struct device *dev, struct device_attribute *attr, char
 static ssize_t show_dvfs(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -434,7 +424,6 @@ static ssize_t show_governor(struct device *dev, struct device_attribute *attr, 
 	ssize_t ret = 0;
 	gpu_dvfs_governor_info *governor_info;
 	int i;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -490,7 +479,6 @@ static ssize_t show_max_lock_status(struct device *dev, struct device_attribute 
 	unsigned long flags;
 	int i;
 	int max_lock_status[NUMBER_LOCK];
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -520,7 +508,6 @@ static ssize_t show_min_lock_status(struct device *dev, struct device_attribute 
 	unsigned long flags;
 	int i;
 	int min_lock_status[NUMBER_LOCK];
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -550,7 +537,6 @@ static ssize_t show_max_lock_dvfs(struct device *dev, struct device_attribute *a
 	unsigned long flags;
 	int locked_clock = -1;
 	int user_locked_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -580,7 +566,6 @@ static ssize_t set_max_lock_dvfs(struct device *dev, struct device_attribute *at
 {
 /*
 	int ret, clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -622,7 +607,6 @@ static ssize_t show_min_lock_dvfs(struct device *dev, struct device_attribute *a
 	unsigned long flags;
 	int locked_clock = -1;
 	int user_locked_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -652,7 +636,6 @@ static ssize_t set_min_lock_dvfs(struct device *dev, struct device_attribute *at
 {
 /*
 	int ret, clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -694,7 +677,6 @@ static ssize_t show_down_staycount(struct device *dev, struct device_attribute *
 	ssize_t ret = 0;
 	unsigned long flags;
 	int i = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -726,7 +708,6 @@ static ssize_t set_down_staycount(struct device *dev, struct device_attribute *a
 	int ret = -1;
 	int clock = -1, level = -1, down_staycount = 0;
 	unsigned int len = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -785,7 +766,6 @@ static ssize_t show_highspeed_clock(struct device *dev, struct device_attribute 
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -812,7 +792,6 @@ static ssize_t set_highspeed_clock(struct device *dev, struct device_attribute *
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -845,7 +824,6 @@ static ssize_t show_highspeed_load(struct device *dev, struct device_attribute *
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_load = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -872,7 +850,6 @@ static ssize_t set_highspeed_load(struct device *dev, struct device_attribute *a
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_load = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -901,7 +878,6 @@ static ssize_t show_highspeed_delay(struct device *dev, struct device_attribute 
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_delay = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -928,7 +904,6 @@ static ssize_t set_highspeed_delay(struct device *dev, struct device_attribute *
 	ssize_t ret = 0;
 	unsigned long flags;
 	int highspeed_delay = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -955,7 +930,6 @@ static ssize_t set_highspeed_delay(struct device *dev, struct device_attribute *
 static ssize_t show_wakeup_lock(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -975,8 +949,6 @@ static ssize_t show_wakeup_lock(struct device *dev, struct device_attribute *att
 
 static ssize_t set_wakeup_lock(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-
 	if (!platform)
 		return -ENODEV;
 
@@ -993,7 +965,6 @@ static ssize_t set_wakeup_lock(struct device *dev, struct device_attribute *attr
 static ssize_t show_polling_speed(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1014,7 +985,6 @@ static ssize_t show_polling_speed(struct device *dev, struct device_attribute *a
 static ssize_t set_polling_speed(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	int ret, polling_speed;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1039,7 +1009,6 @@ static ssize_t set_polling_speed(struct device *dev, struct device_attribute *at
 static ssize_t show_tmu(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1059,8 +1028,6 @@ static ssize_t show_tmu(struct device *dev, struct device_attribute *attr, char 
 
 static ssize_t set_tmu_control(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-
 	if (!platform)
 		return -ENODEV;
 
@@ -1306,7 +1273,6 @@ static int gpu_get_status(struct exynos_context *platform, char *buf, size_t buf
 static ssize_t show_gpu_status(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1328,7 +1294,6 @@ static ssize_t show_gpu_status(struct device *dev, struct device_attribute *attr
 static ssize_t show_vk_boost_status(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1351,7 +1316,6 @@ static ssize_t show_vk_boost_status(struct device *dev, struct device_attribute 
 static ssize_t show_sustainable_status(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1376,8 +1340,6 @@ static ssize_t set_cl_boost_disable(struct device *dev, struct device_attribute 
 	unsigned int cl_boost_disable = 0;
 	int ret;
 
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-
 	if (!platform)
 		return -ENODEV;
 
@@ -1398,7 +1360,6 @@ static ssize_t set_cl_boost_disable(struct device *dev, struct device_attribute 
 static ssize_t show_cl_boost_disable(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1472,7 +1433,6 @@ DEVICE_ATTR(cl_boost_disable, S_IRUGO|S_IWUSR, show_cl_boost_disable, set_cl_boo
 #define BUF_SIZE 1000
 static ssize_t show_kernel_sysfs_gpu_info(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 	ssize_t ret = 0;
 
 	if (!platform)
@@ -1507,7 +1467,6 @@ static ssize_t show_kernel_sysfs_gpu_info(struct kobject *kobj, struct kobj_attr
 static ssize_t show_kernel_sysfs_gpu_asv_table(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1530,7 +1489,6 @@ static ssize_t show_kernel_sysfs_max_lock_dvfs(struct kobject *kobj, struct kobj
 	ssize_t ret = 0;
 	unsigned long flags;
 	int locked_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1559,7 +1517,6 @@ static ssize_t set_kernel_sysfs_max_lock_dvfs(struct kobject *kobj, struct kobj_
 {
 /*
 	int ret, clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1598,7 +1555,6 @@ static ssize_t show_kernel_sysfs_available_governor(struct kobject *kobj, struct
 	ssize_t ret = 0;
 	gpu_dvfs_governor_info *governor_info;
 	int i;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1624,7 +1580,6 @@ static ssize_t show_kernel_sysfs_min_lock_dvfs(struct kobject *kobj, struct kobj
 	ssize_t ret = 0;
 	unsigned long flags;
 	int locked_clock = -1;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1653,7 +1608,6 @@ static ssize_t set_kernel_sysfs_min_lock_dvfs(struct kobject *kobj, struct kobj_
 {
 /*
 	int ret, clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1692,15 +1646,17 @@ static ssize_t set_kernel_sysfs_min_lock_dvfs(struct kobject *kobj, struct kobj_
 
 static ssize_t show_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+	if (!platform)
+		return -ENODEV;
 
 	sprintf(buf, "%s[gpu_max_clock]   \t[%d]\n\n", buf, platform->gpu_max_clock);
 	return strlen(buf);
 }
 
+static void set_gpu_dvfs_limit(unsigned int freq);
+
 static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 	unsigned int val;
 
 #if IS_ENABLED(CONFIG_A2N)
@@ -1719,18 +1675,14 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 546000
 				|| val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			platform->gpu_max_clock = val;
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, val);
-			platform->user_max_lock_input = val;
+			set_gpu_dvfs_limit(val);
 			pr_info("gpufreq: new max freq is %d kHz\n", platform->gpu_max_clock);
-			goto out;
+			return count;
 		}
 	}
 
 err:
 	return -EINVAL;
-
-out:
-	return count;
 }
 
 static ssize_t show_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -1809,7 +1761,8 @@ err:
 
 static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+	if (!platform)
+		return -ENODEV;
 
 	sprintf(buf, "%s[gpu_min_clock]   \t[%d]\n\n", buf, platform->gpu_min_clock);
 	return strlen(buf);
@@ -1817,7 +1770,6 @@ static ssize_t show_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kob
 
 static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 	unsigned int val;
 
 #if IS_ENABLED(CONFIG_A2N)
@@ -1838,22 +1790,18 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 
 			platform->gpu_min_clock = val;
 			pr_info("gpufreq: new min freq is %d kHz\n", platform->gpu_min_clock);
-			goto out;
+			return count;
 		}
 	}
 
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 
 static ssize_t show_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1875,7 +1823,6 @@ static ssize_t show_kernel_sysfs_gpu_time_in_state(struct kobject *kobj, struct 
 {
 	ssize_t ret = 0;
 	int i;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1901,7 +1848,6 @@ static ssize_t show_kernel_sysfs_gpu_time_in_state(struct kobject *kobj, struct 
 static ssize_t show_kernel_sysfs_utilization(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1923,7 +1869,6 @@ static ssize_t show_kernel_sysfs_clock(struct kobject *kobj, struct kobj_attribu
 {
 	ssize_t ret = 0;
 	int clock = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1961,7 +1906,6 @@ static ssize_t show_kernel_sysfs_freq_table(struct kobject *kobj, struct kobj_at
 {
 	ssize_t ret = 0;
 	int i = 0;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -1986,7 +1930,6 @@ static ssize_t show_kernel_sysfs_governor(struct kobject *kobj, struct kobj_attr
 {
 	ssize_t ret = 0;
 	gpu_dvfs_governor_info *governor_info = NULL;
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
 
 	if (!platform)
 		return -ENODEV;
@@ -2140,7 +2083,8 @@ static ssize_t show_kernel_sysfs_gpu_temp(struct kobject *kobj, struct kobj_attr
 
 static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
+	if (!platform)
+		return -ENODEV;
 
 	sprintf(buf, "%s[gpu_temp]\t%d °C\n",buf, gpu_temp);
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, gpu_dvfs_max_temp);
@@ -2160,6 +2104,9 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 {
 	unsigned int tmp;
 
+	if (!platform)
+		return -ENODEV;
+
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		pr_err("[%s] a2n: unprivileged access !\n",__func__);
@@ -2168,13 +2115,14 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_RANGE_TEMP_MAX) {
-			pr_err("%s: out of range %d - %d\n", __func__, (int)GPU_DVFS_RANGE_TEMP_MIN, (int)GPU_DVFS_RANGE_TEMP_MAX);
+		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_TJMAX) {
+			pr_err("%s: DVFS: out of range %d - %d\n", __func__, (int)GPU_DVFS_RANGE_TEMP_MIN, (int)GPU_DVFS_TJMAX);
 			goto err;
 		}
 		gpu_dvfs_max_temp = tmp;
-		gpu_dvfs_down_temp = (tmp - 5);
-		goto out;
+		gpu_dvfs_min_temp = (tmp - 5);
+		set_gpu_dvfs_limit(platform->gpu_max_clock);
+		return count;
 	}
 
 	if (sysfs_streq(buf, "reset_peak")) {
@@ -2183,11 +2131,8 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 	}
 
 err:
-	pr_err("[%s] invalid cmd\n",__func__);
+	pr_err("%s: DVFS: invalid cmd\n", __func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 
 static ssize_t show_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -2214,7 +2159,7 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj
 	if (sscanf(buf, "delay=%d", &tmp)) {
 
 		if (tmp < 1 || tmp > 1000) {
-			pr_warn("%s: out of range !\n", __func__);
+			pr_warn("%s: DVFS: out of range !\n", __func__);
 			return -EINVAL;
 		}
 
@@ -2222,87 +2167,59 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj
 		return count;
 	}
 
-	pr_warn("%s: invalid input\n", __func__);
+	pr_warn("%s: DVFS: invalid input\n", __func__);
 	return -EINVAL;
+}
+
+static void set_gpu_dvfs_limit(unsigned int freq)
+{
+	if (freq > platform->gpu_max_clock)
+		freq = platform->gpu_max_clock;
+
+	if (gpu_dvfs_limit != freq) {
+		gpu_dvfs_limit = freq;
+		gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
+		platform->user_max_lock_input = gpu_dvfs_limit;
+	}
 }
 
 static int gpu_dvfs_check_thread(void *nothing)
 {
-	struct exynos_context *platform = (struct exynos_context *)pkbdev->platform_context;
-	static unsigned int gpu_dvfs_limit = 0;
+	static unsigned int freq = 0;
 
 	while (!kthread_should_stop()) {
 		if (gpu_thermal_data == NULL) {
-			pr_warn("%s: gpu_thermal_data not ready !\n", __func__);
-			msleep(msecs_to_jiffies(80));
+			pr_warn("%s: DVFS: gpu_thermal_data not ready !\n", __func__);
+			msleep(msecs_to_jiffies(200));
 			continue;
 		}
 		if (platform == NULL) {
-			pr_warn("%s: platform not ready !\n", __func__);
-			msleep(msecs_to_jiffies(80));
+			pr_warn("%s: DVFS: platform not ready !\n", __func__);
+			msleep(msecs_to_jiffies(200));
 			continue;
 		}
 		break;
 	}
 
-	gpu_dvfs_limit = platform->gpu_max_clock;
-	gpu_dvfs_down_temp = (gpu_dvfs_max_temp - 5);
-	pr_info("gpu_dvfs: DVFS thread started successfully.\n");
+	set_gpu_dvfs_limit(platform->gpu_max_clock);
+	freq = gpu_dvfs_limit;
+	gpu_dvfs_min_temp = (gpu_dvfs_max_temp - 5);
+	pr_info("%s: DVFS: thread started successfully.\n", __func__);
 
 	while (!kthread_should_stop()) {
 		gpu_temp = gpu_thermal_data->tmu_read(gpu_thermal_data);
 
-		if (gpu_temp >= gpu_dvfs_max_temp) {
-			if (gpu_dvfs_limit == FREQ_STEP_8)
-				gpu_dvfs_limit = FREQ_STEP_7;
-			else if (gpu_dvfs_limit == FREQ_STEP_7)
-				gpu_dvfs_limit = FREQ_STEP_6;
-			else if (gpu_dvfs_limit == FREQ_STEP_6)
-				gpu_dvfs_limit = FREQ_STEP_5;
-			else if (gpu_dvfs_limit == FREQ_STEP_5)
-				gpu_dvfs_limit = FREQ_STEP_4;
-			else if (gpu_dvfs_limit == FREQ_STEP_4)
-				gpu_dvfs_limit = FREQ_STEP_3;
-			else if (gpu_dvfs_limit == FREQ_STEP_3)
-				gpu_dvfs_limit = FREQ_STEP_2;
-			else if (gpu_dvfs_limit == FREQ_STEP_2)
-				gpu_dvfs_limit = FREQ_STEP_1;
-			else if (gpu_dvfs_limit == FREQ_STEP_1)
-				gpu_dvfs_limit = FREQ_STEP_0;
-
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
-			platform->user_max_lock_input = gpu_dvfs_limit;
-
-		} else if (gpu_temp < gpu_dvfs_down_temp) {
-			if (gpu_dvfs_limit == FREQ_STEP_0)
-				gpu_dvfs_limit = FREQ_STEP_1;
-			else if (gpu_dvfs_limit == FREQ_STEP_1)
-				gpu_dvfs_limit = FREQ_STEP_2;
-			else if (gpu_dvfs_limit == FREQ_STEP_2)
-				gpu_dvfs_limit = FREQ_STEP_3;
-			else if (gpu_dvfs_limit == FREQ_STEP_3)
-				gpu_dvfs_limit = FREQ_STEP_4;
-			else if (gpu_dvfs_limit == FREQ_STEP_4)
-				gpu_dvfs_limit = FREQ_STEP_5;
-			else if (gpu_dvfs_limit == FREQ_STEP_5)
-				gpu_dvfs_limit = FREQ_STEP_6;
-			else if (gpu_dvfs_limit == FREQ_STEP_6)
-				gpu_dvfs_limit = FREQ_STEP_7;
-			else if (gpu_dvfs_limit == FREQ_STEP_7)
-				gpu_dvfs_limit = FREQ_STEP_8;
-
-			if (gpu_dvfs_limit > platform->gpu_max_clock)
-				gpu_dvfs_limit = platform->gpu_max_clock;
-
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
-			platform->user_max_lock_input = gpu_dvfs_limit;
+		if (gpu_dvfs_debug) {
+			if (gpu_temp > gpu_dvfs_peak_temp) {
+				gpu_dvfs_peak_temp = gpu_temp;
+				pr_info("%s: DVFS: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
+			}
 		}
 
-		if (gpu_temp > GPU_DVFS_SHUTDOWN_TEMP) {
-			gpu_dvfs_limit = FREQ_STEP_0;
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
-			platform->user_max_lock_input = gpu_dvfs_limit;
-			pr_warn("%s: Shutdown temp reached: %d C !!! - Shutting down ...\n", __func__, gpu_temp);
+		if (gpu_temp >= GPU_DVFS_SHUTDOWN_TEMP) {
+			freq = FREQ_STEP_0;
+			set_gpu_dvfs_limit(freq);
+			pr_warn("%s: DVFS: shutdown temp reached: %d C !!! - Shutting down ...\n", __func__, gpu_temp);
 			mutex_lock(&poweroff_lock);
 			/*
 			 * Queue a backup emergency shutdown in the event of
@@ -2314,20 +2231,48 @@ static int gpu_dvfs_check_thread(void *nothing)
 			break;
 		}
 
-		if (gpu_temp > GPU_DVFS_AVOID_SHUTDOWN_TEMP) {
-			gpu_dvfs_limit = FREQ_STEP_0;
-			gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, SYSFS_LOCK, gpu_dvfs_limit);
-			platform->user_max_lock_input = gpu_dvfs_limit;
-			pr_warn("%s: Critical temp reached: %d C !!! - Throttle GPU to min_freq for now ...\n", __func__ , gpu_temp);
+		if (gpu_temp >= GPU_DVFS_AVOID_SHUTDOWN_TEMP) {
+			freq = FREQ_STEP_0;
+			pr_warn("%s: DVFS: critical temp reached: %d C !!! - Throttle GPU to min_freq for now ...\n", __func__ , gpu_temp);
+
+		} else if (gpu_temp >= gpu_dvfs_max_temp) {
+			if (gpu_dvfs_limit == FREQ_STEP_8)
+				freq = FREQ_STEP_7;
+			else if (gpu_dvfs_limit == FREQ_STEP_7)
+				freq = FREQ_STEP_6;
+			else if (gpu_dvfs_limit == FREQ_STEP_6)
+				freq = FREQ_STEP_5;
+			else if (gpu_dvfs_limit == FREQ_STEP_5)
+				freq = FREQ_STEP_4;
+			else if (gpu_dvfs_limit == FREQ_STEP_4)
+				freq = FREQ_STEP_3;
+			else if (gpu_dvfs_limit == FREQ_STEP_3)
+				freq = FREQ_STEP_2;
+			else if (gpu_dvfs_limit == FREQ_STEP_2)
+				freq = FREQ_STEP_1;
+			else if (gpu_dvfs_limit == FREQ_STEP_1)
+				freq = FREQ_STEP_0;
+	
+		} else if (gpu_temp < gpu_dvfs_min_temp) {
+			if (gpu_dvfs_limit == FREQ_STEP_0)
+				freq = FREQ_STEP_1;
+			else if (gpu_dvfs_limit == FREQ_STEP_1)
+				freq = FREQ_STEP_2;
+			else if (gpu_dvfs_limit == FREQ_STEP_2)
+				freq = FREQ_STEP_3;
+			else if (gpu_dvfs_limit == FREQ_STEP_3)
+				freq = FREQ_STEP_4;
+			else if (gpu_dvfs_limit == FREQ_STEP_4)
+				freq = FREQ_STEP_5;
+			else if (gpu_dvfs_limit == FREQ_STEP_5)
+				freq = FREQ_STEP_6;
+			else if (gpu_dvfs_limit == FREQ_STEP_6)
+				freq = FREQ_STEP_7;
+			else if (gpu_dvfs_limit == FREQ_STEP_7)
+				freq = FREQ_STEP_8;
 		}
 
-		if (gpu_dvfs_debug) {
-			if (gpu_temp > gpu_dvfs_peak_temp) {
-				gpu_dvfs_peak_temp = gpu_temp;
-				pr_info("%s: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
-			}
-		}
-
+		set_gpu_dvfs_limit(freq);
 		msleep(msecs_to_jiffies(gpu_dvfs_check_delay));
 		continue;
 	}
@@ -2681,9 +2626,12 @@ static int __init gpu_dvfs_init(void)
 
 	mutex_init(&poweroff_lock);
 
+	if (!platform)
+		platform = (struct exynos_context *)pkbdev->platform_context;
+
 	gpu_dvfs_thread = kthread_run(gpu_dvfs_check_thread, NULL, "gpu_dvfsd");
 	if (IS_ERR(gpu_dvfs_thread)) {
-		pr_err("gpu_dvfs: failed to start DVFS thread\n");
+		pr_err("%s: DVFS: failed to start DVFS thread\n", __func__);
 		goto err;
 	}
 

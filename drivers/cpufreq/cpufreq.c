@@ -39,6 +39,8 @@
 #include <linux/a2n.h>
 #endif
 
+extern void set_cpu_dvfs_limit(unsigned int freq);
+
 unsigned int cpu0_min_freq = 0;
 unsigned int cpu0_max_freq = 0;
 
@@ -791,10 +793,12 @@ static ssize_t store_user_scaling_max_freq
 	ret = cpufreq_set_policy(policy, &new_policy);
 	if (!ret) {
 		policy->user_policy.max = temp;
-		if (policy->cpu == 0)
+		if (policy->cpu == 0) {
 			cpu0_max_freq = temp;
-		else
+		} else {
 			cpu4_max_freq = temp;
+			set_cpu_dvfs_limit(temp);
+		}
 	} else {
 		goto err;
 	}
