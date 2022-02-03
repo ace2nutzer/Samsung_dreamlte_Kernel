@@ -329,7 +329,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 
 	unsigned long nr_rbin_free, nr_rbin_pool, nr_rbin_alloc, nr_rbin_file;
 
-	if ((sc->gfp_mask & __GFP_RBIN) == __GFP_RBIN) {
+	if ((sc->gfp_mask & __GFP_RBIN) != __GFP_RBIN) {
 		nr_rbin_free = global_page_state(NR_FREE_RBIN_PAGES);
 		nr_rbin_pool = atomic_read(&rbin_pool_pages);
 		nr_rbin_alloc = atomic_read(&rbin_allocated_pages);
