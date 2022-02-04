@@ -233,6 +233,12 @@ int send_instruction(struct ssp_data *data, u8 uInst,
 		return FAIL;
 	}
 
+	if (uSensorType >= SENSOR_MAX && (uInst == ADD_SENSOR || uInst == CHANGE_DELAY)){
+		pr_err("[SSP]: %s - Invalid SensorType! - %u\n",
+			__func__, uSensorType);
+		return FAIL;
+	}
+
 	switch (uInst) {
 	case REMOVE_SENSOR:
 		command = MSG2SSP_INST_BYPASS_SENSOR_REMOVE;

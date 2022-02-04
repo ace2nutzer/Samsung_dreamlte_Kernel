@@ -675,8 +675,6 @@ struct fts_ts_info {
 	unsigned char pressure_cal_base;
 	unsigned char pressure_cal_delta;
 
-	int prox_power_off;
-
 	int max_baseline;
 	int max_baseline_tx;
 	int max_baseline_rx;
