@@ -54,6 +54,7 @@
 #include <linux/migrate.h>
 #include <linux/wait.h>
 #include <linux/pagemap.h>
+#include <linux/swap.h>
 
 #if !defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) && !defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 #undef CONFIG_COMPACTION

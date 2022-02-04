@@ -511,7 +511,7 @@ int fimc_is_set_dvfs(struct fimc_is_core *core, struct fimc_is_device_ischain *d
 		dvfs_ctrl->cur_cam_qos = cam_qos;
 	}
 
-#ifdef CONFIG_SCHED_HMP
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 #if defined(ENABLE_HMP_BOOST)
 	/* hpg_qos : number of minimum online CPU */
 	if (hpg_qos && dvfs_ctrl->cur_hpg_qos != hpg_qos) {

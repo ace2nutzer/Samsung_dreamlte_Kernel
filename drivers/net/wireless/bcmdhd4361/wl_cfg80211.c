@@ -4782,7 +4782,9 @@ wl_role_to_cfg80211_type(uint16 role, uint16 *wl_iftype, uint16 *mode)
 
 	default:
 		WL_ERR(("Unknown interface role:0x%x. Forcing type station\n", role));
-		return BCME_ERROR;
+		*wl_iftype = WL_IF_TYPE_AWDL;
+		*mode = WL_MODE_AWDL;
+		return NL80211_IFTYPE_STATION;
 	}
 }
 

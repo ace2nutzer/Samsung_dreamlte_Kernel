@@ -3859,15 +3859,14 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 
 	if (dl_prio(p->prio))
 		p->sched_class = &dl_sched_class;
-	else if (rt_prio(p->prio))
+	else if (rt_prio(p->prio)) {
 		p->sched_class = &rt_sched_class;
-	else
-		p->sched_class = &fair_sched_class;
-
-#if defined(CONFIG_SCHED_HMP)
-	if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
-		do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+		if (cpumask_equal(&p->cpus_allowed, cpu_all_mask))
+			do_set_cpus_allowed(p, &hmp_slow_cpu_mask);
 #endif
+	} else
+		p->sched_class = &fair_sched_class;
 }
 
 static void
