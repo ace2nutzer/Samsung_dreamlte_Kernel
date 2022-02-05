@@ -3262,17 +3262,19 @@
 		compatible = "samsung,sec_nad_balancer";
 		status = "okay";
 
+		nad_balancer,timeout = <400>;
+
 			qos {
 				cl0 {
 					qos,label="LIT";
-					qos,delay_time=<0>;
+					qos,delay_time=<9>;
 					qos,table_size=<9>;
 					qos,table=<1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
 				};
 
 				cl1 {
 					qos,label="BIG";
-					qos,delay_time=<0>;
+					qos,delay_time=<8>;
 					qos,table_size=<13>;
 					qos,table=<2314000 2158000 2002000 1937000 1807000 1703000 1469000 1261000
 						1170000 1066000 962000 858000 741000>;
@@ -3280,11 +3282,16 @@
 
 				mif {
 					qos,label="MIF";
-					qos,delay_time=<0>;
-					qos,table_size=<8>;
-					qos,table=<1794000 1540000 1352000 1014000 845000 676000 546000 421000>;
+					qos,delay_time=<10>;
+					qos,table_size=<6>;
+					qos,table=<1794000 1540000 1352000 1014000 845000 676000>;
 				};
 			};
+		sleep {
+			/* per msec */
+			sleep,suspend_threshold = <1000>;
+			sleep,resume_threshold = <1000>;
+		};
 	};
 
 	argos {

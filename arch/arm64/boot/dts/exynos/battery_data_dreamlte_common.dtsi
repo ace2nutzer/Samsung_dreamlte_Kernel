@@ -215,7 +215,7 @@
 
 		battery,mix_high_temp = <410>;
 		battery,mix_high_chg_temp = <810>;
-		battery,mix_high_temp_recovery = <450>;
+		battery,mix_high_temp_recovery = <400>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
