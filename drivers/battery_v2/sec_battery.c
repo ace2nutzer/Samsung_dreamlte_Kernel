@@ -25,17 +25,33 @@
 
 bool sleep_mode = false;
 
+/* Fix compiler warning */
+#ifndef CONFIG_CAMERA_GREAT
+#define CONFIG_CAMERA_GREAT 0
+#endif
+
 /* Charger Control */
 #ifdef CONFIG_CAMERA_DREAM2
 static bool is_s8_plus = true;
+static bool is_note8 = false;
 static unsigned int ac_curr_max = 1800;
 static unsigned int usbpd_curr_max = 1800;
 static unsigned int usbcd_curr_max = 1800;
 static unsigned int lpm_ac_curr_max = 2300;
 static unsigned int lpm_usbpd_curr_max = 2300;
 static unsigned int lpm_usbcd_curr_max = 2300;
+#elif CONFIG_CAMERA_GREAT
+static bool is_s8_plus = false;
+static bool is_note8 = true;
+static unsigned int ac_curr_max = 1700;
+static unsigned int usbpd_curr_max = 1700;
+static unsigned int usbcd_curr_max = 1700;
+static unsigned int lpm_ac_curr_max = 2200;
+static unsigned int lpm_usbpd_curr_max = 2200;
+static unsigned int lpm_usbcd_curr_max = 2200;
 #else
 static bool is_s8_plus = false;
+static bool is_note8 = false;
 static unsigned int ac_curr_max = 1500;
 static unsigned int usbpd_curr_max = 1500;
 static unsigned int usbcd_curr_max = 1500;
@@ -69,13 +85,13 @@ static unsigned int batt_care = 101; /* disabled */
 static bool battery_idle = false;
 static unsigned int batt_level = 0;
 extern void enable_blue_led(bool);
-static unsigned int batt_max_temp = 35; /* °C */
+static unsigned int batt_max_temp = 40; /* °C */
 static unsigned int lpm_batt_max_temp = 45; /* LPM */
 
 extern void set_afc_disable(bool);
 extern unsigned int bootmode;
 
-#define CHARGER_CONTROL_VERSION		"3.0"
+#define CHARGER_CONTROL_VERSION		"3.1"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -1193,6 +1209,9 @@ static ssize_t curr_max_store(struct kobject *kobj,
 	if (!max_curr && is_s8_plus)
 		max_curr = 3500;
 
+	if (!max_curr && is_note8)
+		max_curr = 3300;
+
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
@@ -1314,6 +1333,9 @@ static ssize_t s8_plus_mode_show(struct kobject *kobj,
 	if (!max_curr && is_s8_plus)
 		max_curr = 3500;
 
+	if (!max_curr && is_note8)
+		max_curr = 3300;
+
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
@@ -1324,6 +1346,28 @@ static ssize_t s8_plus_mode_show(struct kobject *kobj,
 	return strlen(buf);
 }
 SEC_BAT_ATTR_RO(s8_plus_mode);
+#elif CONFIG_CAMERA_GREAT
+static ssize_t note8_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	unsigned int max_curr = _battery->pdata->max_charging_current;
+
+	if (!max_curr && is_s8_plus)
+		max_curr = 3500;
+
+	if (!max_curr && is_note8)
+		max_curr = 3300;
+
+	if (!max_curr && !is_s8_plus)
+		max_curr = 3000;
+
+	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
+
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(note8_mode);
 #else
 static ssize_t s8_mode_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
@@ -1332,6 +1376,9 @@ static ssize_t s8_mode_show(struct kobject *kobj,
 
 	if (!max_curr && is_s8_plus)
 		max_curr = 3500;
+
+	if (!max_curr && is_note8)
+		max_curr = 3300;
 
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
@@ -1628,6 +1675,8 @@ static struct attribute *sec_bat_attrs[] = {
 	&batt_temp_attr.attr,
 #ifdef CONFIG_CAMERA_DREAM2
 	&s8_plus_mode_attr.attr,
+#elif CONFIG_CAMERA_GREAT
+	&note8_mode_attr.attr,
 #else
 	&s8_mode_attr.attr,
 #endif
