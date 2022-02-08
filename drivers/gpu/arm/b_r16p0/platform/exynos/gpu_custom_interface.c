@@ -57,9 +57,10 @@ static unsigned int gpu_dvfs_min_temp = 0;
 static struct task_struct *gpu_dvfs_thread = NULL;
 
 #define GPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
+#define GPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
 #define GPU_DVFS_TJMAX							(100)	/* °C */
-#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(113)	/* °C */
-#define GPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
+#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
+#define GPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
 
 #define FREQ_STEP_0	260000
 #define FREQ_STEP_1	338000
@@ -2115,8 +2116,8 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_TJMAX) {
-			pr_err("%s: DVFS: out of range %d - %d\n", __func__, (int)GPU_DVFS_RANGE_TEMP_MIN, (int)GPU_DVFS_TJMAX);
+		if (tmp < GPU_DVFS_RANGE_TEMP_MIN || tmp > GPU_DVFS_RANGE_TEMP_MAX) {
+			pr_err("%s: DVFS: out of range %d - %d\n", __func__, (int)GPU_DVFS_RANGE_TEMP_MIN, (int)GPU_DVFS_RANGE_TEMP_MAX);
 			goto err;
 		}
 		gpu_dvfs_max_temp = tmp;
@@ -2219,7 +2220,8 @@ static int gpu_dvfs_check_thread(void *nothing)
 		if (gpu_temp >= GPU_DVFS_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
 			set_gpu_dvfs_limit(freq);
-			pr_warn("%s: DVFS: shutdown temp reached: %d C !!! - Shutting down ...\n", __func__, gpu_temp);
+			pr_warn("%s: DVFS: gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz - shutdown temp reached: %d C !!! - shutting down ...\n", 
+					__func__, gpu_dvfs_max_temp, gpu_dvfs_limit, gpu_temp);
 			mutex_lock(&poweroff_lock);
 			/*
 			 * Queue a backup emergency shutdown in the event of
@@ -2233,7 +2235,8 @@ static int gpu_dvfs_check_thread(void *nothing)
 
 		if (gpu_temp >= GPU_DVFS_AVOID_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
-			pr_warn("%s: DVFS: critical temp reached: %d C !!! - Throttle GPU to min_freq for now ...\n", __func__ , gpu_temp);
+			pr_warn("%s: DVFS: gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz - critical temp reached: %d C !!! - throttle GPU to min_freq for now ...\n", 
+					__func__ , gpu_dvfs_max_temp, gpu_dvfs_limit, gpu_temp);
 
 		} else if (gpu_temp >= gpu_dvfs_max_temp) {
 			if (gpu_dvfs_limit == FREQ_STEP_8)

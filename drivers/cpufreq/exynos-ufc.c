@@ -49,9 +49,10 @@ static unsigned int cpu_dvfs_min_temp = 0;
 static struct task_struct *cpu_dvfs_thread = NULL;
 
 #define CPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
 #define CPU_DVFS_TJMAX							(100)	/* °C */
-#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(113)	/* °C */
-#define CPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
+#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
+#define CPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
@@ -626,8 +627,8 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp < CPU_DVFS_RANGE_TEMP_MIN || tmp > CPU_DVFS_TJMAX) {
-			pr_err("%s: DVFS: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_TJMAX);
+		if (tmp < CPU_DVFS_RANGE_TEMP_MIN || tmp > CPU_DVFS_RANGE_TEMP_MAX) {
+			pr_err("%s: DVFS: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_RANGE_TEMP_MAX);
 			goto err;
 		}
 		cpu_dvfs_max_temp = tmp;
@@ -725,7 +726,8 @@ static int cpu_dvfs_check_thread(void *nothing)
 		if (cpu_temp >= CPU_DVFS_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
 			set_cpu_dvfs_limit(freq);
-			pr_warn("%s: DVFS: shutdown temp reached: %d C !!! - shutting down ...\n", __func__ , cpu_temp);
+			pr_warn("%s: DVFS: cpu_dvfs_max_temp: %u C - cpu4_dvfs_limit: %u KHz - shutdown temp reached: %d C !!! - shutting down ...\n", 
+					__func__ , cpu_dvfs_max_temp, cpu4_dvfs_limit, cpu_temp);
 			mutex_lock(&poweroff_lock);
 			/*
 			 * Queue a backup emergency shutdown in the event of
@@ -739,12 +741,11 @@ static int cpu_dvfs_check_thread(void *nothing)
 
 		if (cpu_temp >= CPU_DVFS_AVOID_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
-			pr_warn("%s: DVFS: critical temp reached: %d C !!! - Throttle BIG CPU to min_freq for now ...\n", __func__ , cpu_temp);
+			pr_warn("%s: DVFS: cpu_dvfs_max_temp: %u C - cpu4_dvfs_limit: %u KHz - critical temp reached: %d C !!! - throttle BIG CPU to min_freq for now ...\n", 
+					__func__ , cpu_dvfs_max_temp, cpu4_dvfs_limit, cpu_temp);
 
 		} else if (cpu_temp >= cpu_dvfs_max_temp) {
-			if (cpu4_dvfs_limit >= FREQ_STEP_15)
-				freq = FREQ_STEP_14;
-			else if (cpu4_dvfs_limit == FREQ_STEP_14)
+			if (cpu4_dvfs_limit >= FREQ_STEP_14)
 				freq = FREQ_STEP_13;
 			else if (cpu4_dvfs_limit == FREQ_STEP_13)
 				freq = FREQ_STEP_12;
