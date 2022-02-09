@@ -113,12 +113,14 @@ void ion_page_pool_free(struct ion_page_pool *pool, struct page *page)
 {
 	int ret;
 
+#ifdef CONFIG_ION_RBIN_HEAP
 	/*
 	 * ION RBIN heap can utilize ion_page_pool_free() for pages which are
-	 * not compound pages. Thus, comment out the below line.
-	 *
-	 * BUG_ON(pool->order != compound_order(page));
+	 * not compound pages.
 	 */
+#else
+	BUG_ON(pool->order != compound_order(page));
+#endif
 
 	ret = ion_page_pool_add(pool, page);
 	if (ret)

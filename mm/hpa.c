@@ -26,18 +26,11 @@
 #include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 #include <linux/device.h>
-#include <linux/dma-contiguous.h>
 #include <linux/oom.h>
-#include <linux/pm_qos.h>
 
 #include "internal.h"
 
 #define MAX_SCAN_TRY		(2)
-
-#ifdef CONFIG_ARM_EXYNOS_ACME
-extern unsigned int exynos_cpufreq_get_max_freq(struct cpumask *mask);
-static struct pm_qos_request cpu_minlock_cl0, cpu_minlock_cl1;
-#endif
 
 static unsigned long start_pfn, end_pfn;
 static unsigned long cached_scan_pfn;
@@ -89,7 +82,7 @@ static int hpa_killer(void)
 		if (!p)
 			continue;
 
-		if (test_tsk_thread_flag(p, TIF_MEMDIE)) {
+		if (task_lmk_waiting(p)) {
 			task_unlock(p);
 
 			if (time_before_eq(jiffies, hpa_deathpending_timeout)) {
@@ -122,10 +115,12 @@ static int hpa_killer(void)
 				selected->comm, selected->pid,
 				selected_oom_score_adj,
 				selected_tasksize * (long)(PAGE_SIZE / 1024));
-		hpa_deathpending_timeout = jiffies + HZ;
-		if (selected->mm)
-			mark_oom_victim(selected);
+		task_lock(selected);
 		send_sig(SIGKILL, selected, 0);
+		if (selected->mm)
+			task_set_lmk_waiting(selected);
+		task_unlock(selected);
+		hpa_deathpending_timeout = jiffies + HZ;
 		rem += selected_tasksize;
 	} else {
 		pr_info("HPA: no killable task\n");
@@ -136,29 +131,25 @@ static int hpa_killer(void)
 	return ret;
 }
 
-static bool is_movable_chunk(unsigned long start_pfn, unsigned int order)
+static bool is_movable_chunk(unsigned long pfn, unsigned int order)
 {
-	unsigned long pfn = start_pfn;
-	struct page *page = pfn_to_page(start_pfn);
+	struct page *page = pfn_to_page(pfn);
+	struct page *page_end = pfn_to_page(pfn + (1 << order));
 
-	for (pfn = start_pfn; pfn < start_pfn + (1 << order); pfn++) {
-		page = pfn_to_page(pfn);
-		if (PageBuddy(page)) {
-			pfn += (1 << page_order(page)) - 1;
-			continue;
-		}
-		if (PageCompound(page))
-			return false;
-		if (PageReserved(page))
+	while (page != page_end) {
+		if (PageCompound(page) || PageReserved(page))
 			return false;
 		if (!PageLRU(page) && !__PageMovable(page))
 			return false;
+
+		page += PageBuddy(page) ? 1 << page_order(page) : 1;
 	}
+
 	return true;
 }
 
 static int alloc_freepages_range(struct zone *zone, unsigned int order,
-					struct page **pages, int *p, int nents)
+				 struct page **pages, int required)
 
 {
 	unsigned int current_order;
@@ -167,9 +158,9 @@ static int alloc_freepages_range(struct zone *zone, unsigned int order,
 	unsigned long flags;
 	struct free_area *area;
 	struct page *page;
-	int current_size;
-	int chunk_size = PAGE_SIZE << order;
-	int remained = nents;
+	int i;
+	int count = 0;
+	struct list_head *pos, *n;
 
 	spin_lock_irqsave(&zone->lock, flags);
 
@@ -178,31 +169,46 @@ static int alloc_freepages_range(struct zone *zone, unsigned int order,
 		wmark = min_wmark_pages(zone) + (1 << current_order);
 
 		for (mt = MIGRATE_UNMOVABLE; mt < MIGRATE_PCPTYPES; ++mt) {
-			while (!list_empty(&area->free_list[mt])) {
+			list_for_each_safe(pos, n, &area->free_list[mt]) {
 				if (!zone_watermark_ok(zone, current_order,
 							wmark, 0, 0))
 					goto wmark_fail;
 
-				if ((remained << order) < (1 << current_order))
-					goto wmark_fail;
+				/*
+				 * expanding the current free chunk is not
+				 * supported here due to the complex logic of
+				 * expand().
+				 */
+				if ((required << order) < (1 << current_order))
+					break;
 
-				page = list_entry(area->free_list[mt].next,
-							struct page, lru);
+				page = list_entry(pos, struct page, lru);
+
+				if ((page_to_pfn(page) >= 0xF0000) &&
+						(page_to_pfn(page) <= 0xFFFFF))
+					continue;
+				if (page_to_pfn(page) > end_pfn)
+					continue;
+
 				list_del(&page->lru);
 				__ClearPageBuddy(page);
 				set_page_private(page, 0);
 				set_pcppage_migratetype(page, mt);
+				/*
+				 * skip checking bad page state
+				 * for fast allocation
+				 */
 				area->nr_free--;
-				current_size = PAGE_SIZE << current_order;
 				__mod_zone_page_state(zone, NR_FREE_PAGES,
 							-(1 << current_order));
-				do {
-					pages[*p] = page;
-					(*p)++;
-					set_page_refcounted(page);
+
+				required -= 1 << (current_order - order);
+
+				for (i = 1 << (current_order - order); i > 0; i--) {
+					post_alloc_hook(page, order, GFP_KERNEL);
+					pages[count++] = page;
 					page += 1 << order;
-					current_size -= chunk_size;
-				} while (--remained > 0 && current_size != 0);
+				}
 			}
 		}
 	}
@@ -210,15 +216,15 @@ static int alloc_freepages_range(struct zone *zone, unsigned int order,
 wmark_fail:
 	spin_unlock_irqrestore(&zone->lock, flags);
 
-	return remained;
+	return count;
 }
 
-static void prep_highorder_pages(unsigned long start_pfn, int order)
+static void prep_highorder_pages(unsigned long base_pfn, int order)
 {
 	int nr_pages = 1 << order;
 	unsigned long pfn;
 
-	for (pfn = start_pfn + 1; pfn < start_pfn + nr_pages; pfn++)
+	for (pfn = base_pfn + 1; pfn < base_pfn + nr_pages; pfn++)
 		set_page_count(pfn_to_page(pfn), 0);
 }
 
@@ -228,29 +234,23 @@ int alloc_pages_highorder(int order, struct page **pages, int nents)
 	unsigned int nr_pages = 1 << order;
 	unsigned long total_scanned = 0;
 	unsigned long pfn, tmp;
-	int p = 0;
 	int remained = nents;
 	int ret;
 	int retry_count = 0;
+	int allocated;
 
 retry:
 	for_each_zone(zone) {
 		if (zone->spanned_pages == 0)
 			continue;
-		remained = alloc_freepages_range(zone, order, pages, &p, remained);
+
+		allocated = alloc_freepages_range(zone, order,
+					pages + nents - remained, remained);
+		remained -= allocated;
+
+		if (remained == 0)
+			return 0;
 	}
-
-	if (remained == 0)
-		return 0;
-
-#ifdef CONFIG_ARM_EXYNOS_ACME
-	pm_qos_update_request(&cpu_minlock_cl0,
-		exynos_cpufreq_get_max_freq
-				((struct cpumask *)cpu_coregroup_mask(0)));
-	pm_qos_update_request(&cpu_minlock_cl1,
-		exynos_cpufreq_get_max_freq
-				((struct cpumask *)cpu_coregroup_mask(4)));
-#endif
 
 	migrate_prep();
 
@@ -266,6 +266,9 @@ retry:
 		}
 
 		/* pfn validation check in the range */
+		if ((pfn >= 0xF0000) && (pfn <= 0xFFFFF))
+			pfn = 0x800000;
+
 		tmp = pfn;
 		do {
 			if (!pfn_valid(tmp))
@@ -282,7 +285,7 @@ retry:
 		 * causes isolated page block remained in isolated state
 		 * forever.
 		 */
-		if (is_migrate_cma(mt) || is_migrate_isolate(mt)) {
+		if (is_migrate_cma_rbin(mt) || is_migrate_isolate(mt)) {
 			/* nr_pages is added before next iteration */
 			pfn = ALIGN(pfn + 1, pageblock_nr_pages) - nr_pages;
 			continue;
@@ -297,17 +300,12 @@ retry:
 		else
 			continue;
 
-		pages[p++] = pfn_to_page(pfn);
+		pages[nents - remained] = pfn_to_page(pfn);
 		remained--;
 	}
 
 	/* save latest scanned pfn */
 	cached_scan_pfn = pfn;
-
-#ifdef CONFIG_ARM_EXYNOS_ACME
-	pm_qos_update_request(&cpu_minlock_cl0, 0);
-	pm_qos_update_request(&cpu_minlock_cl1, 0);
-#endif
 
 	if (remained) {
 		int i;
@@ -322,7 +320,7 @@ retry:
 			goto retry;
 		}
 
-		for (i = 0; i < p; i++)
+		for (i = 0; i < (nents - remained); i++)
 			__free_pages(pages[i], order);
 
 		pr_info("%s: remained=%d / %d, not enough memory in order %d\n",
@@ -362,11 +360,10 @@ static int __init init_highorder_pages_allocator(void)
 		end_pfn = max_pfn;
 	}
 
+	if (end_pfn > 0x97FFFF)
+		end_pfn = 0x97FFFF;
+
 	cached_scan_pfn = start_pfn;
-#ifdef CONFIG_ARM_EXYNOS_ACME
-	pm_qos_add_request(&cpu_minlock_cl0, PM_QOS_CLUSTER0_FREQ_MIN, 0);
-	pm_qos_add_request(&cpu_minlock_cl1, PM_QOS_CLUSTER1_FREQ_MIN, 0);
-#endif
 
 	return 0;
 }
