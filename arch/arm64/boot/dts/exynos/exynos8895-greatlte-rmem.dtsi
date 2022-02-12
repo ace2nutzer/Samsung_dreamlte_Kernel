@@ -38,7 +38,6 @@
 */
 		camera {
 			compatible = "exynos8890-ion,camera";
-			ion,recyclable;
 			reg = <0x8 0x80000000 0x15E00000>;
 			id = <10>;
 		};
