@@ -78,6 +78,7 @@
 			compatible = "exynos,modem_if";
 			reg = <0x0 0xF4C00000 0x9000000>;
 		};
+
 /*
 		cp_ram_logging {
 			compatible = "exynos,cp_ram_logging";
@@ -85,12 +86,10 @@
 		};
 */
 
-/*
 		gnss_if {
 			compatible = "exynos,gnss_if";
 			reg = <0x0 0xFFC00000 0x400000>;
 		};
-*/
 
 	};
 };
