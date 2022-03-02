@@ -354,6 +354,7 @@ struct exynos_ss_log {
 #endif
 };
 
+#ifdef CONFIG_STACKTRACE
 #define ESS_SAVE_STACK_TRACE_CPU(xxx)					\
 	do {								\
 		struct stack_trace t = {				\
@@ -375,6 +376,7 @@ struct exynos_ss_log {
 		};							\
 		save_stack_trace(&t);					\
 	} while (0)
+#endif
 
 struct exynos_ss_log_idx {
 	atomic_t task_log_idx[ESS_NR_CPUS];
@@ -2917,7 +2919,9 @@ void exynos_ss_spinlock(void *v_lock, int en)
 #endif
 		ess_log->spinlock[cpu][i].en = en;
 
+#ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(spinlock);
+#endif
 	}
 }
 #endif
@@ -2955,7 +2959,9 @@ void exynos_ss_irqs_disabled(unsigned long flags)
 		ess_log->irqs_disabled[cpu][i].task = get_current();
 		ess_log->irqs_disabled[cpu][i].task_comm = get_current()->comm;
 
+#ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(irqs_disabled);
+#endif
 	}
 }
 #endif
@@ -3210,7 +3216,9 @@ void exynos_ss_reg(unsigned int read, size_t val, size_t reg, int en)
 	ess_log->reg[cpu][i].reg = phys_reg;
 	ess_log->reg[cpu][i].en = en;
 
+#ifdef CONFIG_STACKTRACE
 	ESS_SAVE_STACK_TRACE_CPU(reg);
+#endif
 }
 #endif
 
@@ -3233,7 +3241,9 @@ void exynos_ss_clockevent(unsigned long long clc, int64_t delta, void *next_even
 		ess_log->clockevent[cpu][i].delta_ns = delta;
 		ess_log->clockevent[cpu][i].next_event = *((ktime_t *)next_event);
 
+#ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(clockevent);
+#endif
 	}
 }
 
@@ -3257,7 +3267,9 @@ void exynos_ss_printk(const char *fmt, ...)
 		ess_log->printk[i].time = cpu_clock(cpu);
 		ess_log->printk[i].cpu = cpu;
 
+#ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE(printk);
+#endif
 	}
 }
 
@@ -3277,7 +3289,9 @@ void exynos_ss_printkl(size_t msg, size_t val)
 		ess_log->printkl[i].msg = msg;
 		ess_log->printkl[i].val = val;
 
+#ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE(printkl);
+#endif
 	}
 }
 #endif
@@ -3853,6 +3867,7 @@ static int exynos_ss_combine_pmsg(char *buffer, size_t count, unsigned int level
 	return 0;
 }
 
+#ifdef CONFIG_EXYNOS_SNAPSHOT_PSTORE
 int exynos_ss_hook_pmsg(char *buffer, size_t count)
 {
 	ess_android_log_header_t header;
@@ -3902,6 +3917,7 @@ int exynos_ss_hook_pmsg(char *buffer, size_t count)
 	return 0;
 }
 EXPORT_SYMBOL(exynos_ss_hook_pmsg);
+#endif
 
 /*
  *  To support pstore/pmsg/pstore_ram, following is implementation for exynos-snapshot

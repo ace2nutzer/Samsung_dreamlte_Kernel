@@ -59,3 +59,4 @@ int exynos_smc(unsigned long cmd, unsigned long arg1, unsigned long arg2, unsign
 
 	return __exynos_smc(cmd, arg1, arg2, arg3);
 }
+EXPORT_SYMBOL(exynos_smc);
