@@ -314,7 +314,6 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 			if (platform->step < max_clock_lev)
 				platform->step = max_clock_lev;
 		} else {
-			/* BOOST */
 			platform->step = max_clock_lev;
 		}
 
@@ -328,17 +327,11 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 		return 0;
 
 	/* Check for frequency decrease */
-	if (utilization < gpu_down_threshold) {
+	if (utilization < gpu_down_threshold)
+		platform->step++;
 
-		if (!gpu_boost) {
-			platform->step++;
-			if (platform->step > min_clock_lev)
-				platform->step = min_clock_lev;
-		} else {
-			/* BOOST */
-			platform->step = min_clock_lev;
-		}
-	}
+	if (platform->step > min_clock_lev)
+		platform->step = min_clock_lev;
 
 	return 0;
 }

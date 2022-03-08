@@ -25,13 +25,13 @@
 
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
-#define DOWN_THRESHOLD_MARGIN			(5)
+#define DOWN_THRESHOLD_MARGIN			(25)
 #define DEF_SAMPLING_DOWN_FACTOR		(3)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
-#define DEF_BOOST				(0)
+#define DEF_BOOST				(1)
 #define IO_IS_BUSY				(0)
 
 /* Cluster 0 little cpu */
@@ -197,82 +197,79 @@ static void od_check_cpu(int cpu, unsigned int load)
 
 	/* Check for frequency decrease */
 	if (load < down_threshold) {
-
-		if (!od_tuners->boost) {
-			/* Little cpu 0 */
-			if (cpu == 0) {
-				if (policy->cur == DEF_FREQUENCY_STEP_CL0_11)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_10;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_9;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_8;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_6;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_5;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_4;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_4)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_3;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_3)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_2;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_1;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_1)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_0;
-				else
-					requested_freq = policy->min;
-			/* Big cpu 4 */
-			} else {
-				if (policy->cur == DEF_FREQUENCY_STEP_CL1_17)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_16;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_15;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_14;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_13;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_12;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_11;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_10;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_9;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_8;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_8)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_7;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_7)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_6;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_6)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_5;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_5)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_4;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_4)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_3;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_3)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_2;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_1;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_1)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_0;
-				else
-					requested_freq = policy->min;
-			}
-			if (requested_freq < policy->min)
+		/* Little cpu 0 */
+		if (cpu == 0) {
+			if (policy->cur == DEF_FREQUENCY_STEP_CL0_11)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_10;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_9;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_8;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_7;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_6;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_5;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_4;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_4)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_3;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_3)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_2;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_1;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_1)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_0;
+			else
 				requested_freq = policy->min;
+		/* Big cpu 4 */
 		} else {
-			/* Boost */
-			requested_freq = policy->min;
+			if (policy->cur == DEF_FREQUENCY_STEP_CL1_17)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_16;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_15;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_14;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_13;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_12;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_11;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_10;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_9;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_8;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_8)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_7;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_7)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_6;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_6)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_5;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_5)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_4;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_4)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_3;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_3)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_2;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_1;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_1)
+				requested_freq = DEF_FREQUENCY_STEP_CL1_0;
+			else
+				requested_freq = policy->min;
 		}
+
+		if (requested_freq < policy->min)
+			requested_freq = policy->min;
 
 		__cpufreq_driver_target(policy, requested_freq,
 				CPUFREQ_RELATION_L);
+
+		return;
 	}
 }
 
