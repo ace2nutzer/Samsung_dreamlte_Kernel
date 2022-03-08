@@ -81,8 +81,6 @@ unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN			(25)
 #define GPU_MIN_UP_THRESHOLD		(40)
 #define GPU_MAX_UP_THRESHOLD		(100)
-#define GPU_FREQ_STEP_0			(260)
-#define GPU_FREQ_STEP_1			(338)
 
 int gpu_pmqos_dvfs_min_lock(int level)
 {
@@ -1723,7 +1721,8 @@ out:
 
 void calc_gpu_down_threshold(void)
 {
-	gpu_down_threshold = ((gpu_up_threshold * GPU_FREQ_STEP_0 / GPU_FREQ_STEP_1) - DOWN_THRESHOLD_MARGIN);
+	gpu_down_threshold = ((gpu_up_threshold * FREQ_STEP_0 / FREQ_STEP_1) - DOWN_THRESHOLD_MARGIN);
+	pr_info("[%s]: new value: %u\n",__func__, gpu_down_threshold);
 }
 
 static ssize_t show_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_attribute *attr, char *buf)

@@ -26,8 +26,9 @@
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(3)
+#define DEF_SAMPLING_DOWN_FACTOR		(20)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
+#define MIN_SAMPLE_RATE			(20000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
@@ -312,6 +313,7 @@ max_delay:
 static void update_down_threshold(struct od_dbs_tuners *od_tuners)
 {
 	down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
+	pr_info("[%s] for CPU - new value: %u\n",__func__, down_threshold);
 }
 
 /************************** sysfs interface ************************/
@@ -612,7 +614,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		 * not depending on HZ, but fixed (very low). The deferred
 		 * timer might skip some samples if idle/sleeping as needed.
 		*/
-		dbs_data->min_sampling_rate = jiffies_to_usecs(MIN_SAMPLING_RATE_RATIO);
+		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 	} else {
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
 
@@ -622,6 +624,8 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		/* For correct statistics, we need 10 ticks for each measure */
 		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 	}
+
+	dbs_data->min_sampling_rate = max((unsigned int)MIN_SAMPLE_RATE, dbs_data->min_sampling_rate);
 
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
