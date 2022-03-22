@@ -136,7 +136,7 @@ static bool btcoex_is_sco_active(struct net_device *dev)
 	int ioc_res = 0;
 	bool res = FALSE;
 	int sco_id_cnt = 0;
-	int param27;
+	int param27 = 0;
 	int i;
 
 	for (i = 0; i < 12; i++) {

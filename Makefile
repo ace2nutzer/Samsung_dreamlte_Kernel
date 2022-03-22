@@ -303,12 +303,12 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
-HOSTCXXFLAGS := -O2
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-format-overflow -O3 -fomit-frame-pointer -fno-strict-aliasing -std=gnu89
+HOSTCXXFLAGS = -O3 -fomit-frame-pointer -fno-strict-aliasing
 
 # Host specific Flags
-HOSTCFLAGS   += -march=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -ftree-vectorize -pipe -Wno-format-overflow
-HOSTCXXFLAGS += -march=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -ftree-vectorize -pipe -Wno-format-overflow
+HOSTCFLAGS   += -march=core2 -mcpu=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -pipe
+HOSTCXXFLAGS += -march=core2 -mcpu=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -pipe
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
@@ -408,26 +408,35 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+KBUILD_CFLAGS	:= $(call cc-option,-Oz,-Os)
+else
+ifdef CONFIG_PROFILE_ALL_BRANCHES
+KBUILD_CFLAGS	:= -O3
+else
+KBUILD_CFLAGS   := -O3
+endif
+endif
+
+KBUILD_CFLAGS   += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -std=gnu89 $(call cc-option,-fno-PIE) \
-		   -D_FORTIFY_SOURCE=1 \
 		   -DNDEBUG \
 		   -pipe
 
 # Target specific Flags
-KBUILD_CFLAGS   += \
-		   -march=armv8-a+crc+crypto \
+CFLAGS_ABI	:= -march=armv8-a+crc+crypto \
 		   -mcpu=exynos-m1+crc+crypto \
 		   -mtune=exynos-m1 \
 		   -mgeneral-regs-only
 
+KBUILD_CFLAGS   += $(CFLAGS_ABI)
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
-KBUILD_AFLAGS   := -D__ASSEMBLY__ $(call cc-option,-fno-PIE)
+KBUILD_AFLAGS   := -D__ASSEMBLY__ $(call cc-option,-fno-PIE) $(CFLAGS_ABI)
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
@@ -683,16 +692,6 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, packed-not-aligned)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-div)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-overflow)
-
-ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
-else
-ifdef CONFIG_PROFILE_ALL_BRANCHES
-KBUILD_CFLAGS	+= -O2
-else
-KBUILD_CFLAGS   += -O2
-endif
-endif
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
