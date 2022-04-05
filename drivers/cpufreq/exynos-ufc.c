@@ -42,17 +42,17 @@ static int cpu_temp = 0;
 static bool cpu_dvfs_debug = false;
 extern unsigned int cpu4_max_freq;
 extern int get_cpu_temp(void);
-static unsigned int cpu_dvfs_check_delay = 12;	/* ms */
+static unsigned int cpu_dvfs_check_delay = 8;	/* ms */
 static struct pm_qos_request cpu_maxlock_cl1;
 unsigned int cpu4_dvfs_limit = 0;
 static unsigned int cpu_dvfs_min_temp = 0;
 static struct task_struct *cpu_dvfs_thread = NULL;
 
 #define CPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
-#define CPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
-#define CPU_DVFS_TJMAX							(100)	/* °C */
-#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
-#define CPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MAX			(100)	/* °C */
+#define CPU_DVFS_TJMAX				(100)	/* °C */
+#define CPU_DVFS_AVOID_SHUTDOWN_TEMP		(110)	/* °C */
+#define CPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
@@ -701,7 +701,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 	while (!kthread_should_stop()) {
 		if (!cpu4_max_freq) {
 			pr_warn("%s: DVFS: cpufreq driver not ready !\n", __func__);
-			msleep(msecs_to_jiffies(200));
+			msleep(200);
 			continue;
 		}
 		break;
@@ -775,40 +775,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 				freq = FREQ_STEP_0;
 
 		} else if (cpu_temp < cpu_dvfs_min_temp) {
-			if (cpu4_dvfs_limit == FREQ_STEP_0)
-				freq = FREQ_STEP_1;
-			else if (cpu4_dvfs_limit == FREQ_STEP_1)
-				freq = FREQ_STEP_2;
-			else if (cpu4_dvfs_limit == FREQ_STEP_2)
-				freq = FREQ_STEP_3;
-			else if (cpu4_dvfs_limit == FREQ_STEP_3)
-				freq = FREQ_STEP_4;
-			else if (cpu4_dvfs_limit == FREQ_STEP_4)
-				freq = FREQ_STEP_5;
-			else if (cpu4_dvfs_limit == FREQ_STEP_5)
-				freq = FREQ_STEP_6;
-			else if (cpu4_dvfs_limit == FREQ_STEP_6)
-				freq = FREQ_STEP_7;
-			else if (cpu4_dvfs_limit == FREQ_STEP_7)
-				freq = FREQ_STEP_8;
-			else if (cpu4_dvfs_limit == FREQ_STEP_8)
-				freq = FREQ_STEP_9;
-			else if (cpu4_dvfs_limit == FREQ_STEP_9)
-				freq = FREQ_STEP_10;
-			else if (cpu4_dvfs_limit == FREQ_STEP_10)
-				freq = FREQ_STEP_11;
-			else if (cpu4_dvfs_limit == FREQ_STEP_11)
-				freq = FREQ_STEP_12;
-			else if (cpu4_dvfs_limit == FREQ_STEP_12)
-				freq = FREQ_STEP_13;
-			else if (cpu4_dvfs_limit == FREQ_STEP_13)
-				freq = FREQ_STEP_14;
-			else if (cpu4_dvfs_limit == FREQ_STEP_14)
-				freq = FREQ_STEP_15;
-			else if (cpu4_dvfs_limit == FREQ_STEP_15)
-				freq = FREQ_STEP_16;
-			else if (cpu4_dvfs_limit == FREQ_STEP_16)
-				freq = FREQ_STEP_17;
+			freq = FREQ_STEP_17;
 		}
 
 		set_cpu_dvfs_limit(freq);

@@ -51,16 +51,16 @@ static unsigned int gpu_dvfs_max_temp = 65;
 static unsigned int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;
 static bool gpu_dvfs_debug = false;
-static unsigned int gpu_dvfs_check_delay = 12;	/* ms */
+static unsigned int gpu_dvfs_check_delay = 8;	/* ms */
 static unsigned int gpu_dvfs_limit = 0;
 static unsigned int gpu_dvfs_min_temp = 0;
 static struct task_struct *gpu_dvfs_thread = NULL;
 
 #define GPU_DVFS_RANGE_TEMP_MIN			(45)	/* °C */
-#define GPU_DVFS_RANGE_TEMP_MAX			(95)	/* °C */
-#define GPU_DVFS_TJMAX							(100)	/* °C */
-#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
-#define GPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
+#define GPU_DVFS_RANGE_TEMP_MAX			(100)	/* °C */
+#define GPU_DVFS_TJMAX				(100)	/* °C */
+#define GPU_DVFS_AVOID_SHUTDOWN_TEMP		(110)	/* °C */
+#define GPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
 
 #define FREQ_STEP_0	260000
 #define FREQ_STEP_1	338000
@@ -2190,12 +2190,12 @@ static int gpu_dvfs_check_thread(void *nothing)
 	while (!kthread_should_stop()) {
 		if (gpu_thermal_data == NULL) {
 			pr_warn("%s: DVFS: gpu_thermal_data not ready !\n", __func__);
-			msleep(msecs_to_jiffies(200));
+			msleep(200);
 			continue;
 		}
 		if (platform == NULL) {
 			pr_warn("%s: DVFS: platform not ready !\n", __func__);
-			msleep(msecs_to_jiffies(200));
+			msleep(200);
 			continue;
 		}
 		break;
@@ -2256,22 +2256,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 				freq = FREQ_STEP_0;
 	
 		} else if (gpu_temp < gpu_dvfs_min_temp) {
-			if (gpu_dvfs_limit == FREQ_STEP_0)
-				freq = FREQ_STEP_1;
-			else if (gpu_dvfs_limit == FREQ_STEP_1)
-				freq = FREQ_STEP_2;
-			else if (gpu_dvfs_limit == FREQ_STEP_2)
-				freq = FREQ_STEP_3;
-			else if (gpu_dvfs_limit == FREQ_STEP_3)
-				freq = FREQ_STEP_4;
-			else if (gpu_dvfs_limit == FREQ_STEP_4)
-				freq = FREQ_STEP_5;
-			else if (gpu_dvfs_limit == FREQ_STEP_5)
-				freq = FREQ_STEP_6;
-			else if (gpu_dvfs_limit == FREQ_STEP_6)
-				freq = FREQ_STEP_7;
-			else if (gpu_dvfs_limit == FREQ_STEP_7)
-				freq = FREQ_STEP_8;
+			freq = FREQ_STEP_8;
 		}
 
 		set_gpu_dvfs_limit(freq);
