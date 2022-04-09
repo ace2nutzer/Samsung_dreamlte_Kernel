@@ -724,10 +724,10 @@ static int tx_task(struct eth_dev *dev, struct usb_request *req)
 	/* throttle highspeed IRQ rate back slightly */
 	if (gadget_is_dualspeed(dev->gadget) &&
 		(dev->gadget->speed == USB_SPEED_HIGH)) {
-		dev->tx_qlen++;
-		if (dev->tx_qlen == (dev->qmult/2)) {
+		atomic_inc(&dev->tx_qlen);
+		if (atomic_read(&dev->tx_qlen) == (dev->qmult/2)) {
 			req->no_interrupt = 0;
-			dev->tx_qlen = 0;
+			atomic_set(&dev->tx_qlen, 0);
 		} else {
 			req->no_interrupt = 1;
 		}
