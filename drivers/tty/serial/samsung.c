@@ -660,12 +660,10 @@ s3c24xx_serial_rx_chars(int irq, void *dev_id)
 			if (uerstat & S3C2410_UERSTAT_FRAME) {
 				printk("[UART] Frame Error!\n");
 				port->icount.frame++;
-				break;
 			}
 			if (uerstat & S3C2410_UERSTAT_OVERRUN) {
 				printk("[UART] Overrun Error!\n");
 				port->icount.overrun++;
-				break;
 			}
 
 			uerstat &= port->read_status_mask;
