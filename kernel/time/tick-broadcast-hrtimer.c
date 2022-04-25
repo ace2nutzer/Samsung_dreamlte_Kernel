@@ -89,9 +89,9 @@ static struct clock_event_device ce_broadcast_hrtimer = {
 	.mult			= 1,
 	.shift			= 0,
 #ifdef CONFIG_SCHED_HMP_CUSTOM
-	.cpumask		= &hmp_slow_cpu_mask,
+	.cpumask		= &hmp_slow_cpu_mask
 #else
-	.cpumask		= cpu_all_mask,
+	.cpumask		= cpu_all_mask
 #endif
 };
 
