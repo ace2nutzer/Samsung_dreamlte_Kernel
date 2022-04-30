@@ -529,7 +529,7 @@ static long hdcp_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	}
 #if defined(CONFIG_HDCP2_EMULATION_MODE)
-	case (uint32_t)HDCP_IOC_EMUL_DPLINK_TX:
+	case (uint32_t)HDCP_IOC_DPLINK_TX_EMUL:
 	{
 		uint32_t emul_cmd;
 		if (copy_from_user(&emul_cmd, (void __user *)arg, sizeof(uint32_t)))

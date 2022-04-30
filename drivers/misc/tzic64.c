@@ -44,7 +44,7 @@
 static int gotoCpu0(void);
 static int gotoAllCpu(void) __attribute__ ((unused));
 
-uint32_t exynos_smc1(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
+static uint32_t exynos_smc1(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
 	register uint32_t reg0 __asm__("x0") = cmd;
 	register uint32_t reg1 __asm__("x1") = arg1;
@@ -62,7 +62,7 @@ uint32_t exynos_smc1(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 	return reg0;
 }
 
-uint32_t exynos_smc_new(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
+static uint32_t exynos_smc_new(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
 	register uint32_t reg0 __asm__("x0") = cmd;
 	register uint32_t reg1 __asm__("x1") = arg1;
@@ -79,7 +79,8 @@ uint32_t exynos_smc_new(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg
     return reg1;
 }
 
-int exynos_smc_read_oemflag(uint32_t ctrl_word, uint32_t *val)
+#if 0
+static int exynos_smc_read_oemflag(uint32_t ctrl_word, uint32_t *val)
 {
 	uint32_t	cmd = 0;
 	uint32_t	arg1 = 0;
@@ -123,7 +124,7 @@ int exynos_smc_read_oemflag(uint32_t ctrl_word, uint32_t *val)
 	return 0;
 }
 
-int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
+static int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
 {
 	uint32_t	cmd = 0;
 	uint32_t	arg1 = 0;
@@ -154,7 +155,7 @@ int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
 	*val = reg1;
 	return 0;
 }
-
+#endif
 
 static DEFINE_MUTEX(tzic_mutex);
 static struct class *driver_class;
@@ -195,8 +196,6 @@ typedef struct
     uint32_t  func_cmd;
     uint32_t  value;
 }t_flag;
-
-int tzic_set_tamper_flag(void);
 
 static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 {
@@ -266,7 +265,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				LOG(KERN_INFO "Address is not in user space");
 				return -1;
 			}
-			exynos_smc_read_oemflag(0x80010001, (uint32_t *) arg);
+			//exynos_smc_read_oemflag(0x80010001, (uint32_t *) arg);
+			arg = 0;
 			goto return_default;
 		break;
 
@@ -297,7 +297,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			}
 			if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 				LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-				exynos_smc_read_oemflag_new(param.name, &param.value) ;
+				//exynos_smc_read_oemflag_new(param.name, &param.value) ;
+				param.value = 0;
 				LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 				goto return_new_to;
 			} else {
@@ -333,7 +334,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				}
 				if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 					LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-					exynos_smc_read_oemflag_new(param.name, &param.value) ;
+					//exynos_smc_read_oemflag_new(param.name, &param.value) ;
+					param.value = 0;
 					LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 					goto return_new_to;
 				} else {
@@ -350,26 +352,12 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 
  return_default:
 	gotoAllCpu();
-
-	/* fake phone status official */
-	tzic_set_tamper_flag();
-
 	return 0;
  return_new_from:
 	gotoAllCpu();
-
-	/* fake phone status official */
-	tzic_set_tamper_flag();
-	param.value = 0;
-
 	return copy_from_user( &param, (void *)arg, sizeof(param) );
  return_new_to:
 	gotoAllCpu();
-
-	/* fake phone status official */
-	tzic_set_tamper_flag();
-	param.value = 0;
-
 	return copy_to_user( (void *)arg, &param, sizeof(param) );
 }
 
@@ -456,20 +444,20 @@ static int gotoAllCpu(void)
 	return ret;
 }
 
-int tzic_get_tamper_flag(void)
+#if 0
+static int tzic_get_tamper_flag(void)
 {
 	uint32_t arg;
 	exynos_smc_read_oemflag(0x80010001, &arg);
 	return arg;
 }
-EXPORT_SYMBOL(tzic_get_tamper_flag);
 
-int tzic_set_tamper_flag(void)
+static int tzic_set_tamper_flag(void)
 {
 	exynos_smc1(SMC_CMD_STORE_BINFO, 0x80010001, 0, 0);
 	return exynos_smc1(SMC_CMD_STORE_BINFO, 0x00000001, 0, 0);
 }
-EXPORT_SYMBOL(tzic_set_tamper_flag);
+#endif
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Samsung TZIC Driver");

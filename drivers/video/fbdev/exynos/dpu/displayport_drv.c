@@ -1000,11 +1000,12 @@ void displayport_hpd_changed(int state)
 		if (!timeout)
 			displayport_err("enable timeout\n");
 	} else {
+#ifdef CONFIG_EXYNOS_HDCP2
 		if (displayport->hdcp_ver == HDCP_VERSION_2_2) {
 			hdcp_dplink_set_integrity_fail();
 			displayport_hdcp22_enable(0);
 		}
-
+#endif
 		cancel_delayed_work_sync(&displayport->hpd_plug_work);
 		cancel_delayed_work_sync(&displayport->hpd_unplug_work);
 		cancel_delayed_work_sync(&displayport->hpd_irq_work);
@@ -1331,6 +1332,7 @@ static int displayport_Automated_Test_Request(void)
 	return 0;
 }
 
+#ifdef CONFIG_EXYNOS_HDCP2
 static int displayport_hdcp22_irq_handler(void)
 {
 	struct displayport_device *displayport = get_displayport_drvdata();
@@ -1350,7 +1352,6 @@ static int displayport_hdcp22_irq_handler(void)
 		/* hdcp22 disable while re-authentication */
 		ret = hdcp_dplink_set_reauth();
 		displayport_hdcp22_enable(0);
-
 		queue_delayed_work(displayport->hdcp2_wq, &displayport->hdcp22_work,
 				msecs_to_jiffies(1000));
 	} else if (rxstatus & DPCD_HDCP22_RXSTATUS_PAIRING_AVAILABLE) {
@@ -1370,6 +1371,7 @@ static int displayport_hdcp22_irq_handler(void)
 
 	return ret;
 }
+#endif
 
 static void displayport_hpd_irq_work(struct work_struct *work)
 {
@@ -1402,8 +1404,9 @@ static void displayport_hpd_irq_work(struct work_struct *work)
 			u8 cpirq_bit = CP_IRQ;
 
 			displayport_info("hdcp22: detect CP_IRQ\n");
+#ifdef CONFIG_EXYNOS_HDCP2
 			ret = displayport_hdcp22_irq_handler();
-
+#endif
 			displayport_reg_dpcd_write(DPCD_ADD_DEVICE_SERVICE_IRQ_VECTOR, 1, &cpirq_bit);
 
 			if (ret == 0)
@@ -1421,9 +1424,10 @@ static void displayport_hpd_irq_work(struct work_struct *work)
 			secdp_bigdata_inc_error_cnt(ERR_INF_IRQHPD);
 #endif
 			displayport_link_training();
-
+#ifdef CONFIG_EXYNOS_HDCP2
 			hdcp_dplink_set_reauth();
 			displayport_hdcp22_enable(0);
+#endif
 			queue_delayed_work(displayport->hdcp2_wq,
 					&displayport->hdcp22_work, msecs_to_jiffies(2000));
 		}
@@ -1781,12 +1785,14 @@ static void displayport_hdcp22_run(struct work_struct *work)
 {
 	u8 val[2] = {0, };
 
+#ifdef CONFIG_EXYNOS_HDCP2
 	if (hdcp_dplink_authenticate() != 0) {
 		displayport_reg_video_mute(1);
 #ifdef CONFIG_SEC_DISPLAYPORT_BIGDATA
 		secdp_bigdata_inc_error_cnt(ERR_HDCP_AUTH);
 #endif
 	} else
+#endif
 		displayport_reg_video_mute(0);
 
 	displayport_dpcd_read_for_hdcp22(DPCD_HDCP22_RX_INFO, 2, val);
@@ -2937,8 +2943,10 @@ static ssize_t displayport_dp_test_store(struct class *dev,
 	case 4:
 #ifdef CONFIG_DISPLAYPORT_ENG
 		if (displayport->hdcp_ver == HDCP_VERSION_2_2) {
+#ifdef CONFIG_EXYNOS_HDCP2
 			hdcp_dplink_set_reauth();
 			displayport_hdcp22_enable(0);
+#endif
 			queue_delayed_work(displayport->hdcp2_wq, &displayport->hdcp22_work,
 					msecs_to_jiffies(0));
 		} else if (displayport->hdcp_ver == HDCP_VERSION_1_3) {

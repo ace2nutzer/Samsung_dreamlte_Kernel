@@ -102,12 +102,14 @@ static int ion_hpa_heap_allocate(struct ion_heap *heap,
 		info->prot_desc.chunk_size = ION_HPA_DEFAULT_SIZE;
 		info->prot_desc.bus_address = (count == 1) ?  phys[0] :
 						info->handle;
+#ifdef CONFIG_EXYNOS_CONTENT_PATH_PROTECTION
 		ret = ion_secure_protect(buffer);
 		if (ret) {
 			pr_err("%s: Failed to protect buffer with %u chunks\n",
 			       __func__, count);
 			goto err_protect;
 		}
+#endif
 	}
 
 	return 0;

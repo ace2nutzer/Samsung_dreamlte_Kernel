@@ -64,7 +64,6 @@
 			compat-id = <25 31>;
 		};
 
-/*
 		tui {
 			// ALIGN(ALIGN(1440*2990*4, 256KB) * 3, 4MB)
 			compatible = "exynos8890-ion,tui";
@@ -72,7 +71,6 @@
 			reg = <0x0 0xE7400000 0x3400000>;
 			id = <12>;
 		};
-*/
 
 		crypto {
 			compatible = "exynos8890-ion,crypto";

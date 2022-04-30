@@ -173,14 +173,14 @@ int ion_exynos_contig_heap_info(int region_id, phys_addr_t *phys, size_t *size);
 int ion_exynos_contig_heap_isolate(int region_id);
 void ion_exynos_contig_heap_deisolate(int region_id);
 int init_exynos_ion_contig_heap(void);
+
+#ifdef CONFIG_EXYNOS_CONTENT_PATH_PROTECTION
 int ion_secure_protect(struct ion_buffer *buffer);
 int ion_secure_unprotect(struct ion_buffer *buffer);
 int ion_secure_iova_alloc(unsigned long *addr, unsigned long size,
 			unsigned int align);
 void ion_secure_iova_free(unsigned long addr, unsigned long size);
-
-#ifndef CONFIG_EXYNOS_CONTENT_PATH_PROTECTION
-#define ion_secure_protect(buffer) do { } while (0)
+#else
 #define ion_secure_unprotect(buffer) do { } while (0)
 #define ion_secure_iova_alloc(addr, size, align) do { } while (0)
 #define ion_secure_iova_free(addr, size) do { } while (0)

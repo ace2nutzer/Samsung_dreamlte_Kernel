@@ -173,17 +173,6 @@ int hdcp_dplink_is_enabled_hdcp22(void)
 	return 1;
 }
 
-/* todo: get stream info from DP */
-#define HDCP_DP_STREAM_NUM	0x01
-static uint8_t stream_id[1] = {0x00};
-int hdcp_dplink_get_stream_info(uint16_t *num, uint8_t *strm_id)
-{
-	*num = HDCP_DP_STREAM_NUM;
-	memcpy(strm_id, stream_id, sizeof(uint8_t) * (*num));
-
-	return 0;
-}
-
 int hdcp_dplink_recv(uint32_t msg_name, uint8_t *data, uint32_t size)
 {
 	int i;
@@ -240,3 +229,14 @@ int hdcp_dplink_send(uint32_t msg_name, uint8_t *data, uint32_t size)
 		return displayport_dpcd_write_for_hdcp22(dpcd_addr[msg_name], size, data);
 }
 #endif
+
+/* todo: get stream info from DP */
+#define HDCP_DP_STREAM_NUM	0x01
+static uint8_t stream_id[1] = {0x00};
+int hdcp_dplink_get_stream_info(uint16_t *num, uint8_t *strm_id)
+{
+	*num = HDCP_DP_STREAM_NUM;
+	memcpy(strm_id, stream_id, sizeof(uint8_t) * (*num));
+
+	return 0;
+}

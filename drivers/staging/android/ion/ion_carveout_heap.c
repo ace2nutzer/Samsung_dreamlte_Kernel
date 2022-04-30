@@ -141,12 +141,14 @@ static int ion_carveout_heap_allocate(struct ion_heap *heap,
 		info->prot_desc.flags = heap->id;
 		info->prot_desc.chunk_size = len;
 		info->prot_desc.bus_address = paddr;
+#ifdef CONFIG_EXYNOS_CONTENT_PATH_PROTECTION
 		ret = ion_secure_protect(buffer);
 		if (ret) {
 			pr_err("%s: Failed to protect buffer of %zu bytes\n",
 			       __func__, size);
 			goto err_protect;
 		}
+#endif
 	}
 
 	return 0;

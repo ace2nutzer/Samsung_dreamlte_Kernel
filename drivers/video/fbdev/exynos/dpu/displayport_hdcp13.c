@@ -545,7 +545,9 @@ static int HDCP13_proceed_repeater(void)
 
 		/* need calculation of V = SHA-1(KSV list || Binfo || M0) */
 		HDCP13_make_sha1_input_buf(sha1_input_buf, HDCP13_DPCD.HDCP13_BINFO, device_cnt);
+#ifdef CONFIG_EXYNOS_HDCP2
 		hdcp_calc_sha1(v_value, sha1_input_buf, BINFO_SIZE + M0_SIZE + KSV_SIZE * device_cnt);
+#endif
 		HDCP13_v_value_order_swap(v_value);
 
 		if (HDCP13_compare_v(v_value) == 0) {

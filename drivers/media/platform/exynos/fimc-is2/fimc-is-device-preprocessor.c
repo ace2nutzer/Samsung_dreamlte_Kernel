@@ -455,6 +455,7 @@ static int fimc_is_preproc_gpio_off(struct fimc_is_device_preproc *device)
 			goto p_err;
 		}
 
+#ifdef CONFIG_COMPANION_FACTORY_VALIDATION
 #ifdef CONFIG_USE_DIRECT_IS_CONTROL
 		/* Run FW/Data CRC on Close */
 		fimc_is_comp_i2c_config(core->client0, true);
@@ -467,6 +468,7 @@ static int fimc_is_preproc_gpio_off(struct fimc_is_device_preproc *device)
 			merr("fimc_is_comp_run_CRC_on_Close fail(%d)",
 				device, ret);
 		}
+#endif
 #endif
 
 		pdata = module->pdata;
