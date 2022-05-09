@@ -2682,10 +2682,10 @@ unsigned int hmp_down_threshold = 256;
 unsigned int hmp_semiboost_up_threshold = 400;
 unsigned int hmp_semiboost_down_threshold = 150;
 #elif CONFIG_SCHED_HMP_CUSTOM
-unsigned int hmp_up_threshold = 0;
-unsigned int hmp_down_threshold = 0;
-unsigned int hmp_semiboost_up_threshold = 0;
-unsigned int hmp_semiboost_down_threshold = 0;
+unsigned int hmp_up_threshold = 128;
+unsigned int hmp_down_threshold = 32;
+unsigned int hmp_semiboost_up_threshold = 64;
+unsigned int hmp_semiboost_down_threshold = 16;
 #endif
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
@@ -5664,13 +5664,8 @@ static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 #define BOOT_BOOST_DURATION 40000000 /* microseconds */
 #define YIELD_CORRECTION_TIME 10000000 /* nanoseconds */
 
-#ifdef CONFIG_SCHED_HMP
 unsigned int hmp_next_up_threshold = 4096;
 unsigned int hmp_next_down_threshold = 4096;
-#elif CONFIG_SCHED_HMP_CUSTOM
-unsigned int hmp_next_up_threshold = 0;
-unsigned int hmp_next_down_threshold = 0;
-#endif
 
 static inline int hmp_boost(void)
 {
@@ -9800,9 +9795,7 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 	int temp_target_cpu;
 	unsigned int up_threshold;
 	unsigned int min_load;
-#ifdef CONFIG_SCHED_HMP
 	u64 now;
-#endif
 
 	if (hmp_cpu_is_fastest(cpu))
 		return 0;
@@ -9817,14 +9810,12 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 			return 0;
 	}
 
-#ifdef CONFIG_SCHED_HMP
 	/* Let the task load settle before doing another up migration */
 	/* hack - always use clock from first online CPU */
 	now = cpu_rq(cpumask_first(cpu_online_mask))->clock_task;
 	if (((now - se->avg.hmp_last_up_migration) >> 10)
 					< hmp_next_up_threshold)
 		return 0;
-#endif
 
 	if (se->avg.last_update_time)
 		hp_event_update(se);
@@ -9858,20 +9849,16 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 static unsigned int hmp_down_migration(int cpu, struct sched_entity *se)
 {
 	struct task_struct *p = task_of(se);
-#ifdef CONFIG_SCHED_HMP
 	u64 now;
-#endif
 
 	if (hmp_cpu_is_slowest(cpu))
 		return 0;
 
-#ifdef CONFIG_SCHED_HMP
 	/* Let the task load settle before doing another down migration */
 	now = cpu_rq(cpu)->clock_task;
 	if (((now - se->avg.hmp_last_down_migration) >> 10)
 					< hmp_next_down_threshold)
 		return 0;
-#endif
 
 	if (hmp_aggressive_up_migration) {
 		if (hmp_boost())
