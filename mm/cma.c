@@ -214,12 +214,12 @@ int __init cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
 	return 0;
 }
 
-#ifdef CONFIG_RBIN
 void cma_set_rbin(struct cma *cma)
 {
+#ifdef CONFIG_RBIN
 	cma->is_rbin = true;
-}
 #endif
+}
 
 /**
  * cma_declare_contiguous() - reserve custom contiguous area

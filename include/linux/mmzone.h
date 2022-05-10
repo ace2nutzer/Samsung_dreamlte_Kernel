@@ -56,7 +56,6 @@ enum {
 	 * a single pageblock.
 	 */
 	MIGRATE_CMA,
-#ifdef CONFIG_RBIN
 	/*
 	 * MIGRATE_RBIN migration type differs from MIGRATE_CMA as
 	 * it is designed to contain specific types of pages.
@@ -66,7 +65,6 @@ enum {
 	 * free pages.
 	 */
 	MIGRATE_RBIN,
-#endif
 #endif
 #ifdef CONFIG_MEMORY_ISOLATION
 	MIGRATE_ISOLATE,	/* can't allocate from here */
@@ -78,7 +76,7 @@ enum {
 #  define is_migrate_cma(migratetype) unlikely((migratetype) == MIGRATE_CMA)
 #  define is_migrate_cma_page(_page) \
 	(get_pageblock_migratetype(_page) == MIGRATE_CMA)
-#ifdef CONFIG_RBIN
+
 #  define is_migrate_rbin(migratetype) unlikely((migratetype) == MIGRATE_RBIN)
 #  define is_migrate_rbin_nolikely(migratetype) ((migratetype) == MIGRATE_RBIN)
 #  define is_migrate_rbin_page(_page) \
@@ -90,14 +88,7 @@ enum {
 #  define is_migrate_cma_rbin_page(_page) \
 	  ((get_pageblock_migratetype(_page) == MIGRATE_CMA) || \
 	   (get_pageblock_migratetype(_page) == MIGRATE_RBIN))
-#else
-#  define is_migrate_rbin(migratetype) false
-#  define is_migrate_rbin_nolikely(migratetype) false
-#  define is_migrate_rbin_page(_page) false
-#  define migratetype_rbin_or_cma(a) MIGRATE_CMA
-#  define is_migrate_cma_rbin(migratetype) is_migrate_cma(migratetype)
-#  define is_migrate_cma_rbin_page(_page) is_migrate_cma_page(_page)
-#endif
+
 #else
 #  define is_migrate_cma(migratetype) false
 #  define is_migrate_cma_page(_page) false
@@ -409,9 +400,7 @@ struct zone {
 	 * considered dirtyable memory.
 	 */
 	unsigned long		dirty_balance_reserve;
-#ifdef CONFIG_RBIN
 	atomic_t rbin_alloc;
-#endif
 
 #ifndef CONFIG_SPARSEMEM
 	/*

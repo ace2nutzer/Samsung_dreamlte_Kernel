@@ -26,11 +26,9 @@ extern int __init cma_declare_contiguous(phys_addr_t base,
 			phys_addr_t size, phys_addr_t limit,
 			phys_addr_t alignment, unsigned int order_per_bit,
 			bool fixed, struct cma **res_cma);
-#ifdef CONFIG_RBIN
+
 extern void cma_set_rbin(struct cma *cma);
-#else
-static inline void cma_set_rbin(struct cma *cma) {}
-#endif
+
 extern int cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
 					unsigned int order_per_bit,
 					struct cma **res_cma);
