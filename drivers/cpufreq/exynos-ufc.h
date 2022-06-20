@@ -37,3 +37,6 @@ struct exynos_ufc_info {
 
 	struct exynos_ufc_freq *freq_table;
 };
+
+extern void update_fvmap(int id, int rate, int volt);
+extern void print_fvmap(void);

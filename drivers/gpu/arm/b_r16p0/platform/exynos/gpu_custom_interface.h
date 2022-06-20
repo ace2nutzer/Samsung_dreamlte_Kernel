@@ -24,4 +24,6 @@ int gpu_create_sysfs_file(struct device *dev);
 void gpu_remove_sysfs_file(struct device *dev);
 #endif /* CONFIG_MALI_DEBUG_SYS */
 
+extern void update_fvmap(int id, int rate, int volt);
+
 #endif /* _GPU_CUSTOM_INTERFACE_H_ */

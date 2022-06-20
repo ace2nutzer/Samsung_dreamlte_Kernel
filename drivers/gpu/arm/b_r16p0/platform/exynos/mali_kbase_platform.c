@@ -356,7 +356,7 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 }
 
 #ifdef CONFIG_MALI_DVFS
-static int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
+int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
 {
 	struct exynos_context *platform = kbdev->platform_context;
 	gpu_dvfs_info *dvfs_table;

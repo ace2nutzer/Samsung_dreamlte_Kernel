@@ -346,4 +346,6 @@ void gpu_update_config_data_string(struct device_node *np, const char *of_string
 void gpu_update_config_data_int_array(struct device_node *np, const char *of_string, int *of_data, int sz);
 #endif
 
+int gpu_dvfs_update_asv_table(struct kbase_device *kbdev);
+
 #endif /* _GPU_PLATFORM_H_ */

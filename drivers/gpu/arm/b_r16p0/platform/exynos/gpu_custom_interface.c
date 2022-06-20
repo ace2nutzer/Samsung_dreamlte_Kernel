@@ -1819,6 +1819,31 @@ static ssize_t show_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attr
 	return ret;
 }
 
+static ssize_t set_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int id = 4; /* dvfs_g3d */
+	unsigned int rate, volt;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
+	}
+#endif
+
+	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
+		if ((volt < 450000) || (volt > 1000000))
+			goto err;
+		update_fvmap(id, rate, volt);
+		gpu_dvfs_update_asv_table(pkbdev);
+		pr_info("%s: updated DVFS: dvfs_g3d - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
+		return count;
+	}
+
+err:
+	return -EINVAL;
+}
+
 static ssize_t show_kernel_sysfs_gpu_time_in_state(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	ssize_t ret = 0;
@@ -2327,7 +2352,7 @@ static struct kobj_attribute gpu_model_attribute =
 	__ATTR(gpu_model, S_IRUGO, show_kernel_sysfs_gpu_model, NULL);
 
 static struct kobj_attribute gpu_volt_attribute =
-	__ATTR(gpu_volt, S_IRUGO, show_kernel_sysfs_gpu_volt, NULL);
+	__ATTR(gpu_volt, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_volt, set_kernel_sysfs_gpu_volt);
 
 
 static struct attribute *attrs[] = {
