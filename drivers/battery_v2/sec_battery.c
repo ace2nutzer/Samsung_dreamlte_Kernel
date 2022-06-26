@@ -4342,7 +4342,8 @@ static void sec_bat_check_input_voltage(struct sec_battery_info *battery)
 		battery->max_charge_power = battery->pd_max_charge_power;
 		return;
 	}
-	else if (is_hv_wire_12v_type(battery->cable_type))
+
+	if (is_hv_wire_12v_type(battery->cable_type))
 		voltage = SEC_INPUT_VOLTAGE_12V;
 	else if (is_hv_wire_9v_type(battery->cable_type))
 		voltage = SEC_INPUT_VOLTAGE_9V;

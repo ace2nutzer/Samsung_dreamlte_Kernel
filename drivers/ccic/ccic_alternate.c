@@ -394,9 +394,9 @@ static int process_discover_identity(void *data)
 	}
 
 	usbpd_data->is_sent_pin_configuration = 0;
-	usbpd_data->is_samsung_accessory_enter_mode = 0;
-	usbpd_data->Vendor_ID = DATA_MSG_ID->BITS.USB_Vendor_ID;
-	usbpd_data->Product_ID = DATA_MSG_PRODUCT->BITS.Product_ID;
+	usbpd_data->is_samsung_accessory_enter_mode = 1; /* fake SAMSUNG accessory */
+	usbpd_data->Vendor_ID = SAMSUNG_VENDOR_ID; /* was DATA_MSG_ID->BITS.USB_Vendor_ID */
+	usbpd_data->Product_ID = DEXDOCK_PRODUCT_ID; /* was DATA_MSG_PRODUCT->BITS.Product_ID */
 	usbpd_data->Device_Version = DATA_MSG_PRODUCT->BITS.Device_Version;
 
 	dev_info(&i2c->dev, "%s Vendor_ID : 0x%X, Product_ID : 0x%X Device Version 0x%X\n",

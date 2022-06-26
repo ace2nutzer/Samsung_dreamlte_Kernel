@@ -19,7 +19,7 @@
 #include "dpp.h"
 #include "decon.h"
 
-int dpp_log_level = 6;
+int dpp_log_level = 3;
 struct dpp_device *dpp_drvdata[MAX_DPP_CNT];
 
 static int dpp_runtime_suspend(struct device *dev);
@@ -778,6 +778,7 @@ static irqreturn_t dpp_irq_handler(int irq, void *priv)
 	struct dpp_device *dpp = priv;
 	u32 dpp_irq = 0;
 	u32 cfg_err = 0;
+	static bool log_once = false;
 
 	spin_lock(&dpp->slock);
 	if (dpp->state == DPP_STATE_OFF)
@@ -789,9 +790,12 @@ static irqreturn_t dpp_irq_handler(int irq, void *priv)
 		cfg_err = dpp_read(dpp->id, DPP_CFG_ERR_STATE);
 		dpp_reg_clear_irq(dpp->id, dpp_irq);
 
-		dpp_err("dpp%d config error occur(0x%x)\n",
-				dpp->id, dpp_irq);
-		dpp_err("DPP_CFG_ERR_STATE = (0x%x)\n", cfg_err);
+		if (!log_once) {
+			dpp_err("dpp%d config error occur(0x%x)\n",
+					dpp->id, dpp_irq);
+			dpp_err("DPP_CFG_ERR_STATE = (0x%x)\n", cfg_err);
+			log_once = true;
+		}
 
 		/*
 		 * Disabled because this can cause slow update
