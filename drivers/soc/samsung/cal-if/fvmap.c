@@ -396,23 +396,13 @@ static void fvmap_copy_from_sram(void)
 
 			/* add missing mif voltages */
 			if ((strcmp(vclk->name, "dvfs_mif") == 0) && (!old->table[j].volt))
-				old->table[j].volt = 850000;
+				old->table[j].volt = 800000;
 
 			/* increase cpucl1 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl1") == 0) {
 				if ((old->table[j].rate == 1898000) && (old->table[j].volt < 1200000))
 					old->table[j].volt = 1200000;
 				else if ((old->table[j].rate == 2002000) && (old->table[j].volt < 1300000))
-					old->table[j].volt = 1300000;
-			}
-
-			/* increase cpucl0 voltages */
-			if (strcmp(vclk->name, "dvfs_cpucl0") == 0) {
-				if ((old->table[j].rate == 2652000) && (old->table[j].volt < 1150000))
-					old->table[j].volt = 1150000;
-				else if ((old->table[j].rate == 2704000) && (old->table[j].volt < 1175000))
-					old->table[j].volt = 1175000;
-				else if ((old->table[j].rate == 2808000) && (old->table[j].volt < 1300000))
 					old->table[j].volt = 1300000;
 			}
 
