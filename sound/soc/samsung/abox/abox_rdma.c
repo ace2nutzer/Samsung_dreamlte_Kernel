@@ -1208,7 +1208,7 @@ static int abox_rdma_hw_params(struct snd_pcm_substream *substream,
 
 	lit = data->pm_qos_lit[abox_get_rate_type(params_rate(params))];
 	big = data->pm_qos_big[abox_get_rate_type(params_rate(params))];
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	hmp = data->pm_qos_hmp[abox_get_rate_type(params_rate(params))];
 #endif
 	abox_request_lit_freq_dai(dev, data->abox_data, rtd->cpu_dai, lit);
@@ -1697,7 +1697,7 @@ static int samsung_abox_rdma_probe(struct platform_device *pdev)
 	if (IS_ERR_VALUE(result))
 		dev_dbg(dev, "Failed to read %s: %d\n", "pm_qos_big", result);
 
-#if defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	result = of_property_read_u32_array(np, "pm_qos_hmp", data->pm_qos_hmp,
 			ARRAY_SIZE(data->pm_qos_hmp));
 	if (IS_ERR_VALUE(result))
