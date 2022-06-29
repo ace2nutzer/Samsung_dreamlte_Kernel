@@ -519,9 +519,9 @@
 						  1898000  1352000
 						  1794000  1352000
 						  1690000  1352000
-						  1456000  1352000
-						  1248000  1352000
-						  1053000  1352000
+						  1456000  1014000
+						  1248000   845000
+						  1053000   845000
 						   949000   845000
 						   832000   845000
 						   715000   845000
@@ -576,10 +576,10 @@
 						  1703000  2093000
 						  1469000  2093000
 						  1261000  2093000
-						  1170000  2093000
-						  1066000  2093000
-						   962000  2093000
-						   858000  2093000
+						  1170000  1794000
+						  1066000  1540000
+						   962000  1352000
+						   858000  1014000
 						   741000   845000 >;
 				};
 				mif-skew {
@@ -801,10 +801,10 @@
 		                    683000    38   75   1  2093000   0   0
 		                    572000    47   75   1  2093000   0   0
 		                    546000    37   75   1  2093000   0   0
-		                    455000    38   75   1  2093000   0   0
-		                    385000    41   75   1  2093000   0   0
-		                    338000    33   75   1  2093000   0   0
-		                    260000    33   75   1  1352000   0   0 >;
+		                    455000    38   75   1  1794000   0   0
+		                    385000    41   75   1  1540000   0   0
+		                    338000    33   75   1  1352000   0   0
+		                    260000    33   75   1  1014000   0   0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
@@ -2700,11 +2700,11 @@
 		iommus = <&sysmmu_g2d_0>, <&sysmmu_g2d_1>;
 		hw_ppc = <2800>, <2400>, <3800>;
 						/* cluster1 cluster0 mif */
-		skia_qos_table = <0 0 0
-						0 0 0
-						0 0 0
-						0 0 0
-						0 0 0
+		skia_qos_table = <0 0 1014000
+						0 0 1014000
+						0 0 845000
+						0 0 845000
+						0 0 676000
 						0 0 0
 						>;
 	};
@@ -3451,7 +3451,7 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <1053000 1053000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3462,7 +3462,7 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <1053000 1053000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3473,7 +3473,7 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <1053000 1053000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3823,7 +3823,7 @@
 				thrd_mb = <1153791>;
 				freq_mfc = <400000>;
 				freq_int = <400000>;
-				freq_mif = <0>;
+				freq_mif = <1352000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3834,7 +3834,7 @@
 				thrd_mb = <1884284>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <0>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3845,7 +3845,7 @@
 				thrd_mb = <2713968>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <0>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3856,7 +3856,7 @@
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <0>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3867,7 +3867,7 @@
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
 				freq_int = <533000>;
-				freq_mif = <0>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
