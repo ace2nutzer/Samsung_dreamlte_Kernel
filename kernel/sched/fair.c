@@ -5502,7 +5502,7 @@ done:
  * fastest domain first.
  */
 DEFINE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
-static const int hmp_max_tasks = 4;
+static const int hmp_max_tasks = 5;
 
 extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
 

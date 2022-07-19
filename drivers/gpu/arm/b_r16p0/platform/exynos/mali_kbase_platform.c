@@ -449,7 +449,7 @@ static int gpu_context_init(struct kbase_device *kbdev)
 	mutex_init(&platform->gpu_dvfs_handler_lock);
 	spin_lock_init(&platform->gpu_dvfs_spinlock);
 
-#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP)
+#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	mutex_init(&platform->gpu_sched_hmp_lock);
 	platform->ctx_need_qos = false;
 #endif
