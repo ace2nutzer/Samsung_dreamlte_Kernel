@@ -387,23 +387,27 @@ static void fvmap_copy_from_sram(void)
 			/* add missing g3d voltages */
 			if ((strcmp(vclk->name, "dvfs_g3d") == 0) && (!old->table[j].volt)) {
 				if (old->table[j].rate == 683000)
-					old->table[j].volt = 700000;
+					old->table[j].volt = 750000;
 				else if (old->table[j].rate == 764000)
-					old->table[j].volt = 750000;
+					old->table[j].volt = 775000;
 				else if (old->table[j].rate == 839000)
-					old->table[j].volt = 750000;
+					old->table[j].volt = 800000;
 			}
 
 			/* add missing mif voltages */
-			if ((strcmp(vclk->name, "dvfs_mif") == 0) && (!old->table[j].volt))
-				old->table[j].volt = 800000;
+			if ((strcmp(vclk->name, "dvfs_mif") == 0) && (!old->table[j].volt)) {
+				if (old->table[j].rate == 2002000)
+					old->table[j].volt = 800000;
+				else if (old->table[j].rate == 2093000)
+					old->table[j].volt = 825000;
+			}
 
 			/* increase cpucl1 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl1") == 0) {
 				if ((old->table[j].rate == 1898000) && (old->table[j].volt < 1200000))
 					old->table[j].volt = 1200000;
-				else if ((old->table[j].rate == 2002000) && (old->table[j].volt < 1300000))
-					old->table[j].volt = 1300000;
+				else if ((old->table[j].rate == 2002000) && (old->table[j].volt < 1400000))
+					old->table[j].volt = 1400000;
 			}
 
 			new->table[j].rate = old->table[j].rate;
