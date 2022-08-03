@@ -25,6 +25,7 @@
 #include <soc/samsung/cal-if.h>
 #include "../governor.h"
 
+#define DEVFREQ_DISP_MAX_FREQ	(630000)
 
 static int exynos8895_devfreq_disp_cmu_dump(struct exynos_devfreq_data *data)
 {
@@ -77,7 +78,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	u32 flags = 0;
 	int i;
 
-	max_freq = (u32)cal_dfs_get_max_freq(data->dfs_id);
+	max_freq = DEVFREQ_DISP_MAX_FREQ;
 	if (!max_freq) {
 		dev_err(data->dev, "failed to get max frequency\n");
 		return -EINVAL;
@@ -97,7 +98,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			return PTR_ERR(target_opp);
 		}
 
-		//data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
+		data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 
