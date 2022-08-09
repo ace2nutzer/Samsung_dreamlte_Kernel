@@ -423,6 +423,7 @@ KBUILD_CFLAGS   += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -std=gnu89 $(call cc-option,-fno-PIE) \
+		   -D_FORTIFY_SOURCE=2 \
 		   -DNDEBUG \
 		   -pipe
 
