@@ -280,7 +280,7 @@ void set_host_turn_on_event(int mode)
 	}
 }
 
-static int process_check_accessory(void *data)
+static void process_check_accessory(void *data)
 {
 	struct s2mm005_data *usbpd_data = data;
 #if defined(CONFIG_USB_HW_PARAM)
@@ -290,10 +290,8 @@ static int process_check_accessory(void *data)
 	uint16_t pid = usbpd_data->Product_ID;
 	uint16_t acc_type = CCIC_DOCK_DETACHED;
 
-	if (((pid < GEARVR_PRODUCT_ID) || (pid > GEARVR_PRODUCT_ID_5)) && (pid != CCIC_DOCK_NEW) && (pid != CCIC_DOCK_DEXPAD)) {
-		vid = SAMSUNG_VENDOR_ID;
-		pid = DEXDOCK_PRODUCT_ID;
-	}
+	/* force Samsung vendor */
+	vid = SAMSUNG_VENDOR_ID;
 
 	/* detect Gear VR */
 	if (usbpd_data->acc_type == CCIC_DOCK_DETACHED) {
@@ -342,26 +340,26 @@ static int process_check_accessory(void *data)
 				acc_type = CCIC_DOCK_UVDM;
 				pr_info("%s : Samsung UVDM device connected.\n",
 					__func__);
-			default:
-				acc_type = CCIC_DOCK_NEW;
-				pr_info("%s : default device connected.\n",
-					__func__);
 				break;
-			}
-		} else if (vid == SAMSUNG_MPA_VENDOR_ID) {
-			switch (pid) {
 			case MPA_PRODUCT_ID:
+				vid = SAMSUNG_MPA_VENDOR_ID;
 				acc_type = CCIC_DOCK_MPA;
 				pr_info("%s : Samsung MPA connected.\n",
 					__func__);
 				break;
 			default:
-				acc_type = CCIC_DOCK_NEW;
-				pr_info("%s : default device connected.\n",
+				acc_type = CCIC_DOCK_DEX;
+				pr_info("%s : Force Samsung DEX connection.\n",
 					__func__);
+#if defined(CONFIG_USB_HW_PARAM)
+				if (o_notify)
+					inc_hw_param(o_notify,
+						     USB_CCIC_DEX_USE_COUNT);
+#endif
 				break;
 			}
 		}
+
 		usbpd_data->acc_type = acc_type;
 	} else
 		acc_type = usbpd_data->acc_type;
@@ -370,8 +368,9 @@ static int process_check_accessory(void *data)
 		ccic_send_dock_intent(acc_type);
 	
 	ccic_send_dock_uevent(vid, pid, acc_type);
-	return 1;
 }
+
+static u32 uvdm_count = 0;
 
 static int process_discover_identity(void *data)
 {
@@ -393,18 +392,19 @@ static int process_discover_identity(void *data)
 		return ret;
 	}
 
+	uvdm_count = 0;
 	usbpd_data->is_sent_pin_configuration = 0;
-	usbpd_data->is_samsung_accessory_enter_mode = 1; /* fake SAMSUNG accessory */
-	usbpd_data->Vendor_ID = SAMSUNG_VENDOR_ID; /* was DATA_MSG_ID->BITS.USB_Vendor_ID */
-	usbpd_data->Product_ID = DEXDOCK_PRODUCT_ID; /* was DATA_MSG_PRODUCT->BITS.Product_ID */
+	usbpd_data->is_samsung_accessory_enter_mode = 0;
+	usbpd_data->Vendor_ID = DATA_MSG_ID->BITS.USB_Vendor_ID;
+	usbpd_data->Product_ID = DATA_MSG_PRODUCT->BITS.Product_ID;
 	usbpd_data->Device_Version = DATA_MSG_PRODUCT->BITS.Device_Version;
 
 	dev_info(&i2c->dev, "%s Vendor_ID : 0x%X, Product_ID : 0x%X Device Version 0x%X\n",
 		 __func__, usbpd_data->Vendor_ID, usbpd_data->Product_ID,
 		 usbpd_data->Device_Version);
-	if (process_check_accessory(usbpd_data))
-		dev_info(&i2c->dev, "%s : Samsung Accessory Connected.\n",
-			 __func__);
+	process_check_accessory(usbpd_data);
+	dev_info(&i2c->dev, "%s : Samsung Accessory Connected.\n",
+			__func__);
 	return 0;
 }
 #define MAX_INPUT_DATA (255)
@@ -1508,6 +1508,11 @@ int samsung_uvdm_ready(void)
 	usbpd_data = dev_get_drvdata(ccic_device);
 	if (usbpd_data->is_samsung_accessory_enter_mode)
 		uvdm_ready =  true;
+	else
+		uvdm_count++;
+
+	if (uvdm_count >= 10)
+		usbpd_data->is_samsung_accessory_enter_mode = 1;
 
 	pr_info("%s : uvdm ready=%d!\n", __func__, uvdm_ready);
 	return uvdm_ready;
