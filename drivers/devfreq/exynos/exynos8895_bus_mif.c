@@ -46,7 +46,8 @@ static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_doma
 	unsigned int i;
 
 	for (i =0; i < ect_domain->num_of_level; i++)
-		if (ect_domain->level[i].main_frequencies == freq) break;
+		if (ect_domain->level[i].main_frequencies == freq)
+			break;
 
 	return ect_domain->level[i].sub_frequencies;
 }
@@ -221,6 +222,7 @@ static int exynos8895_devfreq_mif_set_freq(struct device *dev, u32 new_freq,
 				new_freq);
 		return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -293,7 +295,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	dev_info(data->dev, "min_freq: %uKhz, max_freq: %uKhz\n",
 			data->min_freq, data->max_freq);
 
-	cur_freq = (u32)clk_get_rate(data->clk);
+	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
 	dev_info(data->dev, "current frequency: %uKhz\n", cur_freq);
 
 	for (i = 0; i < data->max_state; i++) {
