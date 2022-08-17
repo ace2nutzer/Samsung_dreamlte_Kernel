@@ -5502,7 +5502,7 @@ done:
  * fastest domain first.
  */
 DEFINE_PER_CPU(struct hmp_domain *, hmp_cpu_domain);
-static const int hmp_max_tasks = 5;
+static const int hmp_max_tasks = 4;
 
 extern void __init arch_get_hmp_domains(struct list_head *hmp_domains_list);
 
@@ -10207,7 +10207,7 @@ static DEFINE_SPINLOCK(hmp_force_migration);
  */
 static void hmp_force_up_migration(int this_cpu)
 {
-	int cpu, target_cpu = NR_CPUS+1;
+	int cpu, target_cpu = NR_CPUS;
 	struct sched_entity *curr, *orig;
 	struct rq *target;
 	unsigned long flags;
@@ -10221,7 +10221,7 @@ static void hmp_force_up_migration(int this_cpu)
 	//trace_printk("hmp_force_up_migration spinlock TAKEN cpu=%d\n", this_cpu);
 
 	for_each_online_cpu(cpu) {
-		BUG_ON((target_cpu > NR_CPUS+1) || (target_cpu < 0));
+		BUG_ON((target_cpu > NR_CPUS) || (target_cpu < 0));
 		force = 0;
 		target = cpu_rq(cpu);
 		raw_spin_lock_irqsave(&target->lock, flags);
