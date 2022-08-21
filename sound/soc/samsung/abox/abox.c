@@ -90,6 +90,8 @@ static void update_mask_value(void __iomem *sfr,
 #define BOOT_DONE_TIMEOUT_MS		(10000)
 
 static unsigned int audio_pm_qos_big = 741000;
+static unsigned int current_big_freq_id = 0;
+static bool boost_ongoing = false;
 
 /* For only external static functions */
 static struct abox_data *p_abox_data;
@@ -3455,41 +3457,6 @@ static void abox_change_big_freq_work_func(struct work_struct *work)
 			pm_qos_request(abox_pm_qos_big.pm_qos_class));
 }
 
-static int set_audio_pm_qos_big(const char *buf, struct kernel_param *kp)
-{
-	struct abox_data *data = p_abox_data;
-	struct abox_qos_request *request = NULL;
-	unsigned int freq = 0;
-
-	sscanf(buf, "%u", &freq);
-
-	if (freq > 2808000 || freq < 741000) {
-		pr_warn("[%s]: out of range !\n",__func__);
-		return -EINVAL;
-	}
-
-	audio_pm_qos_big = freq;
-
-	if (!data) {
-		pr_err("%s: data not ready !! \n", __func__);
-		return -ENOMEM;
-	}
-
-	request = data->big_requests;
-
-	if (data->big_freq && data->big_freq != freq) {
-		request->value = freq;
-		data->big_freq = freq;
-
-		pm_qos_update_request(&abox_pm_qos_big, data->big_freq);
-
-		pr_info("%s: audio pm qos request big: %u kHz\n", __func__, freq);
-	}
-
-	return 0;
-}
-module_param_call(audio_pm_qos_big, set_audio_pm_qos_big, param_get_uint, &audio_pm_qos_big, 0644);
-
 int abox_request_big_freq(struct device *dev, struct abox_data *data,
 		unsigned int id, unsigned int freq)
 {
@@ -3504,8 +3471,13 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 			request->id && request->id != id; request++) {
 	}
 
-	if (freq)
+	if (freq) {
 		freq = audio_pm_qos_big;
+		boost_ongoing = true;
+		current_big_freq_id = id;
+	} else {
+		boost_ongoing = false;
+	}
 
 	if ((request->id == id) && (request->value == freq))
 		return 0;
@@ -3526,6 +3498,28 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 
 	return 0;
 }
+
+static int set_audio_pm_qos_big(const char *buf, struct kernel_param *kp)
+{
+	struct abox_data *data = p_abox_data;
+	struct device *dev = &data->pdev->dev;
+	unsigned int freq = 0;
+
+	sscanf(buf, "%u", &freq);
+
+	if (freq > 2808000 || freq < 741000) {
+		pr_warn("[%s]: out of range !\n",__func__);
+		return -EINVAL;
+	}
+
+	audio_pm_qos_big = freq;
+
+	if (boost_ongoing)
+		abox_request_big_freq(dev, data, current_big_freq_id, freq);
+
+	return 0;
+}
+module_param_call(audio_pm_qos_big, set_audio_pm_qos_big, param_get_uint, &audio_pm_qos_big, 0644);
 
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 static void abox_change_hmp_boost_work_func(struct work_struct *work)
