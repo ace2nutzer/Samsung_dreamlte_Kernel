@@ -1828,13 +1828,19 @@ void cpufreq_resume(void)
 	pr_debug("%s: Resuming Governors\n", __func__);
 
 	for_each_active_policy(policy) {
-		if (cpufreq_driver->resume && cpufreq_driver->resume(policy))
+		if (cpufreq_driver->resume && cpufreq_driver->resume(policy)) {
 			pr_err("%s: Failed to resume driver: %p\n", __func__,
-				policy);
-		else if (__cpufreq_governor(policy, CPUFREQ_GOV_START)
-		    || __cpufreq_governor(policy, CPUFREQ_GOV_LIMITS))
-			pr_err("%s: Failed to start governor for policy: %p\n",
-				__func__, policy);
+					policy);
+		} else if (__cpufreq_governor(policy, CPUFREQ_GOV_START)
+				|| __cpufreq_governor(policy, CPUFREQ_GOV_LIMITS)) {
+			pr_err("%s: Failed to start governor for policy: %p - try again ...\n",
+					__func__, policy);
+			msleep(10);
+			if (__cpufreq_governor(policy, CPUFREQ_GOV_START)
+					|| __cpufreq_governor(policy, CPUFREQ_GOV_LIMITS))
+				pr_err("%s: Failed to start governor for policy: %p\n",
+						__func__, policy);
+		}
 	}
 
 	/*

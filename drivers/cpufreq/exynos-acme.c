@@ -391,13 +391,12 @@ static unsigned int exynos_cpufreq_get(unsigned int cpu)
 
 static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 {
-#if 0
 	struct exynos_cpufreq_domain *domain = find_domain(policy->cpu);
 	unsigned int freq;
 
 	if (!domain)
 		return -EINVAL;
-
+#if 0
 	/* To handle reboot faster, it does not thrrotle frequency of domain0 */
 	if (system_state == SYSTEM_RESTART && domain->id != 0)
 		freq = domain->min_freq;
@@ -409,7 +408,7 @@ static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 
 	/* To guarantee applying frequency, update_freq() is called explicitly */
 	update_freq(domain, freq);
-
+#endif
 	/*
 	 * Although cpufreq governor is stopped in cpufreq_suspend(),
 	 * afterwards, frequency change can be requested by
@@ -417,20 +416,19 @@ static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 	 * cpufreq suspend, disable scaling for all domains.
 	 */
 	disable_domain(domain);
-#endif
+
 	return 0;
 }
 
 static int exynos_cpufreq_resume(struct cpufreq_policy *policy)
 {
-/*
 	struct exynos_cpufreq_domain *domain = find_domain(policy->cpu);
 
 	if (!domain)
 		return -EINVAL;
 
 	enable_domain(domain);
-
+/*
 	pm_qos_update_request(&domain->min_qos_req, domain->min_freq);
 	pm_qos_update_request(&domain->max_qos_req, domain->max_freq);
 */
@@ -534,22 +532,26 @@ out:
 }
 module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_int, &cpu4_suspend_max_freq, 0664);
 
-void set_suspend_cpufreq(bool suspend)
+void set_suspend_cpufreq(bool is_suspend)
 {
 	static bool update_cpu0, update_cpu4 = false;
 
 	if (!enable_suspend_freqs)
 		return;
 
-	if (suspend) {
+	if (is_suspend) {
 		if (cpu0_suspend_max_freq) {
 
 			if (!cpu0_suspend_min_freq)
 				cpu0_suspend_min_freq = cpu0_min_freq;
 
 			/* set min/max cpu0 freq for suspend */
-			cpufreq_update_freq(0, cpu0_suspend_min_freq, cpu0_suspend_max_freq);
-			update_cpu0 = true;
+			if (cpufreq_update_freq(0, cpu0_suspend_min_freq, cpu0_suspend_max_freq)) {
+				pr_err("%s: failed to update cpu0 while suspend !\n", __func__);
+				update_cpu0 = false;
+			} else {
+				update_cpu0 = true;
+			}
 		}
 
 		if (cpu4_suspend_max_freq) {
@@ -558,22 +560,29 @@ void set_suspend_cpufreq(bool suspend)
 				cpu4_suspend_min_freq = cpu4_min_freq;
 
 			/* set min/max cpu4 freq for suspend */
-			cpufreq_update_freq(4, cpu4_suspend_min_freq, cpu4_suspend_max_freq);
-			update_cpu4 = true;
+			if (cpufreq_update_freq(4, cpu4_suspend_min_freq, cpu4_suspend_max_freq)) {
+				pr_err("%s: failed to update cpu4 while suspend !\n", __func__);
+				update_cpu4 = false;
+			} else {
+				update_cpu4 = true;
+			}
 		}
 	} else {
-		/* resume */
+		/* resumed */
 		/* restore previous min/max cpufreq */
-		if (update_cpu0)
-			cpufreq_update_freq(0, cpu0_min_freq, cpu0_max_freq);
-		if (update_cpu4)
-			cpufreq_update_freq(4, cpu4_min_freq, cpu4_max_freq);
-
+		if (update_cpu0) {
+			if (cpufreq_update_freq(0, cpu0_min_freq, cpu0_max_freq))
+				pr_err("%s: failed to update cpu0 while resume !\n", __func__);
+		}
+		if (update_cpu4) {
+			if (cpufreq_update_freq(4, cpu4_min_freq, cpu4_max_freq))
+				pr_err("%s: failed to update cpu4 while resume !\n", __func__);
+		}
 		update_cpu0 = false;
 		update_cpu4 = false;
 	}
 
-	update_gov_tunables(suspend);
+	update_gov_tunables(is_suspend);
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND
 
@@ -924,9 +933,9 @@ void exynos_cpufreq_reset_boot_qos(void)
 			continue;
 
 		pm_qos_update_request_timeout(&domain->max_qos_req,
-				domain->boot_qos, 5 * USEC_PER_SEC);
+				domain->boot_qos, 40 * USEC_PER_SEC);
 		pm_qos_update_request_timeout(&domain->min_qos_req,
-				domain->boot_qos, 5 * USEC_PER_SEC);
+				domain->boot_qos, 40 * USEC_PER_SEC);
 	}
 }
 EXPORT_SYMBOL(exynos_cpufreq_reset_boot_qos);
@@ -1127,9 +1136,9 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	}
 
 	pm_qos_update_request_timeout(&domain->max_qos_req,
-			boot_qos, 5 * USEC_PER_SEC);
+			boot_qos, 40 * USEC_PER_SEC);
 	pm_qos_update_request_timeout(&domain->min_qos_req,
-			boot_qos, 5 * USEC_PER_SEC);
+			boot_qos, 40 * USEC_PER_SEC);
 
 	/* In case of factory mode, if jig cable is attached,
 	 * set cpufreq max limit as frequency of "pm_qos-jigbooting" in device tree.

@@ -680,7 +680,7 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 };
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-void update_gov_tunables(bool suspend)
+void update_gov_tunables(bool is_suspend)
 {
 	int cpu = 0;
 	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
@@ -695,13 +695,13 @@ void update_gov_tunables(bool suspend)
 	dbs_data = policy->governor_data;
 	od_tuners_big = dbs_data->tuners;
 
-	if (suspend) {
+	if (is_suspend) {
 		od_tuners_lit->up_threshold = up_threshold_suspend;
 		od_tuners_lit->boost = boost_suspend;
 		od_tuners_big->up_threshold = up_threshold_suspend;
 		od_tuners_big->boost = boost_suspend;
 	} else {
-		/* resume */
+		/* resumed */
 		od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
 		od_tuners_lit->boost = od_tuners_lit->boost_resume;
 		od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
