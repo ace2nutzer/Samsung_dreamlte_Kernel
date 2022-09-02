@@ -79,10 +79,8 @@ int idle_ip_index;
 
 static int bcm43xx_bt_rfkill_set_power(void *data, bool blocked)
 {
-	static bool init = false;
-
 	/* rfkill_ops callback. Turn transmitter on when blocked is false */
-	if (!blocked && init) {
+	if (!blocked) {
 		pr_info("[BT] Bluetooth Power On.\n");
 
 #ifdef BT_LPM_ENABLE
@@ -101,7 +99,6 @@ static int bcm43xx_bt_rfkill_set_power(void *data, bool blocked)
 		msleep(100);
 
 	} else {
-		init = true;
 		pr_info("[BT] Bluetooth Power Off.\n");
 
 #ifdef BT_LPM_ENABLE
@@ -270,6 +267,7 @@ static int bcm43xx_bluetooth_probe(struct platform_device *pdev)
 #ifdef BT_LPM_ENABLE
 	int ret;
 #endif
+
 	pr_info("[BT] bcm43xx_bluetooth_probe.\n");
 
 	bt_gpio.bt_en = of_get_gpio(pdev->dev.of_node, 0);
@@ -333,7 +331,7 @@ static int bcm43xx_bluetooth_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	rfkill_init_sw_state(bt_rfkill, 0);
+	rfkill_init_sw_state(bt_rfkill, 1);
 
 	rc = rfkill_register(bt_rfkill);
 
@@ -360,9 +358,10 @@ static int bcm43xx_bluetooth_probe(struct platform_device *pdev)
 	}
 #endif
 	idle_ip_index = exynos_get_idle_ip_index("bluetooth");
-    exynos_update_ip_idle_status(idle_ip_index, STATUS_IDLE);
+	exynos_update_ip_idle_status(idle_ip_index, STATUS_IDLE);
 
 	pr_info("[BT] bcm43xx_bluetooth_probe End \n");
+
 	return rc;
 }
 
