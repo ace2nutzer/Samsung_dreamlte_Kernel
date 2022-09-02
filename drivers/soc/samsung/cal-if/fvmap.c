@@ -195,7 +195,7 @@ void print_fvmap(void)
 
 	size = cmucal_get_list_size(ACPM_VCLK_TYPE);
 
-	pr_info("\nCUSTOM DVFS TABLE\n");
+	pr_info("\n\nCUSTOM DVFS TABLE\n\n\n");
 
 	for (i = 0; i < size; i++) {
 		/* load fvmap info */
@@ -350,7 +350,7 @@ static void fvmap_copy_from_sram(void)
 
 	size = cmucal_get_list_size(ACPM_VCLK_TYPE);
 
-	pr_info("ORIGINAL DVFS TABLE\n");
+	pr_info("\n\nORIGINAL DVFS TABLE\n\n\n");
 
 	for (i = 0; i < size; i++) {
 		/* load fvmap info */
@@ -393,20 +393,20 @@ static void fvmap_copy_from_sram(void)
 					new->table[j].rate, new->table[j].volt);
 
 			/* add missing g3d voltages */
-			if ((strcmp(vclk->name, "dvfs_g3d") == 0) && (!old->table[j].volt)) {
-				if (old->table[j].rate == 683000)
+			if (strcmp(vclk->name, "dvfs_g3d") == 0) {
+				if ((old->table[j].rate == 683000) && (old->table[j].volt < 750000))
 					old->table[j].volt = 750000;
-				else if (old->table[j].rate == 764000)
+				else if ((old->table[j].rate == 764000) && (old->table[j].volt < 775000))
 					old->table[j].volt = 775000;
-				else if (old->table[j].rate == 839000)
+				else if ((old->table[j].rate == 839000) && (old->table[j].volt < 800000))
 					old->table[j].volt = 800000;
 			}
 
 			/* add missing mif voltages */
-			if ((strcmp(vclk->name, "dvfs_mif") == 0) && (!old->table[j].volt)) {
-				if (old->table[j].rate == 2002000)
+			if (strcmp(vclk->name, "dvfs_mif") == 0) {
+				if ((old->table[j].rate == 2002000) && (old->table[j].volt < 800000))
 					old->table[j].volt = 800000;
-				else if (old->table[j].rate == 2093000)
+				else if ((old->table[j].rate == 2093000) && (old->table[j].volt < 825000))
 					old->table[j].volt = 825000;
 			}
 
@@ -422,18 +422,10 @@ static void fvmap_copy_from_sram(void)
 			if (strcmp(vclk->name, "dvfs_cpucl0") == 0) {
 				if ((old->table[j].rate == 2652000) && (old->table[j].volt < 1150000))
 					old->table[j].volt = 1150000;
-				else if ((old->table[j].rate == 2704000) && (old->table[j].volt < 1175000))
-					old->table[j].volt = 1175000;
-				else if ((old->table[j].rate == 2808000) && (old->table[j].volt < 1275000))
-					old->table[j].volt = 1275000;
-			}
-
-			/* increase int voltage for 667 MHz step */
-			if (strcmp(vclk->name, "dvfs_int") == 0) {
-				if ((old->table[j].rate == 533000) && (!int_volt)) {
-					int_volt = old->table[j].volt + 100000;
-					old->table[0].volt = int_volt;
-				}
+				else if ((old->table[j].rate == 2704000) && (old->table[j].volt < 1200000))
+					old->table[j].volt = 1200000;
+				else if ((old->table[j].rate == 2808000) && (old->table[j].volt < 1300000))
+					old->table[j].volt = 1300000;
 			}
 
 			/* apply optimized voltages */
