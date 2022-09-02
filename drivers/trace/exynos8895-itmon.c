@@ -713,6 +713,7 @@ static void itmon_post_handler_by_master(struct itmon_dev *itmon,
 			pdata->err_cnt = 0;
 			itmon_init(itmon, false);
 			pr_info("ITMON is turn-off when CPU transaction is detected repeatly\n");
+			WARN_ONCE(1, "err_cnt > PANIC_ALLOWED_THRESHOLD");
 		} else {
 			pr_info("ITMON skips CPU transaction detected\n");
 		}
