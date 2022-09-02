@@ -1573,7 +1573,7 @@ int exynos_pcie_poweron(int ch_num)
 #endif
 		pinctrl_reset = devm_pinctrl_get_select_default(pp->dev);
 		if (IS_ERR(pinctrl_reset)) {
-			dev_err(pp->dev, "faied to set pcie pin state\n");
+			dev_err(pp->dev, "failed to set pcie pin state\n");
 			goto poweron_fail;
 		}
 
