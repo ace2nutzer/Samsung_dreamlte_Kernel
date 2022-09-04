@@ -3443,7 +3443,7 @@
 			"bclk3_gate", "bclk4_gate",
 			"bclk5_gate";
 		iommus = <&sysmmu_aud0>;
-		pm_qos_int = <533000 400000 0 0 0>;
+		pm_qos_int = <667000 400000 0 0 0>;
 
 		abox_rdma_0: abox_rdma@0x13E51000 {
 			compatible = "samsung,abox-rdma";
@@ -3833,7 +3833,7 @@
 			mfc_qos_variant_4 {
 				thrd_mb = <1884284>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
+				freq_int = <667000>;
 				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3844,7 +3844,7 @@
 			mfc_qos_variant_5 {
 				thrd_mb = <2713968>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
+				freq_int = <667000>;
 				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3855,7 +3855,7 @@
 			mfc_qos_variant_6 {
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
+				freq_int = <667000>;
 				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
@@ -3866,7 +3866,7 @@
 			mfc_qos_variant_7 {
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
-				freq_int = <533000>;
+				freq_int = <667000>;
 				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
