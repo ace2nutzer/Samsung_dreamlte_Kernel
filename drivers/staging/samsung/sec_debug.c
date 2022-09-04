@@ -432,7 +432,7 @@ void sec_debug_save_last_kmsg(unsigned char *head_ptr, unsigned char *curr_ptr, 
 	/* provide previous log as last_kmsg */
 	if (*((unsigned long long *)magickey_addr) == SEC_LKMSG_MAGICKEY) {
 		pr_info("%s: sec_log buffer is full\n", __func__);
-		last_kmsg_size = (size_t)SZ_2M;
+		last_kmsg_size = (size_t)SZ_1M;
 		last_kmsg_buffer = kzalloc(last_kmsg_size, GFP_NOWAIT);
 		if (last_kmsg_size && last_kmsg_buffer) {
 			memcpy(last_kmsg_buffer, curr_ptr, last_kmsg_size - size);

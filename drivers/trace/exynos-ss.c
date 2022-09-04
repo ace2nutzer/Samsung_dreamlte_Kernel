@@ -78,7 +78,7 @@
 #define ESS_CORE_REG_SZ			SZ_4K
 #define ESS_SPARE_SZ			SZ_16K
 #define ESS_HEADER_TOTAL_SZ		(ESS_HEADER_SZ + ESS_MMU_REG_SZ + ESS_CORE_REG_SZ + ESS_SPARE_SZ)
-#define ESS_HEADER_ALLOC_SZ		SZ_2M
+#define ESS_HEADER_ALLOC_SZ		SZ_1M
 
 /*  Length domain */
 #define ESS_LOG_STRING_LENGTH		SZ_128
@@ -322,7 +322,6 @@ struct exynos_ss_log {
 		int en;
 	} spi[ESS_LOG_MAX_NUM];
 #endif
-
 #ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 	struct clockevent_log {
 		unsigned long long time;
@@ -563,10 +562,10 @@ static struct exynos_ss_item ess_items[] = {
 	{"log_etm",	{SZ_8M,		0, 0, true, true, true}, NULL ,NULL, 0},
 #endif
 #else /* MINIMIZED MODE */
-	{"log_kevents",	{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
-	{"log_kernel",	{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kevents",	{SZ_8M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_kernel",	{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
-	{"log_platform",{SZ_2M,		0, 0, false, true, true}, NULL ,NULL, 0},
+	{"log_platform",{SZ_1M,		0, 0, false, true, true}, NULL ,NULL, 0},
 #endif
 #endif
 #ifdef CONFIG_EXYNOS_SNAPSHOT_PSTORE
@@ -2087,6 +2086,7 @@ bool exynos_ss_dumper_one(void *v_dumper,
 		break;
 	}
 #endif
+#ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 	case ESS_FLAG_PRINTK:
 	{
 		char *log;
@@ -2140,8 +2140,9 @@ bool exynos_ss_dumper_one(void *v_dumper,
 						msg, val, callstack[0], callstack[1], callstack[2], callstack[3]);
 		break;
 	}
+#endif
 	default:
-		snprintf(line, size, "unsupported inforation to dump\n");
+		snprintf(line, size, "unsupported information to dump\n");
 		goto out;
 	}
 	if (array_size == idx)
@@ -2455,7 +2456,6 @@ static void __init exynos_ss_fixmap_header(void)
 
 	/*  set fake translation to virtual address to debug trace */
 	ess_info.info_event = (struct exynos_ss_log *)ess_log;
-
 #ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 	atomic_set(&(ess_idx.printk_log_idx), -1);
 	atomic_set(&(ess_idx.printkl_log_idx), -1);
@@ -2918,7 +2918,6 @@ void exynos_ss_spinlock(void *v_lock, int en)
 		ess_log->spinlock[cpu][i].owner = lock->raw_lock.owner;
 #endif
 		ess_log->spinlock[cpu][i].en = en;
-
 #ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(spinlock);
 #endif
@@ -2958,7 +2957,6 @@ void exynos_ss_irqs_disabled(unsigned long flags)
 		ess_log->irqs_disabled[cpu][i].index = index;
 		ess_log->irqs_disabled[cpu][i].task = get_current();
 		ess_log->irqs_disabled[cpu][i].task_comm = get_current()->comm;
-
 #ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(irqs_disabled);
 #endif
@@ -3215,7 +3213,6 @@ void exynos_ss_reg(unsigned int read, size_t val, size_t reg, int en)
 	ess_log->reg[cpu][i].val = val;
 	ess_log->reg[cpu][i].reg = phys_reg;
 	ess_log->reg[cpu][i].en = en;
-
 #ifdef CONFIG_STACKTRACE
 	ESS_SAVE_STACK_TRACE_CPU(reg);
 #endif
@@ -3240,7 +3237,6 @@ void exynos_ss_clockevent(unsigned long long clc, int64_t delta, void *next_even
 		ess_log->clockevent[cpu][i].mct_cycle = clc;
 		ess_log->clockevent[cpu][i].delta_ns = delta;
 		ess_log->clockevent[cpu][i].next_event = *((ktime_t *)next_event);
-
 #ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE_CPU(clockevent);
 #endif
@@ -3266,7 +3262,6 @@ void exynos_ss_printk(const char *fmt, ...)
 
 		ess_log->printk[i].time = cpu_clock(cpu);
 		ess_log->printk[i].cpu = cpu;
-
 #ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE(printk);
 #endif
@@ -3288,7 +3283,6 @@ void exynos_ss_printkl(size_t msg, size_t val)
 		ess_log->printkl[i].cpu = cpu;
 		ess_log->printkl[i].msg = msg;
 		ess_log->printkl[i].val = val;
-
 #ifdef CONFIG_STACKTRACE
 		ESS_SAVE_STACK_TRACE(printkl);
 #endif
@@ -3867,7 +3861,7 @@ static int exynos_ss_combine_pmsg(char *buffer, size_t count, unsigned int level
 	return 0;
 }
 
-#ifdef CONFIG_EXYNOS_SNAPSHOT_PSTORE
+#ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 int exynos_ss_hook_pmsg(char *buffer, size_t count)
 {
 	ess_android_log_header_t header;
