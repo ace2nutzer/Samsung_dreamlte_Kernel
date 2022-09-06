@@ -579,10 +579,12 @@ static void shmem_cmd_handler(struct mem_link_device *mld, u16 cmd)
 		break;
 
 	case CMD_CRASH_RESET:
+		WARN_ON(1);
 		cmd_crash_reset_handler(mld);
 		break;
 
 	case CMD_CRASH_EXIT:
+		WARN_ON(1);
 		cmd_crash_exit_handler(mld);
 		break;
 
