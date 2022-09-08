@@ -3451,8 +3451,8 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -3462,8 +3462,8 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -3473,8 +3473,8 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <455000 455000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 

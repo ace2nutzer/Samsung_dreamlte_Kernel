@@ -89,9 +89,12 @@ static void update_mask_value(void __iomem *sfr,
 #define CALLIOPE_ENABLE_TIMEOUT_MS	(1000)
 #define BOOT_DONE_TIMEOUT_MS		(10000)
 
-static unsigned int audio_pm_qos_big = 741000;
+static unsigned int audio_pm_qos_lit = 715000;
+static unsigned int audio_pm_qos_big = 1170000;
+static unsigned int current_lit_freq_id = 0;
 static unsigned int current_big_freq_id = 0;
-static bool boost_ongoing = false;
+static bool boost_ongoing_lit = false;
+static bool boost_ongoing_big = false;
 
 /* For only external static functions */
 static struct abox_data *p_abox_data;
@@ -3409,6 +3412,14 @@ int abox_request_lit_freq(struct device *dev, struct abox_data *data,
 			request->id && request->id != id; request++) {
 	}
 
+	if (freq) {
+		freq = audio_pm_qos_lit;
+		boost_ongoing_lit = true;
+		current_lit_freq_id = id;
+	} else {
+		boost_ongoing_lit = false;
+	}
+
 	if ((request->id == id) && (request->value == freq))
 		return 0;
 
@@ -3473,10 +3484,10 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 
 	if (freq) {
 		freq = audio_pm_qos_big;
-		boost_ongoing = true;
+		boost_ongoing_big = true;
 		current_big_freq_id = id;
 	} else {
-		boost_ongoing = false;
+		boost_ongoing_big = false;
 	}
 
 	if ((request->id == id) && (request->value == freq))
@@ -3499,6 +3510,28 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 	return 0;
 }
 
+static int set_audio_pm_qos_lit(const char *buf, struct kernel_param *kp)
+{
+	struct abox_data *data = p_abox_data;
+	struct device *dev = &data->pdev->dev;
+	unsigned int freq = 0;
+
+	sscanf(buf, "%u", &freq);
+
+	if (freq > 2002000 || freq < 455000) {
+		pr_warn("[%s]: out of range !\n",__func__);
+		return -EINVAL;
+	}
+
+	audio_pm_qos_lit = freq;
+
+	if (boost_ongoing_lit)
+		abox_request_lit_freq(dev, data, current_lit_freq_id, freq);
+
+	return 0;
+}
+module_param_call(audio_pm_qos_lit, set_audio_pm_qos_lit, param_get_uint, &audio_pm_qos_lit, 0644);
+
 static int set_audio_pm_qos_big(const char *buf, struct kernel_param *kp)
 {
 	struct abox_data *data = p_abox_data;
@@ -3514,7 +3547,7 @@ static int set_audio_pm_qos_big(const char *buf, struct kernel_param *kp)
 
 	audio_pm_qos_big = freq;
 
-	if (boost_ongoing)
+	if (boost_ongoing_big)
 		abox_request_big_freq(dev, data, current_big_freq_id, freq);
 
 	return 0;
