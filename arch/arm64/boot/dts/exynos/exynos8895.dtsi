@@ -4922,7 +4922,7 @@
 			input_booster,hmp_boost = <1>;
 			input_booster,kfc_freqs = <1456000>;
 			input_booster,mif_freqs = <0>;
-			input_booster,int_freqs = <400000>;
+			input_booster,int_freqs = <0>;
 
 			/* Time table */
 			input_booster,head_times = <500>;
@@ -4941,7 +4941,7 @@
 			input_booster,hmp_boost = <1>;
 			input_booster,kfc_freqs = <1456000>;
 			input_booster,mif_freqs = <0>;
-			input_booster,int_freqs = <400000>;
+			input_booster,int_freqs = <0>;
 
 			/* Time table */
 			input_booster,head_times = <500>;
@@ -4960,7 +4960,7 @@
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
-			input_booster,int_freqs = <400000 400000>;
+			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
 			input_booster,head_times = <500 500>;
@@ -4998,7 +4998,7 @@
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
-			input_booster,int_freqs = <400000 400000>;
+			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
 			input_booster,head_times = <500 500>;
@@ -5017,7 +5017,7 @@
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
-			input_booster,int_freqs = <400000 400000>;
+			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
 			input_booster,head_times = <500 500>;
@@ -5036,7 +5036,7 @@
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
-			input_booster,int_freqs = <400000 400000>;
+			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
 			input_booster,head_times = <500 500>;
@@ -5055,7 +5055,7 @@
 			input_booster,hmp_boost = <1 1>;
 			input_booster,kfc_freqs = <1456000 1456000>;
 			input_booster,mif_freqs = <0 0>;
-			input_booster,int_freqs = <400000 400000>;
+			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
 			input_booster,head_times = <500 5000>;
