@@ -4520,7 +4520,6 @@ static void abox_reload_extra_firmware(struct abox_data *data, const char *name)
 	struct device *dev = &pdev->dev;
 	struct abox_extra_firmware *ext_fw;
 	int result;
-	bool toio;
 
 	dev_dbg(dev, "%s(%s)\n", __func__, name);
 
@@ -4549,7 +4548,6 @@ static void abox_reload_extra_firmware(struct abox_data *data, const char *name)
 		case 0:
 			base = data->sram_base;
 			size = data->sram_size;
-			toio = true;
 			break;
 		case 1:
 			base = data->dram_base;
@@ -4574,12 +4572,8 @@ static void abox_reload_extra_firmware(struct abox_data *data, const char *name)
 			break;
 		}
 
-		if (toio)
-			memcpy_toio(base + ext_fw->offset, ext_fw->firmware->data,
-					ext_fw->firmware->size);
-		else
-			memcpy(base + ext_fw->offset, ext_fw->firmware->data,
-					ext_fw->firmware->size);
+		memcpy_toio(base + ext_fw->offset, ext_fw->firmware->data,
+			ext_fw->firmware->size);
 
 		dev_info(dev, "%s: %s is downloaded at area %u offset %u\n",
 				__func__, ext_fw->name, ext_fw->area,
@@ -4643,7 +4637,6 @@ static void abox_download_extra_firmware(struct abox_data *data)
 	struct abox_extra_firmware *ext_fw;
 	void __iomem *base;
 	size_t size;
-	bool toio;
 
 	dev_dbg(dev, "%s\n", __func__);
 
@@ -4656,7 +4649,6 @@ static void abox_download_extra_firmware(struct abox_data *data)
 		case 0:
 			base = data->sram_base;
 			size = data->sram_size;
-			toio = true;
 			break;
 		case 1:
 			base = data->dram_base;
@@ -4681,12 +4673,8 @@ static void abox_download_extra_firmware(struct abox_data *data)
 			continue;
 		}
 
-		if (toio)
-			memcpy_toio(base + ext_fw->offset, ext_fw->firmware->data,
-					ext_fw->firmware->size);
-		else
-			memcpy(base + ext_fw->offset, ext_fw->firmware->data,
-					ext_fw->firmware->size);
+		memcpy_toio(base + ext_fw->offset, ext_fw->firmware->data,
+				ext_fw->firmware->size);
 
 		dev_info(dev, "%s: %s is downloaded at area %u offset %u\n",
 				__func__, ext_fw->name, ext_fw->area,

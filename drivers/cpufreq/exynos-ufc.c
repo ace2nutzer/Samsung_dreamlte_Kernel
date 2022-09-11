@@ -150,9 +150,10 @@ static ssize_t show_cpufreq_min_limit(struct kobject *kobj,
 }
 
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
-static bool boosted;
 static inline void control_boost(bool enable)
 {
+	static bool boosted = false;
+
 	if (boosted && !enable) {
 		set_hmp_boost(HMP_BOOSTING_DISABLE);
 		boosted = false;
@@ -898,7 +899,7 @@ static struct global_attr sysfs_update_dvfs_table =
 __ATTR(update_dvfs_table, 0600,
 		NULL, store_update_dvfs_table);
 
-static __init void init_sysfs(void)
+static void init_sysfs(void)
 {
 	if (sysfs_create_file(power_kobj, &cpufreq_table.attr))
 		pr_err("failed to create cpufreq_table node\n");
@@ -945,15 +946,16 @@ static int parse_ufc_ctrl_info(struct exynos_cpufreq_domain *domain,
 	return 0;
 }
 
-static __init void init_pm_qos(struct exynos_cpufreq_domain *domain)
+static void init_pm_qos(struct exynos_cpufreq_domain *domain)
 {
+/*
 	pm_qos_add_request(&domain->user_min_qos_req,
 			domain->pm_qos_min_class, domain->min_freq);
-	//pm_qos_add_request(&domain->user_max_qos_req,
-			//domain->pm_qos_max_class, domain->max_freq);
+	pm_qos_add_request(&domain->user_max_qos_req,
+			domain->pm_qos_max_class, domain->max_freq);
 	pm_qos_add_request(&domain->user_min_qos_wo_boost_req,
 			domain->pm_qos_min_class, domain->min_freq);
-
+*/
 	if (domain->id == 1)
 		pm_qos_add_request(&cpu_maxlock_cl1,
 				PM_QOS_CLUSTER1_FREQ_MAX, domain->max_freq);
@@ -997,7 +999,7 @@ int ufc_domain_init(struct exynos_cpufreq_domain *domain)
 	return 0;
 }
 
-static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
+static int init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
 	struct device_node *child;
