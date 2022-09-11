@@ -454,6 +454,7 @@ static int pm_qos_dbg_show_requests(struct seq_file *s, void *unused)
 		type = "Minimum";
 		break;
 	case PM_QOS_MAX:
+	case PM_QOS_FORCE_MAX:
 		type = "Maximum";
 		break;
 	case PM_QOS_SUM:

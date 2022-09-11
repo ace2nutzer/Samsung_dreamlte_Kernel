@@ -12,7 +12,7 @@
 
 static struct acpm_dvfs acpm_dvfs;
 static struct acpm_dvfs acpm_noti_mif;
-//static struct pm_qos_request mif_request_from_acpm;
+static struct pm_qos_request mif_request_from_acpm;
 
 int exynos_acpm_set_rate(unsigned int id, unsigned long rate)
 {
@@ -151,7 +151,7 @@ int exynos_acpm_vdd_auto_calibration(unsigned int enable)
 static void acpm_noti_mif_callback(unsigned int *cmd, unsigned int size)
 {
 	pr_info("%s : req %d KHz\n", __func__, cmd[1]);
-	//pm_qos_update_request(&mif_request_from_acpm, cmd[1]);
+	pm_qos_update_request(&mif_request_from_acpm, cmd[1]);
 }
 
 #ifdef CONFIG_CPU_THERMAL
@@ -269,7 +269,7 @@ static int acpm_dvfs_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	//pm_qos_add_request(&mif_request_from_acpm, PM_QOS_BUS_THROUGHPUT, 0);
+	pm_qos_add_request(&mif_request_from_acpm, PM_QOS_BUS_THROUGHPUT, 0);
 
 #ifdef CONFIG_CPU_THERMAL
 	acpm_dvfs_get_cpu_cold_temp_list(dev);

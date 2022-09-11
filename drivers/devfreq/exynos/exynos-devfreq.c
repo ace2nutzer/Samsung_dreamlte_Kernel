@@ -461,8 +461,8 @@ static ssize_t store_scaling_devfreq_min(struct device *dev,
 	if (ret != 1)
 		return -EINVAL;
 
-	//if (pm_qos_request_active(&data->sys_pm_qos_min))
-		//pm_qos_update_request(&data->sys_pm_qos_min, qos_value);
+	if (pm_qos_request_active(&data->sys_pm_qos_min))
+		pm_qos_update_request(&data->sys_pm_qos_min, qos_value);
 
 	return count;
 }
@@ -2162,7 +2162,7 @@ static int exynos_devfreq_probe(struct platform_device *pdev)
 	data->devfreq->min_freq = data->min_freq;
 	data->devfreq->max_freq = data->max_freq;
 
-	//pm_qos_add_request(&data->sys_pm_qos_min, (int)data->pm_qos_class, data->min_freq);
+	pm_qos_add_request(&data->sys_pm_qos_min, (int)data->pm_qos_class, data->min_freq);
 #ifdef CONFIG_ARM_EXYNOS_DEVFREQ_DEBUG
 	pm_qos_add_request(&data->debug_pm_qos_min, (int)data->pm_qos_class, data->min_freq);
 	pm_qos_add_request(&data->debug_pm_qos_max, (int)data->pm_qos_class_max, data->max_freq);
@@ -2296,7 +2296,7 @@ err_devfreq_init:
 	pm_qos_remove_request(&data->debug_pm_qos_min);
 	pm_qos_remove_request(&data->debug_pm_qos_max);
 #endif
-	//pm_qos_remove_request(&data->sys_pm_qos_min);
+	pm_qos_remove_request(&data->sys_pm_qos_min);
 	devfreq_remove_device(data->devfreq);
 err_devfreq:
 #ifdef CONFIG_EXYNOS_DVFS_MANAGER
@@ -2378,7 +2378,7 @@ static int exynos_devfreq_remove(struct platform_device *pdev)
 	pm_qos_remove_request(&data->debug_pm_qos_min);
 	pm_qos_remove_request(&data->debug_pm_qos_max);
 #endif
-	//pm_qos_remove_request(&data->sys_pm_qos_min);
+	pm_qos_remove_request(&data->sys_pm_qos_min);
 	devfreq_remove_device(data->devfreq);
 #ifdef CONFIG_EXYNOS_DVFS_MANAGER
 	for (nr_constraint = 0; nr_constraint < MAX_NR_CONSTRAINT; nr_constraint++) {
