@@ -507,7 +507,7 @@
 			user-default-qos = <455000>;
 
 			/* auto calibration value */
-			auto-cal-freq = <1690000>;
+			auto-cal-freq = <1053000>;
 			auto-cal-duration = <400>;	/* ms */
 
 			dm-constraints {
@@ -555,7 +555,7 @@
 			user-default-qos = <741000>;
 
 			/* auto calibration value */
-			auto-cal-freq = <2314000>;
+			auto-cal-freq = <1703000>;
 			auto-cal-duration = <400>;	/* ms */
 
 			dm-constraints {
@@ -821,7 +821,7 @@
 		gpu_temp_throttling_level_num = <9>;
 		gpu_temp_throttling = <839000 764000 683000 572000 546000 455000 385000 338000 260000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <10>; /* ticks */
+		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
@@ -832,17 +832,17 @@
 		gpu_dvfs_polling_time = <30>;
 		gpu_pmqos_int_disable = <1>;
 		gpu_pmqos_mif_max_clock = <2093000>;
-		gpu_pmqos_mif_max_clock_base = <385000>;
+		gpu_pmqos_mif_max_clock_base = <546000>;
 		gpu_cl_dvfs_start_base = <0>;
 		gpu_debug_level = <4>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
 		gpu_trace_level = <0>; /*8 = TRACE_ALL*/
-		gpu_mo_min_clock = <385000>;
-		gpu_boost_gpu_min_lock = <0>;
-		gpu_boost_egl_min_lock = <0>;
+		gpu_mo_min_clock = <455000>;
+		gpu_boost_gpu_min_lock = <455000>;
+		gpu_boost_egl_min_lock = <1703000>;
 		gpu_vk_boost_max_lock = <338000>;
 		gpu_vk_boost_mif_min_lock = <2093000>;
 		gpu_bts_support = <1>;
-		gpu_asv_cali_lock_val = <839000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
+		gpu_asv_cali_lock_val = <546000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
 		gpu_set_pmu_duration_val = <0xfffff363>; /* only for KC for now*/
 	};
@@ -4579,8 +4579,8 @@
 		sensors = <61>;
 		sensing_mode = "max";
 		hotplug_enable = <0>;
-		hotplug_in_threshold = <90>;
-		hotplug_out_threshold = <100>;
+		hotplug_in_threshold = <130>;
+		hotplug_out_threshold = <140>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 
