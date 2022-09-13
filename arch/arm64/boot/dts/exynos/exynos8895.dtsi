@@ -504,7 +504,7 @@
 			pm_qos-jigbooting = <1690000>;
 			pm_qos-booting = <1690000>;
 
-			user-default-qos = <455000>;
+			user-default-qos = <0>;
 
 			/* auto calibration value */
 			auto-cal-freq = <1053000>;
@@ -552,7 +552,7 @@
 			pm_qos-jigbooting = <2314000>;
 			pm_qos-booting = <2314000>;
 
-			user-default-qos = <741000>;
+			user-default-qos = <0>;
 
 			/* auto calibration value */
 			auto-cal-freq = <1703000>;
@@ -5103,14 +5103,14 @@
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "0-3";
 
-			user-default-qos = <455000>;
+			user-default-qos = <0>;
 		};
 
 		domain@1 {
 			device_type = "cpufreq-userctrl";
 			shared-cpus = "4-7";
 
-			user-default-qos = <741000>;
+			user-default-qos = <0>;
 		};
 
 	};
