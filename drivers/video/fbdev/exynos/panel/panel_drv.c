@@ -1527,7 +1527,7 @@ static int panel_parse_regulator(struct panel_device *panel)
 #ifdef CONFIG_SUPPORT_DOZE
 #ifdef CONFIG_SET_1p5_ALPM
 			if (i == REGULATOR_1p6V) {
-				ret = regulator_set_voltage(reg[i], 1600000, 1600000);
+				ret = regulator_set_voltage(reg[i], BUCK_NORMAL_VOLT, BUCK_NORMAL_VOLT);
 				if (ret) {
 					panel_err("PANEL:%s:failed to set volatege\n",
 						__func__);

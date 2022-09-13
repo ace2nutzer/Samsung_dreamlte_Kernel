@@ -25,6 +25,7 @@
 #include <soc/samsung/cal-if.h>
 #include "../governor.h"
 
+#define DEVFREQ_DISP_MIN_FREQ	(134000)
 #define DEVFREQ_DISP_MAX_FREQ	(630000)
 
 static int exynos8895_devfreq_disp_cmu_dump(struct exynos_devfreq_data *data)
@@ -106,7 +107,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	if (data->min_freq > data->max_freq)
 		data->min_freq = data->max_freq;
 
-	min_freq = (u32)cal_dfs_get_min_freq(data->dfs_id);
+	min_freq = DEVFREQ_DISP_MIN_FREQ;
 	if (!min_freq) {
 		dev_err(data->dev, "failed to get min frequency\n");
 		return -EINVAL;
