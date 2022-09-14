@@ -382,14 +382,14 @@ int argos_hmpboost_apply(int dev_num, bool enable)
 		if (*hmpboost_enable == false) {
 			set_hmp_boost(true);
 			*hmpboost_enable = true;
-			pr_info("%s: hmp boost enable [%d]\n", __func__, dev_num);
+			//pr_info("%s: hmp boost enable [%d]\n", __func__, dev_num);
 		}
 	} else {
 		/* enable -> disable */
 		if (*hmpboost_enable == true) {
 			set_hmp_boost(false);
 			*hmpboost_enable = false;
-			pr_info("%s: hmp boost disable [%d]\n", __func__, dev_num);
+			//pr_info("%s: hmp boost disable [%d]\n", __func__, dev_num);
 		}
 	}
 
@@ -411,7 +411,7 @@ static void argos_freq_unlock(int type)
 	REMOVE_PM_QOS(&qos->mif_qos_req);
 	REMOVE_PM_QOS(&qos->int_qos_req);
 
-	pr_info("%s name:%s\n", __func__, cname);
+	//pr_info("%s name:%s\n", __func__, cname);
 }
 
 static void argos_freq_lock(int type, int level)
@@ -471,8 +471,8 @@ static void argos_freq_lock(int type, int level)
 	} else {
 		REMOVE_PM_QOS(&qos->int_qos_req);
 	}
-	pr_info("%s name:%s, CPU_MIN=%d, CPU_MAX=%d, KFC_MIN=%d, KFC_MAX=%d, MIF=%d, INT=%d\n",
-		__func__, cname, cpu_min_freq, cpu_max_freq, kfc_min_freq, kfc_max_freq, mif_freq, int_freq);
+	//pr_info("%s name:%s, CPU_MIN=%d, CPU_MAX=%d, KFC_MIN=%d, KFC_MAX=%d, MIF=%d, INT=%d\n",
+	//	__func__, cname, cpu_min_freq, cpu_max_freq, kfc_min_freq, kfc_max_freq, mif_freq, int_freq);
 }
 
 void argos_block_enable(char *req_name, bool set)
@@ -546,7 +546,7 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 
 	prev_level = cnode->prev_level;
 
-	pr_debug("%s name:%s, speed:%ldMbps\n", __func__, cnode->desc, speed);
+	//pr_debug("%s name:%s, speed:%ldMbps\n", __func__, cnode->desc, speed);
 
 	argos_blocked = cnode->argos_block;
 
@@ -576,8 +576,8 @@ static int argos_pm_qos_notify(struct notifier_block *nfb,
 						__func__, cnode->desc, speed, prev_level, level);
 				goto out;
 			}
-			pr_info("%s: name:%s, speed:%ldMbps, prev level:%d, request level:%d\n",
-					__func__, cnode->desc, speed, prev_level, level);
+			//pr_info("%s: name:%s, speed:%ldMbps, prev level:%d, request level:%d\n",
+			//		__func__, cnode->desc, speed, prev_level, level);
 
 			if (level == -1) {
 				if (cnode->argos_notifier.head) {

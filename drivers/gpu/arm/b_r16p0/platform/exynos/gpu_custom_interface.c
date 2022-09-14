@@ -62,15 +62,12 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 #define GPU_DVFS_AVOID_SHUTDOWN_TEMP		(110)	/* °C */
 #define GPU_DVFS_SHUTDOWN_TEMP			(115)	/* °C */
 
-#define FREQ_STEP_0	260000
-#define FREQ_STEP_1	338000
-#define FREQ_STEP_2	385000
-#define FREQ_STEP_3	455000
-#define FREQ_STEP_4	546000
-#define FREQ_STEP_5	572000
-#define FREQ_STEP_6	683000
-#define FREQ_STEP_7	764000
-#define FREQ_STEP_8	839000
+#define FREQ_STEP_0	338000
+#define FREQ_STEP_1	455000
+#define FREQ_STEP_2	572000
+#define FREQ_STEP_3	683000
+#define FREQ_STEP_4	764000
+#define FREQ_STEP_5	839000
 
 static DEFINE_MUTEX(poweroff_lock);
 
@@ -79,7 +76,7 @@ unsigned int gpu_up_threshold = 95;
 bool gpu_boost = true;
 unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define GPU_MIN_UP_THRESHOLD		(40)
+#define GPU_MIN_UP_THRESHOLD		(45)
 #define GPU_MAX_UP_THRESHOLD		(100)
 
 int gpu_pmqos_dvfs_min_lock(int level)
@@ -1671,8 +1668,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 	}
 
 	if (sscanf(buf, "%d", &val)) {
-		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 546000
-				|| val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+		if (val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			platform->gpu_max_clock = val;
 			set_gpu_dvfs_limit(val);
 			pr_info("gpufreq: new max freq is %d kHz\n", platform->gpu_max_clock);
@@ -1785,9 +1781,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 	}
 
 	if (sscanf(buf, "%d", &val)) {
-		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 546000
-				|| val == 572000 || val == 683000 || val == 764000 || val == 839000) {
-
+		if (val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			platform->gpu_min_clock = val;
 			pr_info("gpufreq: new min freq is %d kHz\n", platform->gpu_min_clock);
 			return count;
@@ -2263,13 +2257,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 					__func__ , gpu_dvfs_max_temp, gpu_dvfs_limit, gpu_temp);
 
 		} else if (gpu_temp >= gpu_dvfs_max_temp) {
-			if (gpu_dvfs_limit == FREQ_STEP_8)
-				freq = FREQ_STEP_7;
-			else if (gpu_dvfs_limit == FREQ_STEP_7)
-				freq = FREQ_STEP_6;
-			else if (gpu_dvfs_limit == FREQ_STEP_6)
-				freq = FREQ_STEP_5;
-			else if (gpu_dvfs_limit == FREQ_STEP_5)
+			if (gpu_dvfs_limit == FREQ_STEP_5)
 				freq = FREQ_STEP_4;
 			else if (gpu_dvfs_limit == FREQ_STEP_4)
 				freq = FREQ_STEP_3;
@@ -2277,11 +2265,11 @@ static int gpu_dvfs_check_thread(void *nothing)
 				freq = FREQ_STEP_2;
 			else if (gpu_dvfs_limit == FREQ_STEP_2)
 				freq = FREQ_STEP_1;
-			else if (gpu_dvfs_limit == FREQ_STEP_1)
+			else
 				freq = FREQ_STEP_0;
 	
 		} else if (gpu_temp < gpu_dvfs_min_temp) {
-			freq = FREQ_STEP_8;
+			freq = FREQ_STEP_5;
 		}
 
 		set_gpu_dvfs_limit(freq);

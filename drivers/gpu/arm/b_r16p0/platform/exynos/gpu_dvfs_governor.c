@@ -302,6 +302,10 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 	max_clock_lev = gpu_dvfs_get_level(platform->gpu_max_clock);
 	min_clock_lev = gpu_dvfs_get_level(platform->gpu_min_clock);
 
+	/* nothing to do */
+	if ((max_clock_lev == min_clock_lev) && (platform->step == max_clock_lev))
+		return 0;
+
 	/* Check for frequency increase */
 	if (utilization >= gpu_up_threshold) {
 

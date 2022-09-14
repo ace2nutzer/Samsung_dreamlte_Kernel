@@ -56,23 +56,17 @@ static struct task_struct *cpu_dvfs_thread = NULL;
 
 /* Cluster 1 big cpu */
 #define FREQ_STEP_0               (741000)
-#define FREQ_STEP_1               (858000)
-#define FREQ_STEP_2               (962000)
-#define FREQ_STEP_3               (1066000)
-#define FREQ_STEP_4               (1170000)
-#define FREQ_STEP_5               (1261000)
-#define FREQ_STEP_6               (1469000)
-#define FREQ_STEP_7               (1703000)
-#define FREQ_STEP_8               (1807000)
-#define FREQ_STEP_9               (1937000)
-#define FREQ_STEP_10              (2002000)
-#define FREQ_STEP_11              (2158000)
-#define FREQ_STEP_12              (2314000)
-#define FREQ_STEP_13              (2496000)
-#define FREQ_STEP_14              (2574000)
-#define FREQ_STEP_15              (2652000)
-#define FREQ_STEP_16              (2704000)
-#define FREQ_STEP_17              (2808000)
+#define FREQ_STEP_1               (962000)
+#define FREQ_STEP_2               (1170000)
+#define FREQ_STEP_3               (1469000)
+#define FREQ_STEP_4               (1703000)
+#define FREQ_STEP_5               (1937000)
+#define FREQ_STEP_6               (2158000)
+#define FREQ_STEP_7               (2314000)
+#define FREQ_STEP_8               (2496000)
+#define FREQ_STEP_9               (2652000)
+#define FREQ_STEP_10              (2704000)
+#define FREQ_STEP_11              (2808000)
 
 static DEFINE_MUTEX(poweroff_lock);
 
@@ -825,17 +819,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 					__func__ , cpu_dvfs_max_temp, cpu4_dvfs_limit, cpu_temp);
 
 		} else if (cpu_temp >= cpu_dvfs_max_temp) {
-			if (cpu4_dvfs_limit >= FREQ_STEP_14)
-				freq = FREQ_STEP_13;
-			else if (cpu4_dvfs_limit == FREQ_STEP_13)
-				freq = FREQ_STEP_12;
-			else if (cpu4_dvfs_limit == FREQ_STEP_12)
-				freq = FREQ_STEP_11;
-			else if (cpu4_dvfs_limit == FREQ_STEP_11)
-				freq = FREQ_STEP_10;
-			else if (cpu4_dvfs_limit == FREQ_STEP_10)
-				freq = FREQ_STEP_9;
-			else if (cpu4_dvfs_limit == FREQ_STEP_9)
+			if (cpu4_dvfs_limit >= FREQ_STEP_9)
 				freq = FREQ_STEP_8;
 			else if (cpu4_dvfs_limit == FREQ_STEP_8)
 				freq = FREQ_STEP_7;
@@ -851,11 +835,11 @@ static int cpu_dvfs_check_thread(void *nothing)
 				freq = FREQ_STEP_2;
 			else if (cpu4_dvfs_limit == FREQ_STEP_2)
 				freq = FREQ_STEP_1;
-			else if (cpu4_dvfs_limit == FREQ_STEP_1)
+			else
 				freq = FREQ_STEP_0;
 
 		} else if (cpu_temp < cpu_dvfs_min_temp) {
-			freq = FREQ_STEP_17;
+			freq = FREQ_STEP_11;
 		}
 
 		set_cpu_dvfs_limit(freq);

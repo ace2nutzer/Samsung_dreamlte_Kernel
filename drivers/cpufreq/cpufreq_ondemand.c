@@ -26,48 +26,38 @@
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(20)
+#define DEF_SAMPLING_DOWN_FACTOR		(50)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MIN_SAMPLE_RATE			(20000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(95)
-#define MIN_FREQUENCY_UP_THRESHOLD		(40)
+#define MIN_FREQUENCY_UP_THRESHOLD		(45)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 #define DEF_BOOST				(1)
 #define IO_IS_BUSY				(0)
 
 /* Cluster 0 little cpu */
-#define DEF_FREQUENCY_STEP_CL0_0               (455000)
-#define DEF_FREQUENCY_STEP_CL0_1               (598000)
-#define DEF_FREQUENCY_STEP_CL0_2               (715000)
-#define DEF_FREQUENCY_STEP_CL0_3               (832000)
-#define DEF_FREQUENCY_STEP_CL0_4               (949000)
-#define DEF_FREQUENCY_STEP_CL0_5               (1053000)
-#define DEF_FREQUENCY_STEP_CL0_6               (1248000)
-#define DEF_FREQUENCY_STEP_CL0_7               (1456000)
-#define DEF_FREQUENCY_STEP_CL0_8               (1690000)
-#define DEF_FREQUENCY_STEP_CL0_9               (1794000)
-#define DEF_FREQUENCY_STEP_CL0_10              (1898000)
-#define DEF_FREQUENCY_STEP_CL0_11              (2002000)
+#define DEF_FREQUENCY_STEP_CL0_0               (598000)
+#define DEF_FREQUENCY_STEP_CL0_1               (832000)
+#define DEF_FREQUENCY_STEP_CL0_2               (1053000)
+#define DEF_FREQUENCY_STEP_CL0_3               (1248000)
+#define DEF_FREQUENCY_STEP_CL0_4               (1456000)
+#define DEF_FREQUENCY_STEP_CL0_5               (1690000)
+#define DEF_FREQUENCY_STEP_CL0_6               (1794000)
+#define DEF_FREQUENCY_STEP_CL0_7               (1898000)
+#define DEF_FREQUENCY_STEP_CL0_8               (2002000)
 
 /* Cluster 1 big cpu */
 #define DEF_FREQUENCY_STEP_CL1_0               (741000)
-#define DEF_FREQUENCY_STEP_CL1_1               (858000)
-#define DEF_FREQUENCY_STEP_CL1_2               (962000)
-#define DEF_FREQUENCY_STEP_CL1_3               (1066000)
-#define DEF_FREQUENCY_STEP_CL1_4               (1170000)
-#define DEF_FREQUENCY_STEP_CL1_5               (1261000)
-#define DEF_FREQUENCY_STEP_CL1_6               (1469000)
-#define DEF_FREQUENCY_STEP_CL1_7               (1703000)
-#define DEF_FREQUENCY_STEP_CL1_8               (1807000)
-#define DEF_FREQUENCY_STEP_CL1_9               (1937000)
-#define DEF_FREQUENCY_STEP_CL1_10              (2002000)
-#define DEF_FREQUENCY_STEP_CL1_11              (2158000)
-#define DEF_FREQUENCY_STEP_CL1_12              (2314000)
-#define DEF_FREQUENCY_STEP_CL1_13              (2496000)
-#define DEF_FREQUENCY_STEP_CL1_14              (2574000)
-#define DEF_FREQUENCY_STEP_CL1_15              (2652000)
-#define DEF_FREQUENCY_STEP_CL1_16              (2704000)
-#define DEF_FREQUENCY_STEP_CL1_17              (2808000)
+#define DEF_FREQUENCY_STEP_CL1_1               (962000)
+#define DEF_FREQUENCY_STEP_CL1_2               (1170000)
+#define DEF_FREQUENCY_STEP_CL1_3               (1469000)
+#define DEF_FREQUENCY_STEP_CL1_4               (1703000)
+#define DEF_FREQUENCY_STEP_CL1_5               (1937000)
+#define DEF_FREQUENCY_STEP_CL1_6               (2158000)
+#define DEF_FREQUENCY_STEP_CL1_7               (2314000)
+#define DEF_FREQUENCY_STEP_CL1_8               (2496000)
+#define DEF_FREQUENCY_STEP_CL1_9               (2652000)
+#define DEF_FREQUENCY_STEP_CL1_10              (2704000)
+#define DEF_FREQUENCY_STEP_CL1_11              (2808000)
 
 static unsigned int down_threshold = 0;
 
@@ -119,14 +109,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_6;
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_8;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_9;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_10;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_11;
 				else
 					requested_freq = policy->max;
 			/* Big cpu 4 */
@@ -151,20 +133,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 					requested_freq = DEF_FREQUENCY_STEP_CL1_9;
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
 					requested_freq = DEF_FREQUENCY_STEP_CL1_10;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_11;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_12;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_13;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_14;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_15;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_16;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
-					requested_freq = DEF_FREQUENCY_STEP_CL1_17;
 				else
 					requested_freq = policy->max;
 			}
@@ -200,13 +168,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 	if (load < down_threshold) {
 		/* Little cpu 0 */
 		if (cpu == 0) {
-			if (policy->cur == DEF_FREQUENCY_STEP_CL0_11)
-				requested_freq = DEF_FREQUENCY_STEP_CL0_10;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
-				requested_freq = DEF_FREQUENCY_STEP_CL0_9;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
-				requested_freq = DEF_FREQUENCY_STEP_CL0_8;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
+			if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_7;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_6;
@@ -220,25 +182,11 @@ static void od_check_cpu(int cpu, unsigned int load)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_2;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_1;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_1)
-				requested_freq = DEF_FREQUENCY_STEP_CL0_0;
 			else
 				requested_freq = policy->min;
 		/* Big cpu 4 */
 		} else {
-			if (policy->cur == DEF_FREQUENCY_STEP_CL1_17)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_16;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_16)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_15;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_15)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_14;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_14)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_13;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_13)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_12;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_12)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_11;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
+			if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
 				requested_freq = DEF_FREQUENCY_STEP_CL1_10;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_10)
 				requested_freq = DEF_FREQUENCY_STEP_CL1_9;
@@ -258,8 +206,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 				requested_freq = DEF_FREQUENCY_STEP_CL1_2;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
 				requested_freq = DEF_FREQUENCY_STEP_CL1_1;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_1)
-				requested_freq = DEF_FREQUENCY_STEP_CL1_0;
 			else
 				requested_freq = policy->min;
 		}
@@ -624,8 +570,6 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		/* For correct statistics, we need 10 ticks for each measure */
 		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 	}
-
-	dbs_data->min_sampling_rate = max((unsigned int)MIN_SAMPLE_RATE, dbs_data->min_sampling_rate);
 
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	tuners->ignore_nice_load = 0;
