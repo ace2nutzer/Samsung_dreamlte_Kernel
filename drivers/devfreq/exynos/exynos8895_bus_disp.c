@@ -37,13 +37,14 @@ static int exynos8895_devfreq_disp_cmu_dump(struct exynos_devfreq_data *data)
 
 static int exynos8895_devfreq_disp_reboot(struct exynos_devfreq_data *data)
 {
+/*
 	data->max_freq = data->reboot_freq;
 	data->devfreq->max_freq = data->max_freq;
 
 	mutex_lock(&data->devfreq->lock);
 	update_devfreq(data->devfreq);
 	mutex_unlock(&data->devfreq->lock);
-
+*/
 	return 0;
 }
 
@@ -140,7 +141,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq);
 	}
 
-	data->devfreq_profile.initial_freq = cal_dfs_get_boot_freq(data->dfs_id);
+	data->devfreq_profile.initial_freq = max_freq;
 	data->devfreq_profile.suspend_freq = cal_dfs_get_resume_freq(data->dfs_id);
 
 	return 0;
