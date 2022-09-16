@@ -39,7 +39,7 @@
 #include <linux/a2n.h>
 #endif
 
-extern void set_cpu_dvfs_limit(unsigned int freq);
+extern void sanitize_cpu_dvfs(bool sanitize);
 
 unsigned int cpu0_min_freq = 0;
 unsigned int cpu0_max_freq = 0;
@@ -736,7 +736,7 @@ static ssize_t store_user_scaling_min_freq
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
-		if ((temp != 455000) && (temp != 598000) && (temp != 741000)) {
+		if ((temp != 832000) && (temp != 741000)) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			goto err;
 		}
@@ -797,7 +797,7 @@ static ssize_t store_user_scaling_max_freq
 			cpu0_max_freq = temp;
 		} else {
 			cpu4_max_freq = temp;
-			set_cpu_dvfs_limit(temp);
+			sanitize_cpu_dvfs(false);
 		}
 	} else {
 		goto err;

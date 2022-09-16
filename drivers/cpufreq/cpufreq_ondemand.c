@@ -23,6 +23,8 @@
 #include <linux/a2n.h>
 #endif
 
+extern unsigned int cpu4_dvfs_limit;
+
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
@@ -92,6 +94,9 @@ static void od_check_cpu(int cpu, unsigned int load)
 		if (policy->cur == policy->max)
 			return;
 
+		if ((cpu) && (policy->cur == cpu4_dvfs_limit))
+			return;
+
 		if (!od_tuners->boost) {
 			/* Little cpu 0 */
 			if (cpu == 0) {
@@ -144,7 +149,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 		}
 
 		/* If switching to max speed, apply sampling_down_factor */
-		if (requested_freq == policy->max)
+		if ((requested_freq == policy->max) || (requested_freq == cpu4_dvfs_limit))
 			dbs_info->rate_mult =
 				od_tuners->sampling_down_factor;
 
