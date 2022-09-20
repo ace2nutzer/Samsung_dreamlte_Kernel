@@ -138,6 +138,7 @@ static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
 			const_table[use_level].constraint_freq
 				= ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
 			config.cmd[3] = const_table[use_level].constraint_freq;
+			pr_info("%s: freq: %u - constraint_freq: %u\n", __func__, data->opp_list[i].freq, const_table[use_level].constraint_freq);
 		}
 #endif
 		ret = acpm_ipc_send_data(ch_num, &config);
@@ -248,7 +249,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 
 	dev_info(data->dev, "max_freq: %uKhz, get_max_freq: %uKhz\n",
 			data->max_freq, max_freq);
-
+/*
 	if (max_freq < data->max_freq) {
 		rcu_read_lock();
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
@@ -263,7 +264,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 		data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
-
+*/
 	/* min ferquency must be equal or under max frequency */
 	if (data->min_freq > data->max_freq)
 		data->min_freq = data->max_freq;
@@ -296,7 +297,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 			data->min_freq, data->max_freq);
 
 	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
-	dev_info(data->dev, "current frequency: %uKhz\n", cur_freq);
+	dev_info(data->dev, "current frequency: %u Khz\n", cur_freq);
 
 	for (i = 0; i < data->max_state; i++) {
 		if (data->opp_list[i].freq > data->max_freq ||
@@ -384,7 +385,7 @@ static int exynos8895_devfreq_mif_set_freq_post(struct exynos_devfreq_data *data
 	return 0;
 }
 
-static int __init exynos8895_devfreq_mif_init_prepare(struct exynos_devfreq_data *data)
+static int exynos8895_devfreq_mif_init_prepare(struct exynos_devfreq_data *data)
 {
 	data->ops.um_register = exynos8895_devfreq_mif_um_register;
 	data->ops.um_unregister = exynos8895_devfreq_mif_um_unregister;

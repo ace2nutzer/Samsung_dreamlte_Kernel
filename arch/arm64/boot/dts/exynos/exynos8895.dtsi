@@ -819,7 +819,7 @@
 		gpu_runtime_pm_delay_time = <50>;
 		gpu_dvfs_polling_time = <30>;
 		gpu_pmqos_int_disable = <1>;
-		gpu_pmqos_mif_max_clock = <2093000>;
+		gpu_pmqos_mif_max_clock = <1794000>;
 		gpu_pmqos_mif_max_clock_base = <572000>;
 		gpu_cl_dvfs_start_base = <0>;
 		gpu_debug_level = <4>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
@@ -828,7 +828,7 @@
 		gpu_boost_gpu_min_lock = <455000>;
 		gpu_boost_egl_min_lock = <1703000>;
 		gpu_vk_boost_max_lock = <455000>;
-		gpu_vk_boost_mif_min_lock = <2093000>;
+		gpu_vk_boost_mif_min_lock = <1540000>;
 		gpu_bts_support = <1>;
 		gpu_asv_cali_lock_val = <572000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
@@ -2486,11 +2486,11 @@
 		use_delay_time = "true";
 		delay_time_list = "20";
 
-		freq_info = <2093000 1014000 1014000 845000 2093000 2093000>;
+		freq_info = <1794000 1014000 1014000 1014000 2093000 1794000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
-		boot_info = <40 2093000>;
+		boot_info = <40 1794000>;
 		/* boot_qos_timeout, boot_freq */
 
 		use_get_dev = "false";
@@ -3822,7 +3822,7 @@
 				thrd_mb = <1884284>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <2093000>;
+				freq_mif = <1794000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3833,7 +3833,7 @@
 				thrd_mb = <2713968>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <2093000>;
+				freq_mif = <1794000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3844,7 +3844,7 @@
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <2093000>;
+				freq_mif = <1794000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3855,7 +3855,7 @@
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <2093000>;
+				freq_mif = <1794000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;

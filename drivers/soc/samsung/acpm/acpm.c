@@ -66,7 +66,7 @@ static int handle_dynamic_plugin(struct device_node *node, unsigned int id, unsi
 
 static void firmware_load(void *base, const char *firmware, int size)
 {
-	memcpy(base, firmware, size);
+	memcpy_toio(base, firmware, size);
 }
 
 static int firmware_update(struct device *dev, void *fw_base, const char *fw_name)

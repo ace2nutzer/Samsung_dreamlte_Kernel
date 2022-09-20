@@ -2070,7 +2070,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L0>;
+				default_mif = <DVFS_MIF_L2>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 				default_hpg = <1>;
@@ -2343,7 +2343,7 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
 				video_high_speed_240fps_int = <DVFS_INT_L0>;
 				video_high_speed_240fps_i2c = <0>;
 				video_high_speed_240fps_hpg = <6>;
@@ -2368,7 +2368,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L0>;
+				default_mif = <DVFS_MIF_L2>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 				default_hpg = <1>;
@@ -2641,7 +2641,7 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
 				video_high_speed_240fps_int = <DVFS_INT_L2>;
 				video_high_speed_240fps_i2c = <0>;
 				video_high_speed_240fps_hpg = <6>;

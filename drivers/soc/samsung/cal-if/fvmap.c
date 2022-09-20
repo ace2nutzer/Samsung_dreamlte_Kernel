@@ -14,11 +14,8 @@
 
 #define FVMAP_SIZE		(SZ_8K)
 
-void __iomem *fvmap_base;
-void __iomem *sram_fvmap_base;
-
-static void __iomem *_map_base = NULL;
-static void __iomem *_sram_base = NULL;
+static void __iomem *fvmap_base = NULL;
+static void __iomem *sram_fvmap_base = NULL;
 
 int init_margin_table[10];
 
@@ -190,12 +187,12 @@ void print_fvmap(void)
 	int size;
 	int i, j;
 
-	fvmap_header = _map_base;
-	header = _sram_base;
+	fvmap_header = fvmap_base;
+	header = sram_fvmap_base;
 
 	size = cmucal_get_list_size(ACPM_VCLK_TYPE);
 
-	pr_info("\n\nCUSTOM DVFS TABLE\n\n\n");
+	pr_info("CUSTOM DVFS TABLE\n");
 
 	for (i = 0; i < size; i++) {
 		/* load fvmap info */
@@ -225,8 +222,8 @@ void print_fvmap(void)
 		pr_info("  num_of_lv      : %d\n", fvmap_header[i].num_of_lv);
 		pr_info("  num_of_members : %d\n", fvmap_header[i].num_of_members);
 
-		old = _sram_base + fvmap_header[i].o_ratevolt;
-		new = _map_base + fvmap_header[i].o_ratevolt;
+		old = sram_fvmap_base + fvmap_header[i].o_ratevolt;
+		new = fvmap_base + fvmap_header[i].o_ratevolt;
 		if (init_margin_table[i])
 			cal_dfs_set_volt_margin(i | ACPM_VCLK_TYPE,
 						init_margin_table[i]);
@@ -239,8 +236,8 @@ void print_fvmap(void)
 		}
 
 		for (j = 0; j < fvmap_header[i].num_of_pll; j++) {
-			clks = _sram_base + fvmap_header[i].o_members;
-			plls = _sram_base + clks->addr[j];
+			clks = sram_fvmap_base + fvmap_header[i].o_members;
+			plls = sram_fvmap_base + clks->addr[j];
 			clk_node = cmucal_get_node(vclk->list[j]);
 			if (clk_node == NULL)
 				continue;
@@ -269,8 +266,8 @@ void update_fvmap(int id, int rate, int volt)
 	int size;
 	int i, j;
 
-	fvmap_header = _map_base;
-	header = _sram_base;
+	fvmap_header = fvmap_base;
+	header = sram_fvmap_base;
 
 	size = cmucal_get_list_size(ACPM_VCLK_TYPE);
 
@@ -298,8 +295,8 @@ void update_fvmap(int id, int rate, int volt)
 		if (vclk == NULL)
 			continue;
 
-		old = _sram_base + fvmap_header[i].o_ratevolt;
-		new = _map_base + fvmap_header[i].o_ratevolt;
+		old = sram_fvmap_base + fvmap_header[i].o_ratevolt;
+		new = fvmap_base + fvmap_header[i].o_ratevolt;
 		if (init_margin_table[i])
 			cal_dfs_set_volt_margin(i | ACPM_VCLK_TYPE,
 						init_margin_table[i]);
@@ -315,8 +312,8 @@ void update_fvmap(int id, int rate, int volt)
 		}
 
 		for (j = 0; j < fvmap_header[i].num_of_pll; j++) {
-			clks = _sram_base + fvmap_header[i].o_members;
-			plls = _sram_base + clks->addr[j];
+			clks = sram_fvmap_base + fvmap_header[i].o_members;
+			plls = sram_fvmap_base + clks->addr[j];
 			clk_node = cmucal_get_node(vclk->list[j]);
 			if (clk_node == NULL)
 				continue;
@@ -343,14 +340,14 @@ static void fvmap_copy_from_sram(void)
 	struct cmucal_clk *clk_node;
 	unsigned int paddr_offset, fvaddr_offset;
 	int size;
-	int i, j, int_volt;
+	int i, j;
 
-	fvmap_header = _map_base;
-	header = _sram_base;
+	fvmap_header = fvmap_base;
+	header = sram_fvmap_base;
 
 	size = cmucal_get_list_size(ACPM_VCLK_TYPE);
 
-	pr_info("\n\nORIGINAL DVFS TABLE\n\n\n");
+	pr_info("ORIGINAL DVFS TABLE\n");
 
 	for (i = 0; i < size; i++) {
 		/* load fvmap info */
@@ -380,8 +377,8 @@ static void fvmap_copy_from_sram(void)
 		pr_info("  num_of_lv      : %d\n", fvmap_header[i].num_of_lv);
 		pr_info("  num_of_members : %d\n", fvmap_header[i].num_of_members);
 
-		old = _sram_base + fvmap_header[i].o_ratevolt;
-		new = _map_base + fvmap_header[i].o_ratevolt;
+		old = sram_fvmap_base + fvmap_header[i].o_ratevolt;
+		new = fvmap_base + fvmap_header[i].o_ratevolt;
 		if (init_margin_table[i])
 			cal_dfs_set_volt_margin(i | ACPM_VCLK_TYPE,
 						init_margin_table[i]);
@@ -428,13 +425,13 @@ static void fvmap_copy_from_sram(void)
 					old->table[j].volt = 1300000;
 			}
 
-			/* apply optimized voltages */
+			/* copy */
 			new->table[j].volt = old->table[j].volt;
 		}
 
 		for (j = 0; j < fvmap_header[i].num_of_pll; j++) {
-			clks = _sram_base + fvmap_header[i].o_members;
-			plls = _sram_base + clks->addr[j];
+			clks = sram_fvmap_base + fvmap_header[i].o_members;
+			plls = sram_fvmap_base + clks->addr[j];
 			clk_node = cmucal_get_node(vclk->list[j]);
 			if (clk_node == NULL)
 				continue;
@@ -455,10 +452,7 @@ static void fvmap_copy_from_sram(void)
 
 int fvmap_init(void __iomem *sram_base)
 {
-	_sram_base = sram_base;
-	_map_base = kzalloc(FVMAP_SIZE, GFP_KERNEL);
-
-	fvmap_base = _map_base;
+	fvmap_base = kzalloc(FVMAP_SIZE, GFP_KERNEL);
 	sram_fvmap_base = sram_base;
 	pr_info("%s:fvmap initialize %pK\n", __func__, sram_base);
 	fvmap_copy_from_sram();
