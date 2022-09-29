@@ -38,7 +38,11 @@
 #include "../../soc/samsung/acpm/acpm_ipc.h"
 #include "exynos_ppmu.h"
 
+extern bool is_suspend;
+
 #define INT	0
+
+static struct exynos_devfreq_data *_data = NULL;
 
 static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_domain,
 					unsigned int freq)
@@ -172,27 +176,42 @@ static int exynos8895_devfreq_mif_cmu_dump(struct exynos_devfreq_data *data)
 
 	return 0;
 }
-
+#ifdef CONFIG_PM_DEVFREQ
 static int exynos8895_devfreq_mif_resume(struct exynos_devfreq_data *data)
 {
-#ifndef CONFIG_EXYNOS_DVFS_MANAGER
-	if (pm_qos_request_active(&data->default_pm_qos_max))
-		pm_qos_update_request(&data->default_pm_qos_max, data->max_freq);
-#endif
+	if (pm_qos_request_active(&data->default_pm_qos_min))
+		pm_qos_update_request(&data->default_pm_qos_min,
+				data->default_qos);
+
+	pr_info("%s: set freq to: %u\n", __func__, data->default_qos);
 
 	return 0;
 }
 
 static int exynos8895_devfreq_mif_suspend(struct exynos_devfreq_data *data)
 {
-#ifndef CONFIG_EXYNOS_DVFS_MANAGER
-	if (pm_qos_request_active(&data->default_pm_qos_max))
-		pm_qos_update_request(&data->default_pm_qos_max,
+	if (pm_qos_request_active(&data->default_pm_qos_min))
+		pm_qos_update_request(&data->default_pm_qos_min,
 				data->devfreq_profile.suspend_freq);
-#endif
+
+	pr_info("%s: set freq to: %lu\n", __func__, data->devfreq_profile.suspend_freq);
 
 	return 0;
 }
+
+void set_devfreq_mif_pm_qos(void)
+{
+	if (_data == NULL) {
+		pr_err("%s: _data is NULL !!\n", __func__);
+		return;
+	}
+
+	if (is_suspend)
+		exynos8895_devfreq_mif_suspend(_data);
+	else
+		exynos8895_devfreq_mif_resume(_data);
+}
+#endif
 
 static int exynos8895_devfreq_mif_reboot(struct exynos_devfreq_data *data)
 {
@@ -235,12 +254,6 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	u32 flags = 0;
 	int i, ret;
 
-	ret = cal_clk_enable(data->dfs_id);
-	if (ret) {
-		dev_err(data->dev, "failed to enable MIF\n");
-		return -EINVAL;
-	}
-
 	max_freq = (u32)cal_dfs_get_max_freq(data->dfs_id);
 	if (!max_freq) {
 		dev_err(data->dev, "failed get max frequency\n");
@@ -249,7 +262,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 
 	dev_info(data->dev, "max_freq: %uKhz, get_max_freq: %uKhz\n",
 			data->max_freq, max_freq);
-/*
+
 	if (max_freq < data->max_freq) {
 		rcu_read_lock();
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
@@ -264,7 +277,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 		data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
-*/
+
 	/* min ferquency must be equal or under max frequency */
 	if (data->min_freq > data->max_freq)
 		data->min_freq = data->max_freq;
@@ -296,23 +309,23 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	dev_info(data->dev, "min_freq: %uKhz, max_freq: %uKhz\n",
 			data->min_freq, data->max_freq);
 
-	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
-	dev_info(data->dev, "current frequency: %u Khz\n", cur_freq);
-
 	for (i = 0; i < data->max_state; i++) {
 		if (data->opp_list[i].freq > data->max_freq ||
 			data->opp_list[i].freq < data->min_freq)
 			dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq);
 	}
 
-	data->devfreq_profile.initial_freq = cal_dfs_get_boot_freq(data->dfs_id);
-	data->devfreq_profile.suspend_freq = cal_dfs_get_resume_freq(data->dfs_id);
+	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
+	dev_info(data->dev, "current frequency: %u Khz\n", cur_freq);
 
 	ret = exynos8895_mif_constraint_parse(data, min_freq, max_freq);
 	if (ret) {
 		dev_err(data->dev, "failed to parse constraint table\n");
 		return -EINVAL;
 	}
+
+	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
+	dev_info(data->dev, "current frequency after setup: %u Khz\n", cur_freq);
 
 	return 0;
 }
@@ -399,6 +412,8 @@ static int exynos8895_devfreq_mif_init_prepare(struct exynos_devfreq_data *data)
 	data->ops.cmu_dump = exynos8895_devfreq_mif_cmu_dump;
 	data->ops.set_freq_prepare = exynos8895_devfreq_mif_set_freq_prepare;
 	data->ops.set_freq_post = exynos8895_devfreq_mif_set_freq_post;
+
+	_data = data;
 
 	return 0;
 }

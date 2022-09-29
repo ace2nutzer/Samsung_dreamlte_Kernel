@@ -24,7 +24,7 @@
 #define NUM_CHANNEL		4
 #define MIF_UTIL		65
 #define INT_UTIL		70
-#define INITIAL_MIF_FREQ	2093000
+#define INITIAL_MIF_FREQ	1794000
 
 #define QBUSY_DEFAULT          4
 #define QFULL_LOW_DEFAULT      0xa

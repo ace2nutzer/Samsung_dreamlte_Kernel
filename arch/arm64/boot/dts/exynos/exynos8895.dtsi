@@ -523,7 +523,7 @@
 						  1248000  1014000
 						  1053000  1014000
 						   832000  1014000
-						   598000  1014000
+						   598000        0
 						   >;
 				};
 				mif-skew {
@@ -571,7 +571,7 @@
 						  1469000  1540000
 						  1170000  1352000
 						   962000  1352000
-						   741000  1014000 >;
+						   741000        0 >;
 				};
 				mif-skew {
 					guidance;
@@ -2486,7 +2486,7 @@
 		use_delay_time = "true";
 		delay_time_list = "20";
 
-		freq_info = <1794000 1014000 1014000 1014000 2093000 1794000>;
+		freq_info = <1794000 1014000 546000 546000 2093000 1794000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
@@ -2517,7 +2517,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <667000 267000 267000 267000 667000 667000>;
+		freq_info = <667000 107000 107000 107000 667000 667000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -2579,7 +2579,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <630000 214000 134000 134000 630000 134000>;
+		freq_info = <630000 134000 134000 134000 630000 134000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
