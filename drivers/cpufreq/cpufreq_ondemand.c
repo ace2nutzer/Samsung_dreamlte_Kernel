@@ -37,15 +37,14 @@ extern unsigned int cpu4_dvfs_limit;
 #define IO_IS_BUSY				(0)
 
 /* Cluster 0 little cpu */
-#define DEF_FREQUENCY_STEP_CL0_0               (598000)
-#define DEF_FREQUENCY_STEP_CL0_1               (832000)
-#define DEF_FREQUENCY_STEP_CL0_2               (1053000)
-#define DEF_FREQUENCY_STEP_CL0_3               (1248000)
-#define DEF_FREQUENCY_STEP_CL0_4               (1456000)
-#define DEF_FREQUENCY_STEP_CL0_5               (1690000)
-#define DEF_FREQUENCY_STEP_CL0_6               (1794000)
-#define DEF_FREQUENCY_STEP_CL0_7               (1898000)
-#define DEF_FREQUENCY_STEP_CL0_8               (2002000)
+#define DEF_FREQUENCY_STEP_CL0_0               (832000)
+#define DEF_FREQUENCY_STEP_CL0_1               (1053000)
+#define DEF_FREQUENCY_STEP_CL0_2               (1248000)
+#define DEF_FREQUENCY_STEP_CL0_3               (1456000)
+#define DEF_FREQUENCY_STEP_CL0_4               (1690000)
+#define DEF_FREQUENCY_STEP_CL0_5               (1794000)
+#define DEF_FREQUENCY_STEP_CL0_6               (1898000)
+#define DEF_FREQUENCY_STEP_CL0_7               (2002000)
 
 /* Cluster 1 big cpu */
 #define DEF_FREQUENCY_STEP_CL1_0               (741000)
@@ -112,8 +111,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_5;
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_6;
-				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
-					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
 				else
 					requested_freq = policy->max;
 			/* Big cpu 4 */
@@ -173,9 +170,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 	if (load < down_threshold) {
 		/* Little cpu 0 */
 		if (cpu == 0) {
-			if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
-				requested_freq = DEF_FREQUENCY_STEP_CL0_7;
-			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
+			if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_6;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_6)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_5;

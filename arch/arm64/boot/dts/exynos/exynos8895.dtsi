@@ -495,7 +495,7 @@
 			cal-id = <ACPM_DVFS_CPUCL1>;
 			dm-type = <DM_CPU_CL0>;
 
-			min-freq = <598000>;
+			min-freq = <832000>;
 			max-freq = <2002000>;
 
 			/* PM QoS Class ID*/
@@ -515,15 +515,14 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 2002000  1014000
-						  1898000  1014000
-						  1794000  1014000
+					table = < 2002000  1352000
+						  1898000  1352000
+						  1794000  1352000
 						  1690000  1014000
 						  1456000  1014000
 						  1248000  1014000
 						  1053000  1014000
-						   832000  1014000
-						   598000        0
+						   832000        0
 						   >;
 				};
 				mif-skew {
@@ -3439,7 +3438,7 @@
 			abox = <&abox>;
 			id = <0>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3450,7 +3449,7 @@
 			abox = <&abox>;
 			id = <1>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
@@ -3461,7 +3460,7 @@
 			abox = <&abox>;
 			id = <2>;
 			type = "normal";
-			pm_qos_lit = <715000 715000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
