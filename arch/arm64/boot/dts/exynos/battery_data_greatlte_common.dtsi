@@ -216,13 +216,13 @@
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
 		battery,full_condition_type = <9>;
-		battery,full_condition_soc = <93>;
-		battery,full_condition_vcell = <4250>;
+		battery,full_condition_soc = <95>;
+		battery,full_condition_vcell = <4300>;
 
 		battery,recharge_check_count = <1>;
 		battery,recharge_condition_type = <4>; /* SEC_BATTERY_RECHARGE_CONDITION_VCELL */
 		battery,recharge_condition_soc = <98>;
-		battery,recharge_condition_vcell = <4280>;
+		battery,recharge_condition_vcell = <4300>;
 
 		battery,charging_total_time = <14400>;
 		battery,hv_charging_total_time = <10800>;
@@ -231,7 +231,7 @@
 		battery,recharging_total_time = <5400>;
 		battery,charging_reset_time = <0>;
 
-		battery,chg_float_voltage = <43500>;
+		battery,chg_float_voltage = <44000>;
 		battery,chg_float_voltage_conv = <10>;
 
 		battery,swelling_high_temp_block = <410>;
@@ -248,7 +248,7 @@
 		battery,swelling_wc_high_temp_current = <500>;	/* 0.3C */
 		battery,swelling_wc_low_temp_current = <500>;	/* 0.3C */
 
-		battery,swelling_drop_float_voltage = <43500>;
+		battery,swelling_drop_float_voltage = <44000>;
 		battery,swelling_high_rechg_voltage = <4280>;
 		battery,swelling_low_rechg_voltage = <4280>;
 
@@ -272,11 +272,7 @@
 		battery,battery_full_capacity = <3300>;
 
 		/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
-		battery,age_data = <0 43500 4280 4250 93
-				300 43250 4255 4225 92
-				400 43125 4242 4212 91
-				700 42875 4217 4187 90
-				1000 42375 4167 4137 89>;
+		battery,age_data = <0 44000 4300 4300 95>;
 
 		battery,health_condition = <
 			/* CYCLE ASOC */
@@ -294,7 +290,7 @@
 		battery,expired_time = <0>;
 		battery,recharging_expired_time = <0>;
 
-		battery,cisd_max_voltage_thr = <4400>; /* battery ovp detection voltage */
+		battery,cisd_max_voltage_thr = <4450>; /* battery ovp detection voltage */
 
 		battery,cisd_alg_index = <7>;
 

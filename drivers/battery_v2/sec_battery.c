@@ -8613,7 +8613,7 @@ static int sec_bat_parse_dt(struct device *dev,
 		&pdata->max_voltage_thr);
 	if (ret) {
 		pr_info("%s : cisd_max_voltage_thr is Empty\n", __func__);
-		pdata->max_voltage_thr = 4400;
+		pdata->max_voltage_thr = 4450;
 	}
 
 	ret = of_property_read_u32(np, "battery,cisd_alg_index",
@@ -9422,34 +9422,34 @@ static int sec_bat_parse_dt(struct device *dev,
 		(unsigned int *)&pdata->chg_float_voltage);
 	if (ret) {
 		pr_info("%s: chg_float_voltage is Empty\n", __func__);
-		pdata->chg_float_voltage = 43500;
+		pdata->chg_float_voltage = 44000;
 	}
 
 	ret = of_property_read_u32(np, "battery,chg_float_voltage_conv",
 				   &pdata->chg_float_voltage_conv);
 	if (ret) {
 		pr_info("%s: chg_float_voltage_conv is Empty\n", __func__);
-		pdata->chg_float_voltage_conv = 1;
+		pdata->chg_float_voltage_conv = 10;
 	}
 
 	ret = of_property_read_u32(np, "battery,wa_volt_recov",
 				   (unsigned int *)&pdata->wa_volt_recov);
 	if (ret) {
-		pdata->wa_volt_recov = 4280;
+		pdata->wa_volt_recov = 4300;
 		pr_info("%s: wa volt recov is Empty\n", __func__);
 	}
 
 	ret = of_property_read_u32(np, "battery,wa_volt_thr",
 				   (unsigned int *)&pdata->wa_volt_thr);
 	if (ret) {
-		pdata->wa_volt_thr = 4280;
+		pdata->wa_volt_thr = 4300;
 		pr_info("%s: wa volt thr is Empty\n", __func__);
 	}
 
 	ret = of_property_read_u32(np, "battery,wa_float_voltage",
 				   (unsigned int *)&pdata->wa_float_voltage);
 	if (ret) {
-		pdata->wa_float_voltage = 43500;
+		pdata->wa_float_voltage = 44000;
 		pr_info("%s: wa float voltage is Empty\n", __func__);
 	}
 
@@ -9555,9 +9555,9 @@ static int sec_bat_parse_dt(struct device *dev,
 	ret = of_property_read_u32(np, "battery,swelling_drop_float_voltage",
 		(unsigned int *)&pdata->swelling_drop_float_voltage);
 	if (ret) {
-		pr_info("%s: swelling drop float voltage is Empty, Default value 4350mV \n", __func__);
-		pdata->swelling_drop_float_voltage = 4350;
-		pdata->swelling_drop_voltage_condition = 4350;
+		pr_info("%s: swelling drop float voltage is Empty, Default value 4400mV \n", __func__);
+		pdata->swelling_drop_float_voltage = 4400;
+		pdata->swelling_drop_voltage_condition = 4400;
 	} else {
 		pdata->swelling_drop_voltage_condition = (pdata->swelling_drop_float_voltage > 10000) ?
 			(pdata->swelling_drop_float_voltage / 10) : (pdata->swelling_drop_float_voltage);
@@ -9569,14 +9569,14 @@ static int sec_bat_parse_dt(struct device *dev,
 		(unsigned int *)&pdata->swelling_high_rechg_voltage);
 	if (ret) {
 		pr_info("%s: swelling_high_rechg_voltage is Empty\n", __func__);
-		pdata->swelling_high_rechg_voltage = 4280;
+		pdata->swelling_high_rechg_voltage = 4300;
 	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_rechg_voltage",
 		(unsigned int *)&pdata->swelling_low_rechg_voltage);
 	if (ret) {
 		pr_info("%s: swelling_low_rechg_voltage is Empty\n", __func__);
-				pdata->swelling_low_rechg_voltage = 4280;
+				pdata->swelling_low_rechg_voltage = 4300;
 	}
 
 	pr_info("%s : SWELLING_HIGH_TEMP(%d) SWELLING_HIGH_TEMP_RECOVERY(%d)\n"
