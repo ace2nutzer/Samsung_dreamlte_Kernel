@@ -1989,7 +1989,7 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type,
 	int count;
 	int passive = 0;
 	struct thermal_governor *governor;
-	const char *mngs = "mngs-thermal";
+	const char *mngs = "CPU";
 
 	if (type && strlen(type) >= THERMAL_NAME_LENGTH)
 		return ERR_PTR(-EINVAL);
