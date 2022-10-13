@@ -39,8 +39,6 @@
 #include <linux/a2n.h>
 #endif
 
-extern void sanitize_cpu_dvfs(bool sanitize);
-
 unsigned int cpu0_min_freq = 0;
 unsigned int cpu0_max_freq = 0;
 
@@ -797,7 +795,7 @@ static ssize_t store_user_scaling_max_freq
 			cpu0_max_freq = temp;
 		} else {
 			cpu4_max_freq = temp;
-			sanitize_cpu_dvfs(false);
+			sanitize_cpu_dvfs(true, false);
 		}
 	} else {
 		goto err;

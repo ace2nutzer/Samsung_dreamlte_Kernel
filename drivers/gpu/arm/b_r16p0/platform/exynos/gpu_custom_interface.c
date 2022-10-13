@@ -2108,7 +2108,7 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 		return -ENODEV;
 
 	sprintf(buf, "%s[gpu_temp]\t%d °C\n",buf, gpu_temp);
-	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, gpu_dvfs_max_temp);
+	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, user_gpu_dvfs_max_temp);
 	if (!gpu_dvfs_debug)
 		sprintf(buf, "%s[peak_temp]\t%s\n",buf, "enable debug");
 	else
@@ -2240,8 +2240,8 @@ static int gpu_dvfs_check_thread(void *nothing)
 		if (gpu_temp >= GPU_DVFS_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
 			set_gpu_dvfs_limit(freq);
-			pr_err("%s: GPU DVFS: GPU_DVFS_SHUTDOWN_TEMP(%u C) reached ! - TEMP: %d C ! - gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u MHz - shutting down ...\n", 
-					__func__ , GPU_DVFS_SHUTDOWN_TEMP, gpu_temp, gpu_dvfs_max_temp, (gpu_dvfs_limit / 1000));
+			pr_err("%s: GPU DVFS: GPU_DVFS_SHUTDOWN_TEMP(%u C) reached ! - TEMP: %d C ! - gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz - shutting down ...\n", 
+					__func__ , GPU_DVFS_SHUTDOWN_TEMP, gpu_temp, user_gpu_dvfs_max_temp, gpu_dvfs_limit);
 			mutex_lock(&poweroff_lock);
 			/*
 			 * Queue a backup emergency shutdown in the event of
@@ -2256,9 +2256,10 @@ static int gpu_dvfs_check_thread(void *nothing)
 		}
 
 		if (gpu_temp >= GPU_DVFS_AVOID_SHUTDOWN_TEMP) {
-			freq = FREQ_STEP_4;
-			pr_warn("%s: GPU DVFS: gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz - GPU_DVFS_AVOID_SHUTDOWN_TEMP reached ! - GPU TEMP: %d C !!! - adjust gpu_dvfs_max_temp to: %u C\n", 
-					__func__ , gpu_dvfs_max_temp, gpu_dvfs_limit, gpu_temp, (gpu_dvfs_max_temp - GPU_DVFS_STEP_DOWN_TEMP));
+			if (freq > FREQ_STEP_4)
+				freq = FREQ_STEP_4;
+			pr_warn("%s: GPU DVFS: GPU_DVFS_AVOID_SHUTDOWN_TEMP(%u C) reached ! - TEMP: %d C ! - gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz\n", 
+					__func__ , GPU_DVFS_AVOID_SHUTDOWN_TEMP, gpu_temp, user_gpu_dvfs_max_temp, gpu_dvfs_limit);
 			sanitize_gpu_dvfs(true);
 
 		} else if (gpu_temp > gpu_dvfs_max_temp) {
