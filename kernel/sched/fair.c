@@ -2682,10 +2682,10 @@ unsigned int hmp_down_threshold = 256;
 unsigned int hmp_semiboost_up_threshold = 400;
 unsigned int hmp_semiboost_down_threshold = 150;
 #elif CONFIG_SCHED_HMP_CUSTOM
-unsigned int hmp_up_threshold = 128;
-unsigned int hmp_down_threshold = 32;
-unsigned int hmp_semiboost_up_threshold = 64;
-unsigned int hmp_semiboost_down_threshold = 16;
+unsigned int hmp_up_threshold = 256;
+unsigned int hmp_down_threshold = 64;
+unsigned int hmp_semiboost_up_threshold = 128;
+unsigned int hmp_semiboost_down_threshold = 32;
 #endif
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
