@@ -53,6 +53,7 @@ extern void set_suspend_cpufreq(void);
 #ifdef CONFIG_PM_DEVFREQ
 extern void set_devfreq_mif_pm_qos(void);
 extern void set_devfreq_disp_pm_qos(void);
+extern void set_devfreq_int_pm_qos(void);
 #endif
 
 bool is_suspend = false;
@@ -982,6 +983,7 @@ blank_exit:
 #ifdef CONFIG_PM_DEVFREQ
 	set_devfreq_mif_pm_qos();
 	set_devfreq_disp_pm_qos();
+	set_devfreq_int_pm_qos();
 #endif
 
 	return ret;
