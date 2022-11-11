@@ -65,12 +65,13 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 #define GPU_DVFS_MARGIN_TEMP			(10)	/* °C */
 #define GPU_DVFS_STEP_DOWN_TEMP			(2)	/* °C */
 
-#define FREQ_STEP_0	338000
-#define FREQ_STEP_1	455000
-#define FREQ_STEP_2	572000
-#define FREQ_STEP_3	683000
-#define FREQ_STEP_4	764000
-#define FREQ_STEP_5	839000
+#define FREQ_STEP_0	260000
+#define FREQ_STEP_1	338000
+#define FREQ_STEP_2	455000
+#define FREQ_STEP_3	572000
+#define FREQ_STEP_4	683000
+#define FREQ_STEP_5	764000
+#define FREQ_STEP_6	839000
 
 static DEFINE_MUTEX(poweroff_lock);
 static void sanitize_gpu_dvfs(bool sanitize);
@@ -1670,7 +1671,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 	}
 
 	if (sscanf(buf, "%d", &val)) {
-		if (val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+		if (val == 260000 || val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			platform->gpu_max_clock = val;
 			sanitize_gpu_dvfs(false);
 			pr_info("gpufreq: new max freq is %d kHz\n", platform->gpu_max_clock);
@@ -1783,7 +1784,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 	}
 
 	if (sscanf(buf, "%d", &val)) {
-		if (val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+		if (val == 260000 || val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			platform->gpu_min_clock = val;
 			pr_info("gpufreq: new min freq is %d kHz\n", platform->gpu_min_clock);
 			return count;
@@ -2263,7 +2264,9 @@ static int gpu_dvfs_check_thread(void *nothing)
 			sanitize_gpu_dvfs(true);
 
 		} else if (gpu_temp > gpu_dvfs_max_temp) {
-			if (gpu_dvfs_limit == FREQ_STEP_5)
+			if (gpu_dvfs_limit == FREQ_STEP_6)
+				freq = FREQ_STEP_5;
+			else if (gpu_dvfs_limit == FREQ_STEP_5)
 				freq = FREQ_STEP_4;
 			else if (gpu_dvfs_limit == FREQ_STEP_4)
 				freq = FREQ_STEP_3;
@@ -2283,8 +2286,10 @@ static int gpu_dvfs_check_thread(void *nothing)
 				freq = FREQ_STEP_3;
 			else if (gpu_dvfs_limit == FREQ_STEP_3)
 				freq = FREQ_STEP_4;
-			else
+			else if (gpu_dvfs_limit == FREQ_STEP_4)
 				freq = FREQ_STEP_5;
+			else
+				freq = FREQ_STEP_6;
 		}
 
 		prev_temp = gpu_temp;

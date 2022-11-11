@@ -784,23 +784,24 @@
 		#cooling-cells = <2>; /* min followed by max */
 		governor = "ondemand";
 		interactive_info = <0 75 0>;
-		gpu_dvfs_table_size = <6 7>; /*<row col>*/
+		gpu_dvfs_table_size = <7 7>; /*<row col>*/
 		gpu_dvfs_table = <
 		                    839000    43   75   1  2093000   0   0
 		                    764000    42   75   1  2093000   0   0
 		                    683000    38   75   1  2093000   0   0
 		                    572000    47   75   1  1794000   0   0
 		                    455000    38   75   1  1540000   0   0
-		                    338000    33   75   1  1352000   0   0 >;
+		                    338000    33   75   1  1352000   0   0
+		                    260000    33   75   1  1352000   0   0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
 		gpu_pmu_status_local_pwr_mask = <0xF>; /*0xF << 0*/
 		gpu_max_clock = <572000>;
 		gpu_max_clock_limit = <839000>;
-		gpu_min_clock = <338000>;
-		gpu_dvfs_start_clock = <338000>;
-		gpu_dvfs_bl_config_clock = <338000>;
+		gpu_min_clock = <260000>;
+		gpu_dvfs_start_clock = <260000>;
+		gpu_dvfs_bl_config_clock = <260000>;
 		gpu_default_voltage = <0>;
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
@@ -4597,9 +4598,9 @@
 				      0 1 764000
 				      0 2 683000
 				      0 3 572000
-				      0 5 455000
-				      0 7 338000
-				      0 9 TABLE_END>;
+				      0 4 455000
+				      0 5 338000
+				      0 6 TABLE_END>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 /*
