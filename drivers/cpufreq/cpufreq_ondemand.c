@@ -17,7 +17,6 @@
 #include <linux/slab.h>
 #include <linux/tick.h>
 #include "cpufreq_governor.h"
-#include <linux/pm_qos.h>
 
 #if IS_ENABLED(CONFIG_A2N)
 #include <linux/a2n.h>
@@ -654,149 +653,8 @@ void update_gov_tunables(bool is_suspend)
 }
 #endif
 
-#ifdef CONFIG_ARCH_EXYNOS
-static int cpufreq_ondemand_cluster1_min_qos_handler(struct notifier_block *b,
-						unsigned long val, void *v)
-{
-	struct od_cpu_dbs_info_s *pcpu;
-	struct od_dbs_tuners *od_tuners;
-	unsigned long flags;
-	int ret = NOTIFY_OK;
-	int cpu = 4; /* policy cpu of cluster 1 */
-
-	pcpu = &per_cpu(od_cpu_dbs_info, cpu);
-
-	mutex_lock(&cpufreq_governor_lock);
-
-	if (!pcpu->policy || !pcpu->policy->governor_data ||
-		!pcpu->policy->governor) {
-		ret = NOTIFY_BAD;
-		goto exit;
-	}
-
-	//trace_cpufreq_ondemand_cpu_min_qos(cpu, val, pcpu->policy->cur);
-
-	if (val < pcpu->policy->cur)
-		od_tuners = pcpu->policy->governor_data;
-
-exit:
-	mutex_unlock(&cpufreq_governor_lock);
-	return ret;
-}
-
-static struct notifier_block cpufreq_ondemand_cluster1_min_qos_notifier = {
-	.notifier_call = cpufreq_ondemand_cluster1_min_qos_handler,
-};
-
-static int cpufreq_ondemand_cluster1_max_qos_handler(struct notifier_block *b,
-						unsigned long val, void *v)
-{
-	struct od_cpu_dbs_info_s *pcpu;
-	struct od_dbs_tuners *od_tuners;
-	unsigned long flags;
-	int ret = NOTIFY_OK;
-	int cpu = 4; /* policy cpu of cluster1 */
-
-	pcpu = &per_cpu(od_cpu_dbs_info, cpu);
-
-	mutex_lock(&cpufreq_governor_lock);
-
-	if (!pcpu->policy || !pcpu->policy->governor_data ||
-		!pcpu->policy->governor) {
-		ret = NOTIFY_BAD;
-		goto exit;
-	}
-
-	//trace_cpufreq_ondemand_cpu_max_qos(cpu, val, pcpu->policy->cur);
-
-	if (val > pcpu->policy->cur)
-		od_tuners = pcpu->policy->governor_data;
-
-exit:
-	mutex_unlock(&cpufreq_governor_lock);
-	return ret;
-}
-
-static struct notifier_block cpufreq_ondemand_cluster1_max_qos_notifier = {
-	.notifier_call = cpufreq_ondemand_cluster1_max_qos_handler,
-};
-
-static int cpufreq_ondemand_cluster0_min_qos_handler(struct notifier_block *b,
-						unsigned long val, void *v)
-{
-	struct od_cpu_dbs_info_s *pcpu;
-	struct od_dbs_tuners *od_tuners;
-	unsigned long flags;
-	int ret = NOTIFY_OK;
-	int cpu = 0; /* policy cpu of cluster0 */
-
-	pcpu = &per_cpu(od_cpu_dbs_info, cpu);
-
-	mutex_lock(&cpufreq_governor_lock);
-
-	if (!pcpu->policy || !pcpu->policy->governor_data ||
-		!pcpu->policy->governor) {
-		ret = NOTIFY_BAD;
-		goto exit;
-	}
-
-	//trace_cpufreq_ondemand_cpu_min_qos(cpu, val, pcpu->policy->cur);
-
-	if (val < pcpu->policy->cur)
-		od_tuners = pcpu->policy->governor_data;
-
-exit:
-	mutex_unlock(&cpufreq_governor_lock);
-	return ret;
-}
-
-static struct notifier_block cpufreq_ondemand_cluster0_min_qos_notifier = {
-	.notifier_call = cpufreq_ondemand_cluster0_min_qos_handler,
-};
-
-static int cpufreq_ondemand_cluster0_max_qos_handler(struct notifier_block *b,
-						unsigned long val, void *v)
-{
-	struct od_cpu_dbs_info_s *pcpu;
-	struct od_dbs_tuners *od_tuners;
-	unsigned long flags;
-	int ret = NOTIFY_OK;
-	int cpu = 0; /* policy cpu of cluster0 */
-
-	pcpu = &per_cpu(od_cpu_dbs_info, cpu);
-
-	mutex_lock(&cpufreq_governor_lock);
-
-	if (!pcpu->policy ||!pcpu->policy->governor_data ||
-		!pcpu->policy->governor) {
-		ret = NOTIFY_BAD;
-		goto exit;
-	}
-
-	//trace_cpufreq_ondemand_cpu_max_qos(cpu, val, pcpu->policy->cur);
-
-	if (val > pcpu->policy->cur)
-		od_tuners = pcpu->policy->governor_data;
-
-exit:
-	mutex_unlock(&cpufreq_governor_lock);
-	return ret;
-}
-
-static struct notifier_block cpufreq_ondemand_cluster0_max_qos_notifier = {
-	.notifier_call = cpufreq_ondemand_cluster0_max_qos_handler,
-};
-#endif
-
 static int __init cpufreq_gov_dbs_init(void)
 {
-#ifdef CONFIG_ARCH_EXYNOS
-	pm_qos_add_notifier(PM_QOS_CLUSTER1_FREQ_MIN, &cpufreq_ondemand_cluster1_min_qos_notifier);
-	pm_qos_add_notifier(PM_QOS_CLUSTER1_FREQ_MAX, &cpufreq_ondemand_cluster1_max_qos_notifier);
-	pm_qos_add_notifier(PM_QOS_CLUSTER0_FREQ_MIN, &cpufreq_ondemand_cluster0_min_qos_notifier);
-	pm_qos_add_notifier(PM_QOS_CLUSTER0_FREQ_MAX, &cpufreq_ondemand_cluster0_max_qos_notifier);
-#endif
-
 	return cpufreq_register_governor(&cpufreq_gov_ondemand);
 }
 
