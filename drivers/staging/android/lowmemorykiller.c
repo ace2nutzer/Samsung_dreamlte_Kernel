@@ -241,6 +241,7 @@ static void lmk_event_init(void)
 
 static void show_memory(void)
 {
+#ifdef CONFIG_RBIN
 	unsigned long nr_rbin_free, nr_rbin_pool, nr_rbin_alloc, nr_rbin_file;
 
 	nr_rbin_free = global_page_state(NR_FREE_RBIN_PAGES);
@@ -248,6 +249,7 @@ static void show_memory(void)
 	nr_rbin_alloc = atomic_read(&rbin_allocated_pages);
 	nr_rbin_file = totalrbin_pages - nr_rbin_free - nr_rbin_pool
 					- nr_rbin_alloc;
+#endif
 
 #define K(x) ((x) << (PAGE_SHIFT - 10))
 	printk("Mem-Info:"
@@ -268,11 +270,15 @@ static void show_memory(void)
 		" slab_unreclaimable:%lukB"
 		" kernel_stack:%lukB"
 		" pagetables:%lukB"
+#ifdef CONFIG_CMA
 		" free_cma:%lukB"
+#endif
+#ifdef CONFIG_RBIN
 		" rbin_free:%lukB"
 		" rbin_pool:%lukB"
 		" rbin_alloc:%lukB"
 		" rbin_file:%lukB"
+#endif
 		"\n",
 		K(totalram_pages),
 		K(global_page_state(NR_FREE_PAGES)),
@@ -290,12 +296,18 @@ static void show_memory(void)
 		K(global_page_state(NR_SLAB_RECLAIMABLE)),
 		K(global_page_state(NR_SLAB_UNRECLAIMABLE)),
 		K(global_page_state(NR_KERNEL_STACK)),
-		K(global_page_state(NR_PAGETABLE)),
-		K(global_page_state(NR_FREE_CMA_PAGES)),
+		K(global_page_state(NR_PAGETABLE))
+#ifdef CONFIG_CMA
+		,
+		K(global_page_state(NR_FREE_CMA_PAGES))
+#endif
+#ifdef CONFIG_RBIN
+		,
 		K(nr_rbin_free),
 		K(nr_rbin_pool),
 		K(nr_rbin_alloc),
 		K(nr_rbin_file)
+#endif
 		);
 #undef K
 }
@@ -326,9 +338,24 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				global_page_state(NR_SHMEM) -
 				global_page_state(NR_UNEVICTABLE) -
 				total_swapcache_pages();
-
+#ifdef CONFIG_RBIN
 	unsigned long nr_rbin_free, nr_rbin_pool, nr_rbin_alloc, nr_rbin_file;
+#endif
+#ifdef CONFIG_CMA
+	unsigned long nr_cma_free, nr_cma_file;
 
+	if (((sc->gfp_mask & __GFP_CMA) != __GFP_CMA)
+#ifdef CONFIG_RBIN
+			|| ((sc->gfp_mask & (__GFP_CMA|__GFP_RBIN)) == (__GFP_CMA|__GFP_RBIN))
+#endif
+	){
+		nr_cma_free = global_page_state(NR_FREE_CMA_PAGES);
+		nr_cma_file = totalcma_pages - nr_cma_free;
+		other_free -= nr_cma_free;
+		other_file -= nr_cma_file;
+	}
+#endif
+#ifdef CONFIG_RBIN
 	if ((sc->gfp_mask & __GFP_RBIN) != __GFP_RBIN) {
 		nr_rbin_free = global_page_state(NR_FREE_RBIN_PAGES);
 		nr_rbin_pool = atomic_read(&rbin_pool_pages);
@@ -338,6 +365,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		other_free -= nr_rbin_free;
 		other_file -= nr_rbin_file;
 	}
+#endif
 
 	if (lowmem_adj_size < array_size)
 		array_size = lowmem_adj_size;

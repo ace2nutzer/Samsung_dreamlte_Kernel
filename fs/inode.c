@@ -169,11 +169,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	mapping->flags = 0;
 	atomic_set(&mapping->i_mmap_writable, 0);
 #ifdef CONFIG_RBIN
-	if ((sb->s_flags & MS_RDONLY) && !shmem_mapping(mapping))
-		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE |
-					__GFP_RBIN);
-	else
-		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
+	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE | __GFP_RBIN);
 #else
 	mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE);
 #endif
