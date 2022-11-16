@@ -203,9 +203,7 @@ static int do_cpu_hotplug(bool fast_hotplug)
 	if (fast_hotplug) {
 		struct cpumask temp;
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		cpumask_and(&temp, &hmp_fast_cpu_mask, cpu_online_mask);
-#endif
 		cpumask_andnot(&temp, &temp, &disable_cpus);
 		if (cpumask_empty(&temp)) {
 			mutex_unlock(&cpu_hotplug.lock);
@@ -374,14 +372,13 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf,
 		size_t count)
 {
-/*
 	int input;
 
 	if (!sscanf(buf, "%d", &input))
 		return -EINVAL;
 
 	control_cpu_hotplug(!!input);
-*/
+
 	return count;
 }
 
@@ -504,7 +501,7 @@ static int __init cpu_hotplug_init(void)
 	register_pm_notifier(&exynos_cpu_hotplug_nb);
 
 	/* Enable cpu_hotplug */
-	//update_enable_flag(true);
+	update_enable_flag(true);
 
 	return 0;
 }
