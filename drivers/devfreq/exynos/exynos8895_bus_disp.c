@@ -25,8 +25,6 @@
 #include <soc/samsung/cal-if.h>
 #include "../governor.h"
 
-extern bool is_suspend;
-
 #define USE_MIN_MAX_FREQ_FROM_DT
 
 static struct exynos_devfreq_data *_data = NULL;
@@ -63,7 +61,7 @@ static int exynos8895_devfreq_disp_suspend(struct exynos_devfreq_data *data)
 	return 0;
 }
 
-void set_devfreq_disp_pm_qos(void)
+void set_devfreq_disp_pm_qos(bool is_suspend)
 {
 	if (_data == NULL) {
 		pr_err("%s: _data is NULL !!\n", __func__);

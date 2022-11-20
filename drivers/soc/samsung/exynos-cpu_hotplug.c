@@ -18,6 +18,10 @@
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
+extern bool is_suspend;
+static bool hotplug_big_cpu_suspend = false;
+void should_hotplug_big_cpu(void);
+
 static int cpu_hotplug_in(const struct cpumask *mask)
 {
 	int cpu, ret = 0;
@@ -378,6 +382,7 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		return -EINVAL;
 
 	control_cpu_hotplug(!!input);
+	should_hotplug_big_cpu();
 
 	return count;
 }
@@ -385,16 +390,77 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 static struct kobj_attribute cpu_hotplug_enabled =
 __ATTR(enabled, 0644, show_cpu_hotplug_enable, store_cpu_hotplug_enable);
 
+static ssize_t show_hotplug_big_cpu_suspend(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%s\n", hotplug_big_cpu_suspend ? "Y":"N");
+}
+
+static ssize_t store_hotplug_big_cpu_suspend(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf,
+		size_t count)
+{
+	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
+		hotplug_big_cpu_suspend = true;
+		should_hotplug_big_cpu();
+		return count;
+	}
+
+	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
+		hotplug_big_cpu_suspend = false;
+		should_hotplug_big_cpu();
+		return count;
+	}
+
+	pr_err("[%s:] Invalid cmd\n" , __func__);
+	return -EINVAL;
+}
+
+static struct kobj_attribute hotplug_big_cpu_suspend_attr =
+__ATTR(hotplug_big_cpu_suspend, 0644, show_hotplug_big_cpu_suspend, store_hotplug_big_cpu_suspend);
+
 static struct attribute *cpu_hotplug_attrs[] = {
 	&min_online_cpu.attr,
 	&max_online_cpu.attr,
 	&cpu_hotplug_enabled.attr,
+	&hotplug_big_cpu_suspend_attr.attr,
 	NULL,
 };
 
 static const struct attribute_group cpu_hotplug_group = {
 	.attrs = cpu_hotplug_attrs,
 };
+
+void should_hotplug_big_cpu(void)
+{
+	bool hotplug = false;
+	int ret = 0;
+	int cpu = 0;
+
+	if ((!cpu_hotplug.enabled && hotplug_big_cpu_suspend && is_suspend) ||
+			(!cpu_hotplug.enabled && !hotplug_big_cpu_suspend))
+		hotplug = true;
+	else
+		hotplug = false;
+
+	ret = lock_device_hotplug_sysfs();
+	if (ret) {
+		pr_err("%s: Error while lock_device_hotplug_sysfs() !!\n",__func__);
+		return;
+	}
+
+	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+		if (hotplug) {
+			if (cpu_online(cpu))
+				device_offline(get_cpu_device(cpu));
+		} else {
+			if (!cpu_online(cpu))
+				device_online(get_cpu_device(cpu));
+		}
+	}
+
+	unlock_device_hotplug();
+}
 
 static void __init cpu_hotplug_dt_init(void)
 {

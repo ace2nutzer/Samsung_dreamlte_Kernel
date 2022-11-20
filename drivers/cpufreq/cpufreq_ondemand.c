@@ -625,30 +625,46 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 void update_gov_tunables(bool is_suspend)
 {
-	int cpu = 0;
+	int cpu;
 	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
-	struct od_cpu_dbs_info_s *dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
-	struct cpufreq_policy *policy = dbs_info->cdbs.shared->policy;
-	struct dbs_data *dbs_data = policy->governor_data;
-	od_tuners_lit = dbs_data->tuners;
+	struct od_cpu_dbs_info_s *dbs_info;
+	struct cpufreq_policy *policy;
+	struct dbs_data *dbs_data;
 
-	cpu = 4;
-	dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
-	policy = dbs_info->cdbs.shared->policy;
-	dbs_data = policy->governor_data;
-	od_tuners_big = dbs_data->tuners;
+	for_each_cpu(cpu, &hmp_slow_cpu_mask) {
+		if (cpu_online(cpu)) {
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+			policy = dbs_info->cdbs.shared->policy;
+			dbs_data = policy->governor_data;
+			od_tuners_lit = dbs_data->tuners;
+				if (is_suspend) {
+					od_tuners_lit->up_threshold = up_threshold_suspend;
+					od_tuners_lit->boost = boost_suspend;
+				} else {
+					/* resumed */
+					od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
+					od_tuners_lit->boost = od_tuners_lit->boost_resume;
+				}
+			break;
+		}
+	}
 
-	if (is_suspend) {
-		od_tuners_lit->up_threshold = up_threshold_suspend;
-		od_tuners_lit->boost = boost_suspend;
-		od_tuners_big->up_threshold = up_threshold_suspend;
-		od_tuners_big->boost = boost_suspend;
-	} else {
-		/* resumed */
-		od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
-		od_tuners_lit->boost = od_tuners_lit->boost_resume;
-		od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
-		od_tuners_big->boost = od_tuners_big->boost_resume;
+	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+		if (cpu_online(cpu)) {
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+			policy = dbs_info->cdbs.shared->policy;
+			dbs_data = policy->governor_data;
+			od_tuners_big = dbs_data->tuners;
+			if (is_suspend) {
+				od_tuners_big->up_threshold = up_threshold_suspend;
+				od_tuners_big->boost = boost_suspend;
+			} else {
+				/* resumed */
+				od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
+				od_tuners_big->boost = od_tuners_big->boost_resume;
+			}
+			break;
+		}
 	}
 }
 #endif
