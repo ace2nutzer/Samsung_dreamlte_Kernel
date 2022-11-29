@@ -93,7 +93,7 @@ static struct sec_battery_info *_battery;
 extern void set_afc_disable(bool);
 extern unsigned int bootmode;
 
-#define CHARGER_CONTROL_VERSION		"3.2"
+#define CHARGER_CONTROL_VERSION		"3.3"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -1260,24 +1260,24 @@ static void calc_input_curr(void)
 static ssize_t curr_max_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sCharging Current:   \t%d mA\n\n", buf, charging_curr);
+	sprintf(buf, "%sCharging Current:   \t%dmA\n\n", buf, charging_curr);
 
-	sprintf(buf, "%sAC current max:   \t%u mA\n", buf, ac_curr_max);
-	sprintf(buf, "%sUSB-PD current max:   \t%u mA\n", buf, usbpd_curr_max);
-	sprintf(buf, "%sUSB-CD current max:   \t%u mA\n", buf, usbcd_curr_max);
-	sprintf(buf, "%sWC current max:   \t%u mA\n", buf, wc_curr_max);
-	sprintf(buf, "%sUSB 3.0 current max:   \t%u mA\n", buf, usb3_curr_max);
-	sprintf(buf, "%sUSB 2.0 current max:   \t%u mA\n\n", buf, usb2_curr_max);
+	sprintf(buf, "%sAC current max: %umA\n", buf, ac_curr_max);
+	sprintf(buf, "%sUSB-PD current max: %umA\n", buf, usbpd_curr_max);
+	sprintf(buf, "%sUSB-CD current max: %umA\n", buf, usbcd_curr_max);
+	sprintf(buf, "%sWC current max: %umA\n", buf, wc_curr_max);
+	sprintf(buf, "%sUSB-3.0 current max: %umA\n", buf, usb3_curr_max);
+	sprintf(buf, "%sUSB-2.0 current max: %umA\n\n", buf, usb2_curr_max);
 
-	sprintf(buf, "%sAC input current 12 V:   \t%u mA\n", buf, ac_in_curr_12v);
-	sprintf(buf, "%sAC input current 9 V:   \t%u mA\n\n", buf, ac_in_curr_9v);
+	sprintf(buf, "%sAC input current 12V: %umA\n", buf, ac_in_curr_12v);
+	sprintf(buf, "%sAC input current 9V: %umA\n\n", buf, ac_in_curr_9v);
 
-	sprintf(buf, "%sUSB-PD input current 12 V:   \t%u mA\n", buf, usbpd_in_curr_12v);
-	sprintf(buf, "%sUSB-PD input current 9 V:   \t%u mA\n\n", buf, usbpd_in_curr_9v);
+	sprintf(buf, "%sUSB-PD input current 12V: %umA\n", buf, usbpd_in_curr_12v);
+	sprintf(buf, "%sUSB-PD input current 9V: %umA\n\n", buf, usbpd_in_curr_9v);
 
-	sprintf(buf, "%sWC input current 12 V:   \t%u mA\n", buf, wc_in_curr_12v);
-	sprintf(buf, "%sWC input current 10 V:   \t%u mA\n", buf, wc_in_curr_10v);
-	sprintf(buf, "%sWC input current 9 V:   \t%u mA\n", buf, wc_in_curr_9v);
+	sprintf(buf, "%sWC input current 12V: %umA\n", buf, wc_in_curr_12v);
+	sprintf(buf, "%sWC input current 10V: %umA\n", buf, wc_in_curr_10v);
+	sprintf(buf, "%sWC input current 9V: %umA\n", buf, wc_in_curr_9v);
 
 	return strlen(buf);
 }
@@ -1308,7 +1308,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "ac=%u", &val)) {
 		if (val < 200 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200-%umA\n", max_curr);
 			goto err;
 		}
 		ac_curr_max = val;
@@ -1320,7 +1320,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usb2=%u", &val)) {
 		if (val < 100 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 100 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 100-%umA\n", max_curr);
 			goto err;
 		}
 		usb2_curr_max = val;
@@ -1329,7 +1329,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usb3=%u", &val)) {
 		if (val < 100 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 100 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 100-%umA\n", max_curr);
 			goto err;
 		}
 		usb3_curr_max = val;
@@ -1338,7 +1338,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usbpd=%u", &val)) {
 		if (val < 200 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200-%umA\n", max_curr);
 			goto err;
 		}
 		usbpd_curr_max = val;
@@ -1350,7 +1350,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "usbcd=%u", &val)) {
 		if (val < 200 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200-%umA\n", max_curr);
 			goto err;
 		}
 		usbcd_curr_max = val;
@@ -1359,7 +1359,7 @@ static ssize_t curr_max_store(struct kobject *kobj,
 
 	if (sscanf(buf, "wc=%u", &val)) {
 		if (val < 200 || val > max_curr) {
-			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
+			pr_err("[sec_batt] Out of valid range 200-%umA\n", max_curr);
 			goto err;
 		}
 		wc_curr_max = val;
@@ -1388,7 +1388,7 @@ SEC_BAT_ATTR_RW(curr_max);
 static ssize_t input_volt_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sInput Voltage: \t%u V\n", buf, input_volt);
+	sprintf(buf, "%sInput Voltage: %uV\n", buf, input_volt);
 
 	return strlen(buf);
 }
@@ -1409,9 +1409,9 @@ static ssize_t s8_plus_mode_show(struct kobject *kobj,
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
+	sprintf(buf,  "%s[Max allowed current: %umA]\n\n", buf, max_curr);
 
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V%s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1431,9 +1431,9 @@ static ssize_t note8_mode_show(struct kobject *kobj,
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
+	sprintf(buf,  "%s[Max allowed current: %umA]\n\n", buf, max_curr);
 
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V%s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1453,9 +1453,9 @@ static ssize_t s8_mode_show(struct kobject *kobj,
 	if (!max_curr && !is_s8_plus)
 		max_curr = 3000;
 
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
+	sprintf(buf,  "%s[Max allowed current: %umA]\n\n", buf, max_curr);
 
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V%s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1465,7 +1465,7 @@ SEC_BAT_ATTR_RO(s8_mode);
 static ssize_t batt_temp_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sBattery Temp: \t%d °C / %d °F\n", buf, batt_temp, ((batt_temp * 9) * 2 + 5) / 5 / 2 + 32);
+	sprintf(buf, "%sBattery Temp: %d°C / %d°F\n", buf, batt_temp, ((batt_temp * 9) * 2 + 5) / 5 / 2 + 32);
 
 	return strlen(buf);
 }
@@ -1475,7 +1475,7 @@ SEC_BAT_ATTR_RO(batt_temp);
 static ssize_t water_detection_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sWater detection:   \t%s \n", buf, water_detect ? "ENABLED" : "DISABLED");
+	sprintf(buf, "%sWater detection: %s\n", buf, water_detect ? "ENABLED" : "DISABLED");
 
 	return strlen(buf);
 }
@@ -1516,7 +1516,7 @@ SEC_BAT_ATTR_RW(water_detection);
 static ssize_t batt_idle_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sBattery IDLE: \t%s \n\n", buf, batt_idle ? "ENABLED" : "DISABLED");
+	sprintf(buf, "%sBattery IDLE: %s\n\n", buf, batt_idle ? "ENABLED" : "DISABLED");
 
 	return strlen(buf);
 }
@@ -1572,10 +1572,10 @@ static ssize_t batt_care_show(struct kobject *kobj,
 {
 	sprintf(buf,   "%s[Battery Care]\n\n", buf);
 
-	sprintf(buf, "%s[enabled] \t[%s]\n\n", buf, batt_care < 100 ? "*" : " ");
+	sprintf(buf, "%s[enabled] [%s]\n\n", buf, batt_care < 100 ? "*" : " ");
 
 	if (batt_care < 100)
-		sprintf(buf, "%s[Battery Care Level] \t[%u %%]\n", buf, batt_care);
+		sprintf(buf, "%s[Battery Care Level] [%u%%]\n", buf, batt_care);
 
 	return strlen(buf);
 }
@@ -1651,7 +1651,7 @@ static ssize_t fg_asoc_show(struct kobject *kobj,
 		}
 	}
 
-	sprintf(buf, "%sReal Battery Capacity: \t%d %%\n", buf, value.intval);
+	sprintf(buf, "%sReal Battery Capacity: %d%%\n", buf, value.intval);
 	return strlen(buf);
 }
 SEC_BAT_ATTR_RO(fg_asoc);
@@ -1659,7 +1659,7 @@ SEC_BAT_ATTR_RO(fg_asoc);
 static ssize_t batt_volt_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf, "%sBattery Voltage: \t%d mV\n", buf, _battery->voltage_now);
+	sprintf(buf, "%sBattery Voltage: %dmV\n", buf, _battery->voltage_now);
 
 	return strlen(buf);
 }
@@ -1670,7 +1670,7 @@ static ssize_t batt_max_temp_show(struct kobject *kobj,
 {
 	sprintf(buf,   "%s[Battery temperature control]\n\n", buf);
 
-	sprintf(buf, "%s[max_temp] \t[%u °C]\n", buf, batt_max_temp);
+	sprintf(buf, "%s[max_temp] [%u°C]\n", buf, batt_max_temp);
 
 	return strlen(buf);
 }
@@ -1734,7 +1734,7 @@ static ssize_t fg_fullcapnom_show(struct kobject *kobj,
 	psy_do_property(_battery->pdata->fuelgauge_name, get,
 		POWER_SUPPLY_PROP_ENERGY_NOW, value);
 
-	sprintf(buf, "%sReal Battery Capacity: \t%d mAh\n", buf, value.intval);
+	sprintf(buf, "%sReal Battery Capacity: %dmAh\n", buf, value.intval);
 	return strlen(buf);
 }
 SEC_BAT_ATTR_RO(fg_fullcapnom);
@@ -5407,31 +5407,31 @@ ssize_t sec_bat_show_attrs(struct device *dev,
 		break;
 	case BATT_TUNE_FLOAT_VOLTAGE:
 		ret = battery->pdata->chg_float_voltage;
-		pr_info("%s float voltage = %d mA",__func__, ret);
+		pr_info("%s float voltage = %dmA",__func__, ret);
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 				ret);
 		break;
 	case BATT_TUNE_INPUT_CHARGE_CURRENT:
 		ret = battery->pdata->charging_current[i].input_current_limit;
-		pr_info("%s input charge current = %d mA",__func__, ret);
+		pr_info("%s input charge current = %dmA",__func__, ret);
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 				ret);
 		break;
 	case BATT_TUNE_FAST_CHARGE_CURRENT:
 		ret = battery->pdata->charging_current[i].fast_charging_current;
-		pr_info("%s fast charge current = %d mA",__func__, ret);
+		pr_info("%s fast charge current = %dmA",__func__, ret);
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 				ret);
 		break;
 	case BATT_TUNE_UI_TERM_CURRENT_1ST:
 		ret = battery->pdata->full_check_current_1st;
-		pr_info("%s ui term current = %d mA",__func__, ret);
+		pr_info("%s ui term current = %dmA",__func__, ret);
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 				ret);
 		break;
 	case BATT_TUNE_UI_TERM_CURRENT_2ND:
 		ret = battery->pdata->full_check_current_2nd;
-		pr_info("%s ui term current = %d mA",__func__, ret);
+		pr_info("%s ui term current = %dmA",__func__, ret);
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 				ret);
 		break;
@@ -6461,7 +6461,7 @@ ssize_t sec_bat_store_attrs(
 		break;
 	case BATT_TUNE_FLOAT_VOLTAGE:
 		sscanf(buf, "%10d\n", &x);
-		pr_info("%s float voltage = %d mV",__func__, x);
+		pr_info("%s float voltage = %dmV",__func__, x);
 
 		if(x > 4000 && x <= 4400 ){
 			value.intval = x;
@@ -6471,7 +6471,7 @@ ssize_t sec_bat_store_attrs(
 		break;
 	case BATT_TUNE_INPUT_CHARGE_CURRENT:
 		sscanf(buf, "%10d\n", &x);
-		pr_info("%s input charge current = %d mA",__func__, x);
+		pr_info("%s input charge current = %dmA",__func__, x);
 
 		if(x >= 0 && x <= 4000 ){
 			for(i=0; i < SEC_BATTERY_CABLE_MAX; i++)
@@ -6484,7 +6484,7 @@ ssize_t sec_bat_store_attrs(
 		break;
 	case BATT_TUNE_FAST_CHARGE_CURRENT:
 		sscanf(buf, "%10d\n", &x);
-		pr_info("%s fast charge current = %d mA",__func__, x);
+		pr_info("%s fast charge current = %dmA",__func__, x);
 		if(x >= 0 && x <= 4000 ){
 			for(i=0; i < SEC_BATTERY_CABLE_MAX; i++)
 				battery->pdata->charging_current[i].fast_charging_current = x;
@@ -6496,7 +6496,7 @@ ssize_t sec_bat_store_attrs(
 		break;
 	case BATT_TUNE_UI_TERM_CURRENT_1ST:
 		sscanf(buf, "%10d\n", &x);
-		pr_info("%s ui term current = %d mA",__func__, x);
+		pr_info("%s ui term current = %dmA",__func__, x);
 
 		if(x > 0 && x < 1000 ){
 			battery->pdata->full_check_current_1st = x;
@@ -6504,7 +6504,7 @@ ssize_t sec_bat_store_attrs(
 		break;
 	case BATT_TUNE_UI_TERM_CURRENT_2ND:
 		sscanf(buf, "%10d\n", &x);
-		pr_info("%s ui term current = %d mA",__func__, x);
+		pr_info("%s ui term current = %dmA",__func__, x);
 
 		if(x > 0 && x < 1000 ){
 			battery->pdata->full_check_current_2nd = x;
