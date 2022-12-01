@@ -1,0 +1,41 @@
+This how-to is based to work on any Ubuntu or Ubuntu-based distros in 64-bit mode.
+
+Download required tools:
+1. Download tool for unpack/repack ramdisk "AIK-Linux" from https://forum.xda-developers.com/t/tool-android-image-kitchen-unpack-repack-kernel-ramdisk-win-android-linux-mac.2073775/
+2. Downlaod toolchain "gcc-arm-8.3-2019.03-x86_64-aarch64-linux-gnu" from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-a/downloads/8-3-2019-03
+
+3. Unpack a2n_kernel_g950x_9.x.zip to your HOME folder and don't change the structure of the files.
+4. Put the unpacked toolchain and AIK-Linux to your HOME folder.
+5. Grab the boot.img from "a2n_kernel_g950x_9.x" and copy it to the root folder of AIK-Linux
+6. Open a new terminal emulator in the AIK folder and unpack ramdisk:
+./unpackimg.sh --nosudo
+
+7. Open a new terminal emulator and download the source code:
+git clone https://github.com/ace2nutzer/Samsung_dreamlte_Kernel.git
+cd Samsung_dreamlte_Kernel
+
+8. Check the scripts:
+clean.sh
+edit_kernel_g950x.sh
+build_kernel_g950x.sh
+and adjust variables to your own.
+
+9. # cleanup source tree
+./clean.sh
+
+10. # edit kernel (enabled or disable drivers)
+./edit_kernel_g950x.sh
+
+11. # build kernel and create a flashable zip-file for e.g. TWRP
+./build_kernel_g950x.sh
+
+If the compilation will run without any errors, it'll give you a "a2n_kernel_g950x_9.x_user_build.zip" in the folder "a2n_kernel_g950x_9.x"
+
+### HOW TO FIX BUILD ERRORS ###
+e.g. if you get error: git: command not found or similar, then simply install the missing packages like this:
+open a new terminal emulator and install missing "git" tool:
+sudo apt-get install git
+
+### NOTE ###
+You are only allowed to download, edit, build and use the generated zip-file ONLY FOR YOUR OWN USAGE.
+!! DO NOT RESTRIBUTE !!
