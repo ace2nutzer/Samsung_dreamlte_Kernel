@@ -4,6 +4,23 @@
 # if you want to build for S8+ korean version, use "g955x_kor_defconfig" etc..
 # if you have a quad-core CPU with 2-threads per-cpu, then use JOBS=8
 
+# Created By @ace2nutzer xda
+# Modified By @v3rb0se xda
+
+echo "==========================="
+echo " Fetching Latest Wireguard "
+echo "==========================="
+# Fetching Missing Wireguard 
+
+
+bash fetch-wireguard.sh
+
+
+echo "========================"
+echo " Setting up Environment "
+echo "========================"
+
+
 # SETUP
 SOURCE_PATH=$HOME/Samsung_dreamlte_Kernel
 DEFCONFIG=g950x_defconfig
@@ -15,9 +32,24 @@ AIK=$HOME/AIK-Linux
 
 	rm arch/arm64/boot/dts/exynos/*dtb*
 
+echo "==================="
+echo " Compilation Start "
+echo "==================="
+
+
 	make -j$JOBS $DEFCONFIG
 
 	make -j$JOBS $@
+	
+	
+echo "================="
+echo " Compilation End "
+echo "================="
+
+
+echo "==============="
+echo " Zipping Stuff "
+echo "==============="
 
 	# copy modules
 	cp fs/cifs/cifs.ko $OUTPUT/system/lib/modules
@@ -64,4 +96,7 @@ AIK=$HOME/AIK-Linux
 	zip -r a2n_kernel_g950x_9.x_user_build.zip META-INF system boot.img
 
 	md5sum *.zip > *.md5
-
+	
+	
+	echo "Finished"
+	echo "you can find generated zip file inside $OUTPUT"
