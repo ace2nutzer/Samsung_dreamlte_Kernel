@@ -43,10 +43,6 @@ AIK=$HOME/AIK-Linux
 	cp net/wireguard/wireguard.ko $OUTPUT/system/lib/modules
 	cp net/l2tp/l2tp_core.ko $OUTPUT/system/lib/modules
 
-	# copy modules to ramdisk
-	cp crypto/crc32.ko $AIK/ramdisk/lib/modules
-	cp fs/f2fs/f2fs.ko $AIK/ramdisk/lib/modules
-
 	cp arch/arm64/boot/Image $AIK/split_img/boot.img-kernel
 
 	./tools/dtbtool -o $AIK/split_img/boot.img-dt arch/arm64/boot/dts/exynos/
