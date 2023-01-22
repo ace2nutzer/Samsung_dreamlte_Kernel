@@ -64,6 +64,9 @@ static unsigned int down_threshold = 0;
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 static unsigned int up_threshold_suspend = 95;
 static bool boost_suspend = false;
+
+static unsigned int up_threshold_resume = MICRO_FREQUENCY_UP_THRESHOLD;
+static bool boost_resume = DEF_BOOST;
 #endif
 
 static DEFINE_PER_CPU(struct od_cpu_dbs_info_s, od_cpu_dbs_info);
@@ -380,7 +383,7 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	od_tuners->up_threshold = input;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	od_tuners->up_threshold_resume = input;
+	up_threshold_resume = input;
 #endif
 
 	/* update down_threshold */
@@ -472,7 +475,7 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 	od_tuners->boost = input;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	od_tuners->boost_resume = input;
+	boost_resume = input;
 #endif
 
 	return count;
@@ -552,7 +555,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		tuners->up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-		tuners->up_threshold_resume = MICRO_FREQUENCY_UP_THRESHOLD;
+		tuners->up_threshold = up_threshold_resume;
 #endif
 		/*
 		 * In nohz/micro accounting case we set the minimum frequency
@@ -564,7 +567,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-		tuners->up_threshold_resume = DEF_FREQUENCY_UP_THRESHOLD;
+		tuners->up_threshold = up_threshold_resume;
 #endif
 		/* For correct statistics, we need 10 ticks for each measure */
 		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
@@ -576,7 +579,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 	tuners->boost = DEF_BOOST;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	tuners->boost_resume = DEF_BOOST;
+	tuners->boost = boost_resume;
 #endif
 
 	dbs_data->tuners = tuners;
@@ -642,8 +645,8 @@ void update_gov_tunables(bool is_suspend)
 					od_tuners_lit->boost = boost_suspend;
 				} else {
 					/* resumed */
-					od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
-					od_tuners_lit->boost = od_tuners_lit->boost_resume;
+					od_tuners_lit->up_threshold = up_threshold_resume;
+					od_tuners_lit->boost = boost_resume;
 				}
 			break;
 		}
@@ -660,8 +663,8 @@ void update_gov_tunables(bool is_suspend)
 				od_tuners_big->boost = boost_suspend;
 			} else {
 				/* resumed */
-				od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
-				od_tuners_big->boost = od_tuners_big->boost_resume;
+				od_tuners_big->up_threshold = up_threshold_resume;
+				od_tuners_big->boost = boost_resume;
 			}
 			break;
 		}
