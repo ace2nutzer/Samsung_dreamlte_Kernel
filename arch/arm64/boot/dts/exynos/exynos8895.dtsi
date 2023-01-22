@@ -4891,16 +4891,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head */
-			input_booster,cpu_freqs = <1703000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <1>;
-			input_booster,kfc_freqs = <1456000>;
+			input_booster,kfc_freqs = <0>;
 			input_booster,mif_freqs = <0>;
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <500>;
-			input_booster,tail_times = <500>;
-			input_booster,phase_times = <500>;
+			input_booster,head_times = <0>;
+			input_booster,tail_times = <0>;
+			input_booster,phase_times = <0>;
 		};
 		booster_key@3 {
 			input_booster,label = "TOUCH";
@@ -4910,16 +4910,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000>;
+			input_booster,cpu_freqs = <0>;
 			input_booster,hmp_boost = <1>;
-			input_booster,kfc_freqs = <1456000>;
+			input_booster,kfc_freqs = <0>;
 			input_booster,mif_freqs = <0>;
 			input_booster,int_freqs = <0>;
 
 			/* Time table */
-			input_booster,head_times = <500>;
-			input_booster,tail_times = <500>;
-			input_booster,phase_times = <500>;
+			input_booster,head_times = <0>;
+			input_booster,tail_times = <0>;
+			input_booster,phase_times = <0>;
 		};
 		booster_key@4 { // Input Booster +
 			input_booster,label = "MULTITOUCH";
@@ -4929,16 +4929,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1703000 1703000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <1456000 1456000>;
+			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 500>;
-			input_booster,tail_times = <500 500>;
-			input_booster,phase_times = <500 500>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@5 {
 			input_booster,label = "KEYBOARD";
@@ -4967,16 +4967,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1703000 1703000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <1456000 1456000>;
+			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 500>;
-			input_booster,tail_times = <500 500>;
-			input_booster,phase_times = <500 500>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@7 {
 			input_booster,label = "MOUSE WHEEL";
@@ -4986,16 +4986,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1703000 1703000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <1456000 1456000>;
+			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 500>;
-			input_booster,tail_times = <500 500>;
-			input_booster,phase_times = <500 500>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@8 {
 			input_booster,label = "PEN HOVER";
@@ -5005,16 +5005,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1703000 1703000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <1456000 1456000>;
+			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 500>;
-			input_booster,tail_times = <500 500>;
-			input_booster,phase_times = <500 500>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@9 {
 			input_booster,label = "PEN";
@@ -5024,16 +5024,16 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head 2_Tail*/
-			input_booster,cpu_freqs = <1703000 1703000>;
+			input_booster,cpu_freqs = <0 0>;
 			input_booster,hmp_boost = <1 1>;
-			input_booster,kfc_freqs = <1456000 1456000>;
+			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 5000>;
-			input_booster,tail_times = <500 500>;
-			input_booster,phase_times = <500 500>;
+			input_booster,head_times = <0 0>;
+			input_booster,tail_times = <0 0>;
+			input_booster,phase_times = <0 0>;
 		};
 		booster_key@10 {
 			input_booster,label = "KEY_TWO";
@@ -5084,8 +5084,21 @@
 			shared-cpus = "4-7";
 
 			user-default-qos = <0>;
+
+			min-limit {
+				ctrl-type = <PM_QOS_MIN_LIMIT>;
+				execution-mode = <AARCH64_MODE>;
+					/* big	    lit */
+				table = < 2808000 2002000 >;
+			};
+
+			max-limit {
+				ctrl-type = <PM_QOS_MAX_LIMIT>;
+				execution-mode = <AARCH64_MODE>;
+					/* big	    lit */
+				table = < 2808000 2002000 >;
+			};
+
 		};
-
 	};
-
 };
