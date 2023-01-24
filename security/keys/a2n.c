@@ -17,12 +17,6 @@ extern unsigned int lpcharge;
 static int set_a2n_allow(const char *buf, struct kernel_param *kp)
 {
 	unsigned int temp = 0;
-	static int tries = 0;
-
-	if (tries >= 3) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		return -EINVAL;
-	}
 
 	sscanf(buf, "%u", &temp);
 
@@ -42,7 +36,6 @@ static int set_a2n_allow(const char *buf, struct kernel_param *kp)
 		a2n_allow = false;
 		pr_info("[%s] a2n: bye bye !\n",__func__);
 	} else {
-		tries = tries +1;
 		pr_warn("[%s] a2n: wrong input !\n",__func__);
 		return -EINVAL;
 	}
