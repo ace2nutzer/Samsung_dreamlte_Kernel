@@ -409,9 +409,9 @@ static int dhdpcie_pm_suspend(struct device *dev)
 	DHD_BUS_BUSY_CLEAR_SUSPEND_IN_PROGRESS(bus->dhd);
 	dhd_os_busbusy_wake(bus->dhd);
 	DHD_GENERAL_UNLOCK(bus->dhd, flags);
-	pdev->state_saved = TRUE;
 
 	return ret;
+
 }
 
 static int dhdpcie_pm_prepare(struct device *dev)
@@ -449,6 +449,7 @@ static int dhdpcie_pm_resume(struct device *dev)
 	DHD_GENERAL_LOCK(bus->dhd, flags);
 	DHD_BUS_BUSY_SET_RESUME_IN_PROGRESS(bus->dhd);
 	DHD_GENERAL_UNLOCK(bus->dhd, flags);
+
 	if (!bus->dhd->dongle_reset)
 		ret = dhdpcie_set_suspend_resume(bus, FALSE);
 
@@ -456,7 +457,6 @@ static int dhdpcie_pm_resume(struct device *dev)
 	DHD_BUS_BUSY_CLEAR_RESUME_IN_PROGRESS(bus->dhd);
 	dhd_os_busbusy_wake(bus->dhd);
 	DHD_GENERAL_UNLOCK(bus->dhd, flags);
-	pdev->state_saved = TRUE;
 
 	return ret;
 }
@@ -773,6 +773,7 @@ static int dhdpcie_resume_dev(struct pci_dev *dev)
 		printf("%s:pci_set_power_state error %d \n", __FUNCTION__, err);
 		goto out;
 	}
+
 out:
 	return err;
 }
