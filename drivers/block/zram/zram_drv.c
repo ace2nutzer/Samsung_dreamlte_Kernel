@@ -1400,7 +1400,7 @@ compress_again:
 				__GFP_KSWAPD_RECLAIM |
 				__GFP_NOWARN |
 				__GFP_HIGHMEM
-#if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
+#if defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
 #endif
 				);
@@ -1409,7 +1409,7 @@ compress_again:
 		atomic64_inc(&zram->stats.writestall);
 		handle = zs_malloc(zram->mem_pool, comp_len,
 				GFP_NOIO | __GFP_HIGHMEM
-#if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
+#if defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
 #endif
 				);
