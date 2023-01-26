@@ -3440,7 +3440,7 @@
 			id = <0>;
 			type = "normal";
 			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -3451,7 +3451,7 @@
 			id = <1>;
 			type = "normal";
 			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -3462,7 +3462,7 @@
 			id = <2>;
 			type = "normal";
 			pm_qos_lit = <832000 832000 0>; /* SUHQA UHQA NORMAL */
-			pm_qos_big = <1170000 1170000 0>; /* SUHQA UHQA NORMAL */
+			pm_qos_big = <741000 741000 0>; /* SUHQA UHQA NORMAL */
 			pm_qos_hmp = <1 1 0>; /* SUHQA UHQA NORMAL */
 		};
 
@@ -5089,14 +5089,16 @@
 				ctrl-type = <PM_QOS_MIN_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2808000 2002000 >;
+				table = < 2808000 2002000
+					   741000 832000 >;
 			};
 
 			max-limit {
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2808000 2002000 >;
+				table = < 2808000 2002000
+					   741000 832000 >;
 			};
 
 		};
