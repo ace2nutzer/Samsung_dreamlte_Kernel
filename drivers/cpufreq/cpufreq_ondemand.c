@@ -32,7 +32,7 @@ extern unsigned int cpu4_dvfs_limit;
 #define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MIN_FREQUENCY_UP_THRESHOLD		(45)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
-#define DEF_BOOST				(1)
+#define DEF_BOOST				(0)
 #define IO_IS_BUSY				(0)
 
 /* Cluster 0 little cpu */

@@ -36,8 +36,8 @@
  *********************************************************************/
 
 /* custom DVFS */
-static unsigned int cpu_dvfs_max_temp = 75;
-static unsigned int user_cpu_dvfs_max_temp = 75;
+static unsigned int cpu_dvfs_max_temp = 60;
+static unsigned int user_cpu_dvfs_max_temp = 60;
 static unsigned int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
 static bool cpu_dvfs_debug = false;
@@ -604,13 +604,6 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
 	unsigned int tmp = 0;
-	static bool init = false;
-
-	if (!init) {
-		init = true;
-		tmp = 65;
-		goto out;
-	}
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
@@ -625,7 +618,7 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 			goto err;
 		}
 	}
-out:
+
 	user_cpu_dvfs_max_temp = tmp;
 	if ((cpu4_max_freq == FREQ_STEP_11) && (tmp > 90))
 		tmp = 90;

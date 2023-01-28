@@ -47,8 +47,8 @@ extern struct kbase_device *pkbdev;
 static struct exynos_context *platform = NULL;
 
 /* custom DVFS */
-static unsigned int gpu_dvfs_max_temp = 65;
-static unsigned int user_gpu_dvfs_max_temp = 65;
+static unsigned int gpu_dvfs_max_temp = 60;
+static unsigned int user_gpu_dvfs_max_temp = 60;
 static unsigned int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;
 static bool gpu_dvfs_debug = false;
@@ -78,7 +78,7 @@ static void sanitize_gpu_dvfs(bool sanitize);
 
 /* for ondemand gov */
 unsigned int gpu_up_threshold = 95;
-bool gpu_boost = true;
+bool gpu_boost = false;
 unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN		(25)
 #define GPU_MIN_UP_THRESHOLD		(45)
