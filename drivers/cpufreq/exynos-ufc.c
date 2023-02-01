@@ -79,7 +79,7 @@ static DEFINE_MUTEX(poweroff_lock);
  */
 #define SCALE_SIZE	2
 
-static int last_max_limit = -1;
+//static int last_max_limit = -1;
 static int sse_mode = 0;
 
 static ssize_t show_cpufreq_table(struct kobject *kobj,
@@ -447,6 +447,7 @@ static void disable_domain_cpus(struct exynos_cpufreq_domain *domain)
 	pm_qos_update_request(&cpu_online_max_qos_req, cpumask_weight(&mask));
 }
 
+#if 0
 static void cpufreq_max_limit_update(unsigned int input_freq)
 {
 	struct list_head *domains = get_domain_list();
@@ -543,11 +544,12 @@ static void cpufreq_max_limit_update(unsigned int input_freq)
 		set_max = true;
 	}
 }
+#endif
 
 static ssize_t store_cpufreq_max_limit(struct kobject *kobj, struct attribute *attr,
 					const char *buf, size_t count)
 {
-
+/*
 	int input;
 
 	if (sscanf(buf, "%8d", &input) < 1)
@@ -555,7 +557,7 @@ static ssize_t store_cpufreq_max_limit(struct kobject *kobj, struct attribute *a
 
 	last_max_limit = input;
 	cpufreq_max_limit_update(input);
-
+*/
 	return count;
 }
 
@@ -568,6 +570,7 @@ static ssize_t show_execution_mode_change(struct kobject *kobj,
 static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribute *attr,
 					const char *buf, size_t count)
 {
+/*
 	int input;
 	int prev_mode;
 
@@ -581,7 +584,7 @@ static ssize_t store_execution_mode_change(struct kobject *kobj, struct attribut
 		if (last_max_limit != -1)
 			cpufreq_max_limit_update(last_max_limit);
 	}
-
+*/
 	return count;
 }
 
@@ -967,8 +970,10 @@ static void init_pm_qos(struct exynos_cpufreq_domain *domain)
 {
 	pm_qos_add_request(&domain->user_min_qos_req,
 			domain->pm_qos_min_class, domain->min_freq);
+/*
 	pm_qos_add_request(&domain->user_max_qos_req,
 			domain->pm_qos_max_class, domain->max_freq);
+*/
 	pm_qos_add_request(&domain->user_min_qos_wo_boost_req,
 			domain->pm_qos_min_class, domain->min_freq);
 
