@@ -153,7 +153,7 @@ enum {
 /**
  * Default period for DVFS sampling
  */
-#define DEFAULT_PM_DVFS_PERIOD 20 /* 20ms */
+#define DEFAULT_PM_DVFS_PERIOD 40 /* 40ms */
 
 /**
  * Power Management poweroff tick granuality. This is in nanoseconds to
@@ -163,17 +163,17 @@ enum {
  * -# Power off one or more shader cores
  * -# Power off the entire GPU
  */
-#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (4000000) /* 4000us */
+#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (400000) /* 400us */
 
 /**
  * Power Manager number of ticks before shader cores are powered off
  */
-#define DEFAULT_PM_POWEROFF_TICK_SHADER (20) /* 4000-8000us */
+#define DEFAULT_PM_POWEROFF_TICK_SHADER (2) /* 400-800us */
 
 /**
  * Default scheduling tick granuality
  */
-#define DEFAULT_JS_SCHEDULING_PERIOD_NS    (20000000u) /* 20ms */
+#define DEFAULT_JS_SCHEDULING_PERIOD_NS    (100000000u) /* 100ms */
 
 /**
  * Default minimum number of scheduling ticks before jobs are soft-stopped.
@@ -181,12 +181,12 @@ enum {
  * This defines the time-slice for a job (which may be different from that of a
  * context)
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS       (10) /* 1000ms-2000ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS       (1) /* 100ms-200ms */
 
 /**
  * Default minimum number of scheduling ticks before CL jobs are soft-stopped.
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (10) /* 1000ms-2000ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (1) /* 100ms-200ms */
 
 /**
  * Default minimum number of scheduling ticks before jobs are hard-stopped
@@ -245,7 +245,7 @@ enum {
  * @note the resolution is nanoseconds (ns) here, because that's the format
  * often used by the OS.
  */
-#define DEFAULT_JS_CTX_TIMESLICE_NS (20000000) /* 20ms */
+#define DEFAULT_JS_CTX_TIMESLICE_NS (50000000) /* 50ms */
 
 /**
  * Perform GPU power down using only platform specific code, skipping DDK power

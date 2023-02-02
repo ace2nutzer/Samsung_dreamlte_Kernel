@@ -140,6 +140,7 @@ static ssize_t show_clock(struct device *dev, struct device_attribute *attr, cha
 	return ret;
 }
 
+#if 0
 static ssize_t set_clock(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int clk = 0;
@@ -196,6 +197,7 @@ static ssize_t set_clock(struct device *dev, struct device_attribute *attr, cons
 
 	return count;
 }
+#endif
 
 static ssize_t show_vol(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -1383,7 +1385,7 @@ static ssize_t show_cl_boost_disable(struct device *dev, struct device_attribute
  * This is used for obtaining information about the mali t series operating clock & framebuffer address,
  */
 
-DEVICE_ATTR(clock, S_IRUGO|S_IWUSR, show_clock, set_clock);
+DEVICE_ATTR(clock, S_IRUGO, show_clock, NULL);
 DEVICE_ATTR(vol, S_IRUGO, show_vol, NULL);
 DEVICE_ATTR(power_state, S_IRUGO, show_power_state, NULL);
 DEVICE_ATTR(asv_table, S_IRUGO, show_asv_table, NULL);
