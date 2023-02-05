@@ -1402,6 +1402,9 @@ compress_again:
 				__GFP_HIGHMEM
 #if defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
+#if defined(CONFIG_CMA)
+				| __GFP_CMA
+#endif
 #endif
 				);
 	if (!handle) {
@@ -1411,6 +1414,9 @@ compress_again:
 				GFP_NOIO | __GFP_HIGHMEM
 #if defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
+#if defined(CONFIG_CMA)
+				| __GFP_CMA
+#endif
 #endif
 				);
 		if (handle)
