@@ -1,0 +1,45 @@
+From e4685febdcf6cc28576aa6c93a15d57460d754e2 Mon Sep 17 00:00:00 2001
+From: ace2nutzer <ace2nutzer@gmail.com>
+Date: Tue, 7 Feb 2023 07:03:57 +0100
+Subject: [PATCH] net/wireguard: allow to build as module &
+fix build error for ipv6_dst_lookup_flow
+
+---
+ net/wireguard/Kconfig         | 2 +-
+ net/wireguard/compat/compat.h | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/net/wireguard/Kconfig b/net/wireguard/Kconfig
+index d34dfc3..06d19a3 100644
+--- a/net/wireguard/Kconfig
++++ b/net/wireguard/Kconfig
+@@ -1,5 +1,5 @@
+ config WIREGUARD
+-	bool "IP: WireGuard secure network tunnel"
++	tristate "IP: WireGuard secure network tunnel"
+ 	depends on NET && INET
+ 	depends on IPV6 || !IPV6
+ 	select NET_UDP_TUNNEL
+diff --git a/net/wireguard/compat/compat.h b/net/wireguard/compat/compat.h
+index d166ac2..01dfc94 100644
+--- a/net/wireguard/compat/compat.h
++++ b/net/wireguard/compat/compat.h
+@@ -87,11 +87,11 @@
+ #define ipv6_dst_lookup(a, b, c, d) ipv6_dst_lookup(b, c, d)
+ #endif
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 83)
+-#define ipv6_dst_lookup_flow(a, b, c, d) ipv6_dst_lookup_flow(b, c, d)
+-#elif (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 5) && LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(5, 3, 18) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0) && !defined(ISUBUNTU1904)) || (!defined(ISRHEL8) && !defined(ISDEBIAN) && !defined(ISUBUNTU1804) && LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 119) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 181) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 224) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 224) && !defined(ISUBUNTU1604) && !defined(ISRHEL7))
++//#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 83)
++//#define ipv6_dst_lookup_flow(a, b, c, d) ipv6_dst_lookup_flow(b, c, d)
++//#elif (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 5) && LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(5, 3, 18) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0) && !defined(ISUBUNTU1904)) || (!defined(ISRHEL8) && !defined(ISDEBIAN) && !defined(ISUBUNTU1804) && LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 119) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 181) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 224) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || (LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 224) && !defined(ISUBUNTU1604) && !defined(ISRHEL7))
+ #define ipv6_dst_lookup_flow(a, b, c, d) ipv6_dst_lookup(a, b, &dst, c) + (void *)0 ?: dst
+-#endif
++//#endif
+ 
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 12, 0) && IS_ENABLED(CONFIG_IPV6) && !defined(ISRHEL7)
+ #include <net/ipv6.h>
+-- 
+2.25.1
+

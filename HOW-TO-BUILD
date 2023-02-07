@@ -6,28 +6,32 @@ Download required tools:
 
 3. Unpack a2n_kernel_g950x_9.x.zip to your HOME folder and don't change the structure of the files.
 4. Put the unpacked toolchain and AIK-Linux to your HOME folder.
-5. Grab the boot.img from "a2n_kernel_g950x_9.x" and copy it to the root folder of AIK-Linux
-6. Open a new terminal emulator in the AIK folder and unpack ramdisk:
+5. Grab the boot.img from "a2n_kernel_g950x_9.x" and copy it to the root of AIK-Linux
+6. Open a new terminal emulator in the AIK-Linux folder and unpack ramdisk:
 ./unpackimg.sh --nosudo
 
-7. Open a new terminal emulator and download the source code:
+7. Open a new terminal emulator in your HOME folder and download the source code:
 git clone https://github.com/ace2nutzer/Samsung_dreamlte_Kernel.git
 cd Samsung_dreamlte_Kernel
+# apply wireguard patch
+git apply wireguard.patch
 
 8. Check the scripts:
 clean.sh
-edit_kernel_g950x.sh
-build_kernel_g950x.sh
+edit.sh
+build.sh
 and adjust variables to your own.
 
-9. # cleanup source tree
+### Steps to clean, edit and build the kernel ###
+
+1. # cleanup source tree
 ./clean.sh
 
-10. # edit kernel (enabled or disable drivers)
-./edit_kernel_g950x.sh
+2. # edit kernel (enabled or disable drivers)
+./edit.sh
 
-11. # build kernel and create a flashable zip-file for e.g. TWRP
-./build_kernel_g950x.sh
+3. # build kernel and create a flashable zip-file for e.g. TWRP
+./build.sh
 
 If the compilation will run without any errors, it'll give you a "a2n_kernel_g950x_9.x_user_build.zip" in the folder "a2n_kernel_g950x_9.x"
 
