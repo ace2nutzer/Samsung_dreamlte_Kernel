@@ -30,13 +30,18 @@
 
 #include "internal.h"
 
+#if defined(CONFIG_ZRAM)
+extern unsigned long zram_pool_pages;
+extern atomic64_t zram_stored_pages;
+#endif
+
 #define MAX_SCAN_TRY		(2)
 
 static unsigned long start_pfn, end_pfn;
 static unsigned long cached_scan_pfn;
 
 #define HPA_MIN_OOMADJ	100
-static unsigned long hpa_deathpending_timeout;
+static unsigned long hpa_deathpending_timeout = 0;
 
 static int test_task_flag(struct task_struct *p, int flag)
 {
@@ -56,18 +61,16 @@ static int test_task_flag(struct task_struct *p, int flag)
 
 static int hpa_killer(void)
 {
-	struct task_struct *tsk;
+	struct task_struct *tsk = NULL;
 	struct task_struct *selected = NULL;
-	unsigned long rem = 0;
-	int tasksize;
-	int selected_tasksize = 0;
+	int tasksize = 0;
 	short selected_oom_score_adj = HPA_MIN_OOMADJ;
 	int ret = 0;
 
 	rcu_read_lock();
 	for_each_process(tsk) {
-		struct task_struct *p;
-		short oom_score_adj;
+		struct task_struct *p = NULL;
+		short oom_score_adj = 0;
 
 		if (tsk->flags & PF_KTHREAD)
 			continue;
@@ -82,46 +85,51 @@ static int hpa_killer(void)
 		if (!p)
 			continue;
 
-		if (task_lmk_waiting(p)) {
+		if (task_lmk_waiting(p) &&
+				time_before_eq(jiffies, hpa_deathpending_timeout)) {
 			task_unlock(p);
-
-			if (time_before_eq(jiffies, hpa_deathpending_timeout)) {
-				rcu_read_unlock();
-				return ret;
-			}
-
-			continue;
+			rcu_read_unlock();
+			return ret;
 		}
+
 		oom_score_adj = p->signal->oom_score_adj;
 		tasksize = get_mm_rss(p->mm);
-		task_unlock(p);
-		if (tasksize <= 0 || oom_score_adj <= HPA_MIN_OOMADJ)
-			continue;
 
+#if defined(CONFIG_ZRAM)
+		if (atomic64_read(&zram_stored_pages)) {
+			tasksize += (int)zram_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
+				/ atomic64_read(&zram_stored_pages);
+		}
+#endif
+
+		if (oom_score_adj <= HPA_MIN_OOMADJ) {
+			task_unlock(p);
+			continue;
+		}
+
+		task_unlock(p);
+		if (tasksize <= 0)
+			continue;
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
-			if (oom_score_adj == selected_oom_score_adj &&
-			    tasksize <= selected_tasksize)
-				continue;
+			else
+				break;
 		}
 		selected = p;
-		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
 	}
 
 	if (selected) {
+		task_lock(selected);
+		send_sig(SIGKILL, selected, 0);
+		task_set_lmk_waiting(selected);
+		task_unlock(selected);
 		pr_info("HPA: Killing '%s' (%d), adj %hd freed %ldkB\n",
 				selected->comm, selected->pid,
 				selected_oom_score_adj,
-				selected_tasksize * (long)(PAGE_SIZE / 1024));
-		task_lock(selected);
-		send_sig(SIGKILL, selected, 0);
-		if (selected->mm)
-			task_set_lmk_waiting(selected);
-		task_unlock(selected);
+				tasksize * (long)(PAGE_SIZE / 1024));
 		hpa_deathpending_timeout = jiffies + HZ;
-		rem += selected_tasksize;
 	} else {
 		pr_info("HPA: no killable task\n");
 		ret = -ESRCH;

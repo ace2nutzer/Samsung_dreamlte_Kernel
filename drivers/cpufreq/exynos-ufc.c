@@ -796,7 +796,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 			continue;
 		}
 
-		if (cpu_dvfs_debug) {
+		if (unlikely(cpu_dvfs_debug)) {
 			if (cpu_temp > cpu_dvfs_peak_temp) {
 				cpu_dvfs_peak_temp = cpu_temp;
 				pr_info("%s: CPU DVFS: peak_temp: %u C\n", __func__, cpu_dvfs_peak_temp);

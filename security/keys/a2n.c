@@ -47,7 +47,7 @@ module_param_call(a2n_allow, set_a2n_allow, param_get_bool, &a2n_allow, 0644);
 static int __init a2n_init(void)
 {
 	a2n = 1;
-	a2n_allow = true;
+	a2n_allow = false;
 	pr_info("%s: initialized\n", __func__);
 	return 0;
 }

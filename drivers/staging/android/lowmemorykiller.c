@@ -71,7 +71,7 @@ static int lowmem_minfree[6] = {
 static int lowmem_minfree_size = 4;
 static uint32_t lowmem_lmkcount = 0;
 
-static unsigned long lowmem_deathpending_timeout;
+static unsigned long lowmem_deathpending_timeout = 0;
 
 #define lowmem_print(level, x...)			\
 	do {						\
@@ -83,7 +83,7 @@ static unsigned long lowmem_deathpending_timeout;
 extern u64 zswap_pool_pages;
 extern atomic_t zswap_stored_pages;
 #elif defined(CONFIG_ZRAM)
-extern u64 zram_pool_pages;
+extern unsigned long zram_pool_pages;
 extern atomic64_t zram_stored_pages;
 #endif
 
@@ -325,15 +325,15 @@ static unsigned long lowmem_count(struct shrinker *s,
 
 static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 {
-	struct task_struct *tsk;
+	struct task_struct *tsk = NULL;
 	struct task_struct *selected = NULL;
 	unsigned long rem = 0;
-	int tasksize;
-	int i;
+	int tasksize = 0;
+	int i = 0;
 	short min_score_adj = OOM_SCORE_ADJ_MAX + 1;
 	int minfree = 0;
-	int selected_tasksize = 0;
-	short selected_oom_score_adj;
+	short selected_oom_score_adj = 0;
+	static char adj_lvl = 0;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
 	int other_file = global_page_state(NR_FILE_PAGES) -
@@ -341,11 +341,11 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				global_page_state(NR_UNEVICTABLE) -
 				total_swapcache_pages();
 #ifdef CONFIG_CMA
-	unsigned long nr_cma_free, nr_cma_file;
+	unsigned long nr_cma_free = 0, nr_cma_file = 0;
 #endif
 
 #ifdef CONFIG_RBIN
-	unsigned long nr_rbin_free, nr_rbin_pool, nr_rbin_alloc, nr_rbin_file;
+	unsigned long nr_rbin_free = 0, nr_rbin_pool = 0, nr_rbin_alloc = 0, nr_rbin_file = 0;
 
 	if ((sc->gfp_mask & __GFP_RBIN) != __GFP_RBIN) {
 		nr_rbin_free = global_page_state(NR_FREE_RBIN_PAGES);
@@ -371,15 +371,16 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		array_size = lowmem_adj_size;
 	if (lowmem_minfree_size < array_size)
 		array_size = lowmem_minfree_size;
-	for (i = 0; i < array_size; i++) {
+
+	for (i = array_size - 1 - adj_lvl; i >= 0; i--) {
 		minfree = lowmem_minfree[i];
-		if (other_free < minfree && other_file < minfree) {
+		if ((other_free < minfree) && (other_file < minfree)) {
 			min_score_adj = lowmem_adj[i];
 			break;
 		}
 	}
 
-	lowmem_print(3, "lowmem_scan %lu, %x, ofree %d %d, ma %hd\n",
+	lowmem_print(4, "lowmem_scan %lu, %x, ofree %d %d, ma %hd\n",
 		     sc->nr_to_scan, sc->gfp_mask, other_free,
 		     other_file, min_score_adj);
 
@@ -393,8 +394,8 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 
 	rcu_read_lock();
 	for_each_process(tsk) {
-		struct task_struct *p;
-		short oom_score_adj;
+		struct task_struct *p = NULL;
+		short oom_score_adj = 0;
 
 		if (tsk->flags & PF_KTHREAD)
 			continue;
@@ -420,14 +421,14 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		if (atomic_read(&zswap_stored_pages)) {
 			lowmem_print(3, "shown tasksize : %d\n", tasksize);
 			tasksize += (int)zswap_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
-				/ atomic_read(&zswap_stored_pages);
+					/ atomic_read(&zswap_stored_pages);
 			lowmem_print(3, "real tasksize : %d\n", tasksize);
 		}
 #elif defined(CONFIG_ZRAM)
 		if (atomic64_read(&zram_stored_pages)) {
 			lowmem_print(3, "shown tasksize : %d\n", tasksize);
 			tasksize += (int)zram_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
-				/ atomic64_read(&zram_stored_pages);
+					/ atomic64_read(&zram_stored_pages);
 			lowmem_print(3, "real tasksize : %d\n", tasksize);
 		}
 #endif
@@ -438,26 +439,26 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
-			if (oom_score_adj == selected_oom_score_adj &&
-			    tasksize <= selected_tasksize)
-				continue;
+			else
+				break;
 		}
 		selected = p;
-		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
 		lowmem_print(2, "select '%s' (%d), adj %hd, size %d, to kill\n",
 			     p->comm, p->pid, oom_score_adj, tasksize);
 	}
 	if (selected) {
-		long cache_size = other_file * (long)(PAGE_SIZE / 1024);
-		long cache_limit = minfree * (long)(PAGE_SIZE / 1024);
-		long free = other_free * (long)(PAGE_SIZE / 1024);
+		long cache_size = 0, cache_limit = 0, free = 0;
 
 		task_lock(selected);
 		send_sig(SIGKILL, selected, 0);
-		if (selected->mm)
-			task_set_lmk_waiting(selected);
+		task_set_lmk_waiting(selected);
 		task_unlock(selected);
+
+		cache_size = other_file * (long)(PAGE_SIZE / 1024);
+		cache_limit = minfree * (long)(PAGE_SIZE / 1024);
+		free = other_free * (long)(PAGE_SIZE / 1024);
+
 		trace_lowmemory_kill(selected, cache_size, cache_limit, free);
 		lowmem_print(1, "Killing '%s' (%d) (tgid %d), adj %hd,\n"
 				 "   to free %ldkB on behalf of '%s' (%d) because\n"
@@ -465,20 +466,28 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				 "   Free memory is %ldkB above reserved\n",
 			     selected->comm, selected->pid, selected->tgid,
 			     selected_oom_score_adj,
-			     selected_tasksize * (long)(PAGE_SIZE / 1024),
+			     tasksize * (long)(PAGE_SIZE / 1024),
 			     current->comm, current->pid,
 			     cache_size, cache_limit,
 			     min_score_adj,
 			     free);
-		if (lowmem_debug_level)
-			show_memory();
-		lowmem_deathpending_timeout = jiffies + HZ;
-		rem += selected_tasksize;
-		lowmem_lmkcount++;
-	}
 
-	lowmem_print(4, "lowmem_scan %lu, %x, return %lu\n",
-		     sc->nr_to_scan, sc->gfp_mask, rem);
+		if (unlikely(lowmem_debug_level > 4))
+			show_memory();
+
+		lowmem_deathpending_timeout = jiffies + HZ;
+		rem = tasksize;
+		lowmem_lmkcount++;
+		adj_lvl = 0;
+
+		lowmem_print(4, "lowmem_scan %lu, %x, return %lu\n",
+			     sc->nr_to_scan, sc->gfp_mask, rem);
+	} else {
+		if ((array_size -1) > adj_lvl)
+			adj_lvl++;
+		lowmem_print(2, "lowmem_scan: no killable task for oom_score_adj %hd\n",
+			     min_score_adj);
+	}
 	rcu_read_unlock();
 
 	if (selected)

@@ -2233,7 +2233,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 			continue;
 		}
 
-		if (gpu_dvfs_debug) {
+		if (unlikely(gpu_dvfs_debug)) {
 			if (gpu_temp > gpu_dvfs_peak_temp) {
 				gpu_dvfs_peak_temp = gpu_temp;
 				pr_info("%s: GPU DVFS: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
