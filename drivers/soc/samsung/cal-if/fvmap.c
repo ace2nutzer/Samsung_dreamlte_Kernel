@@ -328,15 +328,15 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 				if (old->table[j].rate == 683000)
 					old->table[j].volt = 750000;
 				else if (old->table[j].rate == 764000)
-					old->table[j].volt = 775000;
-				else if (old->table[j].rate == 839000)
 					old->table[j].volt = 800000;
+				else if (old->table[j].rate == 839000)
+					old->table[j].volt = 850000;
 			}
 
 			/* hardcoded cpucl1 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl1") == 0) {
 				if (old->table[j].rate == 1794000)
-					old->table[j].volt = 1125000;
+					old->table[j].volt = 1135000;
 				else if (old->table[j].rate == 1898000)
 					old->table[j].volt = 1150000;
 				else if (old->table[j].rate == 2002000)
@@ -346,7 +346,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 			/* hardcoded cpucl0 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl0") == 0) {
 				if (old->table[j].rate == 2496000)
-					old->table[j].volt = 1025000;
+					old->table[j].volt = 1035000;
 				else if (old->table[j].rate == 2652000)
 					old->table[j].volt = 1125000;
 				else if (old->table[j].rate == 2704000)
