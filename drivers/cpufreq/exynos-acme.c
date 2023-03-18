@@ -1119,8 +1119,8 @@ free_table:
 }
 
 /* check jig detection by boot param */
-#if defined(CONFIG_SEC_PM) && defined(CONFIG_SEC_FACTORY)
-bool jig_attached = false;
+#if defined(CONFIG_SEC_PM)
+static bool jig_attached = false;
 
 static __init int get_jig_status(char *arg)
 {
@@ -1177,7 +1177,7 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	/* In case of factory mode, if jig cable is attached,
 	 * set cpufreq max limit as frequency of "pm_qos-jigbooting" in device tree.
 	 */
-#if defined(CONFIG_SEC_PM) && defined(CONFIG_SEC_FACTORY)
+#if defined(CONFIG_SEC_PM)
 	pr_info("%s:jig_attached = %d\n", __func__, jig_attached);
 
 	if(jig_attached && !of_property_read_u32(dn, "pm_qos-jigbooting", &val)) {	
