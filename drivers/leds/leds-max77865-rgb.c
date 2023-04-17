@@ -120,6 +120,9 @@ static bool disable_lowpow_mode_r = false;
 static bool disable_lowpow_mode_g = false;
 static bool disable_lowpow_mode_b = false;
 
+/* allow to force lowpower mode in userspace */
+static bool enable_lowpow_mode_r = false;
+
 extern int get_lcd_info(char *arg);
 static unsigned int octa_color = 0x0;
 
@@ -237,7 +240,9 @@ static void max77865_rgb_set_state(struct led_classdev *led_cdev,
 		/* apply brightness ratio for optimize each led brightness*/
 		switch(n) {
 		case RED:
-			if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_r))
+			if (enable_lowpow_mode_r)
+				brightness = brightness * brightness_ratio_r_low / 100;
+			else if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_r))
 				brightness = brightness * brightness_ratio_r_low / 100;
 			else
 				brightness = brightness * brightness_ratio_r / 100;
@@ -643,7 +648,9 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 		} else {
-			if (disable_lowpow_mode_r)
+			if (enable_lowpow_mode_r)
+				max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_ALWAYS_ON);
+			else if (disable_lowpow_mode_r)
 				max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_ALWAYS_ON);
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_ALWAYS_ON);
@@ -652,7 +659,9 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		break;
 	case CHARGING_ERR:
 		max77865_rgb_blink(dev, 500, 500);
-		if (disable_lowpow_mode_r)
+		if (enable_lowpow_mode_r)
+			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
+		else if (disable_lowpow_mode_r)
 			max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_BLINK);
@@ -666,7 +675,9 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		break;
 	case LOW_BATTERY:
 		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
-		if (disable_lowpow_mode_r)
+		if (enable_lowpow_mode_r)
+			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
+		else if (disable_lowpow_mode_r)
 			max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_BLINK);
@@ -732,7 +743,9 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 
 	/* In user case, LED current is restricted to less than tuning value */
 	if (led_r_brightness != 0) {
-		if (disable_lowpow_mode_r)
+		if (enable_lowpow_mode_r)
+			led_r_brightness = (led_r_brightness * low_powermode_current) / LED_MAX_CURRENT;
+		else if (disable_lowpow_mode_r)
 			led_r_brightness = (led_r_brightness * normal_powermode_current) / LED_MAX_CURRENT;
 		else
 			led_r_brightness = (led_r_brightness * led_dynamic_current) / LED_MAX_CURRENT;
@@ -1156,9 +1169,52 @@ out:
 }
 LED_RGB_ATTR_RW(disable_lowpow_mode);
 
+static ssize_t enable_lowpow_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf,   "%s[LED-RGB: enable lowpower mode]\n\n", buf);
+
+	sprintf(buf, "%s[RED]\t[%s]\n", buf, enable_lowpow_mode_r ? "*" : " ");
+
+	return strlen(buf);
+}
+
+static ssize_t enable_lowpow_mode_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct max77865_rgb *max77865_rgb = dev_get_drvdata(led_dev);
+	int tmp;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
+	}
+#endif
+
+	if (sscanf(buf, "red=%d", &tmp)) {
+		if (tmp < 0 || tmp > 1) {
+			pr_err("[led_rgb] Invaild input\n");
+			goto err;
+		}
+		enable_lowpow_mode_r = tmp;
+		goto out;
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+	return -EINVAL;
+
+out:
+	return count;
+}
+LED_RGB_ATTR_RW(enable_lowpow_mode);
+
 static struct attribute *led_rgb_attrs[] = {
 	&blink_delays_attr.attr,
 	&disable_lowpow_mode_attr.attr,
+	&enable_lowpow_mode_attr.attr,
 	NULL,
 };
 
