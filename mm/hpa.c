@@ -64,6 +64,7 @@ static int hpa_killer(void)
 	struct task_struct *tsk = NULL;
 	struct task_struct *selected = NULL;
 	int tasksize = 0;
+	int selected_tasksize = 0;
 	short selected_oom_score_adj = HPA_MIN_OOMADJ;
 	int ret = 0;
 
@@ -113,22 +114,25 @@ static int hpa_killer(void)
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
-			else
-				break;
+			if (oom_score_adj == selected_oom_score_adj &&
+					tasksize <= selected_tasksize)
+				continue;
 		}
 		selected = p;
+		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
 	}
 
 	if (selected) {
 		task_lock(selected);
 		send_sig(SIGKILL, selected, 0);
-		task_set_lmk_waiting(selected);
+		if (selected->mm)
+			task_set_lmk_waiting(selected);
 		task_unlock(selected);
 		pr_info("HPA: Killing '%s' (%d), adj %hd freed %ldkB\n",
 				selected->comm, selected->pid,
 				selected_oom_score_adj,
-				tasksize * (long)(PAGE_SIZE / 1024));
+				selected_tasksize * (long)(PAGE_SIZE / 1024));
 		hpa_deathpending_timeout = jiffies + HZ;
 	} else {
 		pr_info("HPA: no killable task\n");
