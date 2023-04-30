@@ -3282,7 +3282,11 @@ static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 
+#ifdef CONFIG_INCREASE_MAXIMUM_SWAPPINESS
+	if (val > 200)
+#else
 	if (val > 100)
+#endif
 		return -EINVAL;
 
 	if (css->parent)
