@@ -115,13 +115,11 @@ static bool led_charging = false;
 static unsigned int blink_on_delay = 500;
 static unsigned int blink_off_delay = 5000;
 
-/* allow to disable lowpower mode in userspace */
-static bool disable_lowpow_mode_r = false;
-static bool disable_lowpow_mode_g = false;
-static bool disable_lowpow_mode_b = false;
+/* allow to force normal current */
+static bool force_normal_current = false;
 
-/* allow to force lowpower mode in userspace */
-static bool enable_lowpow_mode_r = false;
+/* allow to force low current */
+static bool force_low_current = false;
 
 extern int get_lcd_info(char *arg);
 static unsigned int octa_color = 0x0;
@@ -240,21 +238,25 @@ static void max77865_rgb_set_state(struct led_classdev *led_cdev,
 		/* apply brightness ratio for optimize each led brightness*/
 		switch(n) {
 		case RED:
-			if (enable_lowpow_mode_r)
-				brightness = brightness * brightness_ratio_r_low / 100;
-			else if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_r))
+			if (force_normal_current)
+				brightness = brightness * brightness_ratio_r / 100;
+			else if ((force_low_current) || (led_lowpower_mode == 1))
 				brightness = brightness * brightness_ratio_r_low / 100;
 			else
 				brightness = brightness * brightness_ratio_r / 100;
 			break;
 		case GREEN:
-			if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_g))
+			if (force_normal_current)
+				brightness = brightness * brightness_ratio_g / 100;
+			else if ((force_low_current) || (led_lowpower_mode == 1))
 				brightness = brightness * brightness_ratio_g_low / 100;
 			else
 				brightness = brightness * brightness_ratio_g / 100;
 			break;
 		case BLUE:
-			if ((led_lowpower_mode == 1) && (!disable_lowpow_mode_b))
+			if (force_normal_current)
+				brightness = brightness * brightness_ratio_b / 100;
+			else if ((force_low_current) || (led_lowpower_mode == 1))
 				brightness = brightness * brightness_ratio_b_low / 100;
 			else
 				brightness = brightness * brightness_ratio_b / 100;
@@ -643,15 +645,17 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 
 	case CHARGING:
 		if (batt_idle) {
-			if (disable_lowpow_mode_b)
+			if (force_normal_current)
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+			else if (force_low_current)
+				max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 		} else {
-			if (enable_lowpow_mode_r)
-				max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_ALWAYS_ON);
-			else if (disable_lowpow_mode_r)
+			if (force_normal_current)
 				max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_ALWAYS_ON);
+			else if (force_low_current)
+				max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_ALWAYS_ON);
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_ALWAYS_ON);
 		}
@@ -659,44 +663,53 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		break;
 	case CHARGING_ERR:
 		max77865_rgb_blink(dev, 500, 500);
-		if (enable_lowpow_mode_r)
-			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
-		else if (disable_lowpow_mode_r)
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_BLINK);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_BLINK);
 		break;
 	case MISSED_NOTI:
 		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
-		if (disable_lowpow_mode_b)
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_BLINK);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_BLINK);
 		break;
 	case LOW_BATTERY:
 		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
-		if (enable_lowpow_mode_r)
-			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
-		else if (disable_lowpow_mode_r)
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_BLINK);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_BLINK);
 		break;
 	case FULLY_CHARGED:
-		if (disable_lowpow_mode_g)
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[GREEN], normal_powermode_current, LED_ALWAYS_ON);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], low_powermode_current, LED_ALWAYS_ON);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_ALWAYS_ON);
 		break;
 	case POWERING:
 		max77865_rgb_ramp(dev, 800, 800);
 		max77865_rgb_blink(dev, 200, 200);
-		if (disable_lowpow_mode_b)
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
-		if (disable_lowpow_mode_g)
+
+		if (force_normal_current)
 			max77865_rgb_set_state(&max77865_rgb->led[GREEN], normal_powermode_current, LED_BLINK);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], low_powermode_current, LED_BLINK);
 		else
 			max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_BLINK);
 		break;
@@ -743,26 +756,30 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 
 	/* In user case, LED current is restricted to less than tuning value */
 	if (led_r_brightness != 0) {
-		if (enable_lowpow_mode_r)
-			led_r_brightness = (led_r_brightness * low_powermode_current) / LED_MAX_CURRENT;
-		else if (disable_lowpow_mode_r)
+		if (force_normal_current)
 			led_r_brightness = (led_r_brightness * normal_powermode_current) / LED_MAX_CURRENT;
+		else if (force_low_current)
+			led_r_brightness = (led_r_brightness * low_powermode_current) / LED_MAX_CURRENT;
 		else
 			led_r_brightness = (led_r_brightness * led_dynamic_current) / LED_MAX_CURRENT;
 		if (led_r_brightness == 0)
 			led_r_brightness = 1;
 	}
 	if (led_g_brightness != 0) {
-		if (disable_lowpow_mode_g)
+		if (force_normal_current)
 			led_g_brightness = (led_g_brightness * normal_powermode_current) / LED_MAX_CURRENT;
+		else if (force_low_current)
+			led_g_brightness = (led_g_brightness * low_powermode_current) / LED_MAX_CURRENT;
 		else
 			led_g_brightness = (led_g_brightness * led_dynamic_current) / LED_MAX_CURRENT;
 		if (led_g_brightness == 0)
 			led_g_brightness = 1;
 	}
 	if (led_b_brightness != 0) {
-		if (disable_lowpow_mode_b)
+		if (force_normal_current)
 			led_b_brightness = (led_b_brightness * normal_powermode_current) / LED_MAX_CURRENT;
+		else if (force_low_current)
+			led_b_brightness = (led_b_brightness * low_powermode_current) / LED_MAX_CURRENT;
 		else
 			led_b_brightness = (led_b_brightness * led_dynamic_current) / LED_MAX_CURRENT;
 		if (led_b_brightness == 0)
@@ -1031,8 +1048,10 @@ void enable_blue_led(bool enable)
 		batt_idle = true;
 		if (led_charging && led_ongoing) {
 			max77865_rgb_reset(led_dev);
-			if (disable_lowpow_mode_b)
+			if (force_normal_current)
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+			else if (force_low_current)
+				max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 		}
@@ -1098,24 +1117,24 @@ out:
 }
 LED_RGB_ATTR_RW(blink_delays);
 
-static ssize_t disable_lowpow_mode_show(struct kobject *kobj,
+static ssize_t force_curr_mode_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	sprintf(buf,   "%s[LED-RGB: disable lowpower mode]\n\n", buf);
+	sprintf(buf, "%s[LED-RGB: force current mode]\n\n", buf);
 
-	sprintf(buf, "%s[RED]\t[%s]\n", buf, disable_lowpow_mode_r ? "*" : " ");
-	sprintf(buf, "%s[GREEN]\t[%s]\n", buf, disable_lowpow_mode_g ? "*" : " ");
-	sprintf(buf, "%s[BLUE]\t[%s]\n\n", buf, disable_lowpow_mode_b ? "*" : " ");
+	sprintf(buf, "%s[DYNAMIC MODE]\t[%s]\n\n", buf, !force_normal_current && !force_low_current ? "Y" : "N");
+
+	sprintf(buf, "%s[FORCE NORMAL]\t[%s]\n", buf, force_normal_current ? "Y" : "N");
+	sprintf(buf, "%s[FORCE LOW]\t[%s]\n", buf, force_low_current ? "Y" : "N");
 
 	return strlen(buf);
 }
 
-static ssize_t disable_lowpow_mode_store(struct kobject *kobj,
+static ssize_t force_curr_mode_store(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   const char *buf, size_t count)
 {
 	struct max77865_rgb *max77865_rgb = dev_get_drvdata(led_dev);
-	int tmp;
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
@@ -1124,97 +1143,39 @@ static ssize_t disable_lowpow_mode_store(struct kobject *kobj,
 	}
 #endif
 
-	if (sscanf(buf, "red=%d", &tmp)) {
-		if (tmp < 0 || tmp > 1) {
-			pr_err("[led_rgb] Invaild input\n");
-			goto err;
-		}
-		disable_lowpow_mode_r = tmp;
-		goto out;
-	}
-
-	if (sscanf(buf, "green=%d", &tmp)) {
-		if (tmp < 0 || tmp > 1) {
-			pr_err("[led_rgb] Invaild input\n");
-			goto err;
-		}
-		disable_lowpow_mode_g = tmp;
-		goto out;
-	}
-
-	if (sscanf(buf, "blue=%d", &tmp)) {
-		if (tmp < 0 || tmp > 1) {
-			pr_err("[led_rgb] Invaild input\n");
-			goto err;
-		}
-		disable_lowpow_mode_b = tmp;
-
-		if (batt_idle && led_charging && led_ongoing) {
-			max77865_rgb_reset(led_dev);
-			if (disable_lowpow_mode_b)
-				max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
-			else
-				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
-		}
-
-		goto out;
-	}
-
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
-	return -EINVAL;
-
-out:
-	return count;
-}
-LED_RGB_ATTR_RW(disable_lowpow_mode);
-
-static ssize_t enable_lowpow_mode_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	sprintf(buf,   "%s[LED-RGB: enable lowpower mode]\n\n", buf);
-
-	sprintf(buf, "%s[RED]\t[%s]\n", buf, enable_lowpow_mode_r ? "*" : " ");
-
-	return strlen(buf);
-}
-
-static ssize_t enable_lowpow_mode_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct max77865_rgb *max77865_rgb = dev_get_drvdata(led_dev);
-	int tmp;
-
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+	if (sysfs_streq(buf, "normal")) {
+		force_low_current = false;
+		force_normal_current = true;
+	} else if (sysfs_streq(buf, "low")) {
+		force_normal_current = false;
+		force_low_current = true;
+	} else if (sysfs_streq(buf, "dynamic")) {
+		force_normal_current = false;
+		force_low_current = false;
+	} else {
 		goto err;
 	}
-#endif
 
-	if (sscanf(buf, "red=%d", &tmp)) {
-		if (tmp < 0 || tmp > 1) {
-			pr_err("[led_rgb] Invaild input\n");
-			goto err;
-		}
-		enable_lowpow_mode_r = tmp;
-		goto out;
+	if (batt_idle && led_charging && led_ongoing) {
+		max77865_rgb_reset(led_dev);
+		if (force_normal_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 	}
 
+	return count;
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
-LED_RGB_ATTR_RW(enable_lowpow_mode);
+LED_RGB_ATTR_RW(force_curr_mode);
 
 static struct attribute *led_rgb_attrs[] = {
 	&blink_delays_attr.attr,
-	&disable_lowpow_mode_attr.attr,
-	&enable_lowpow_mode_attr.attr,
+	&force_curr_mode_attr.attr,
 	NULL,
 };
 
