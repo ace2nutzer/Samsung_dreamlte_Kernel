@@ -119,6 +119,8 @@ static LIST_HEAD(kbase_dev_list);
 
 #define KERNEL_SIDE_DDK_VERSION_STRING "K:" MALI_RELEASE_NAME "(GPL)"
 
+bool gpu_always_on = false;
+
 static int kbase_api_handshake(struct kbase_context *kctx,
 			       struct kbase_ioctl_version_check *version)
 {
@@ -1571,6 +1573,11 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
 		dev_err(dev, "power_policy: policy not found\n");
 		return -EINVAL;
 	}
+
+	if (sysfs_streq(buf, "always_on"))
+		gpu_always_on = true;
+	else
+		gpu_always_on = false;
 
 	kbase_pm_set_policy(kbdev, new_policy);
 

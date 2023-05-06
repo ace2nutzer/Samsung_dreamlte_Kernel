@@ -56,6 +56,8 @@ extern void set_devfreq_disp_pm_qos(bool is_suspend);
 extern void set_devfreq_int_pm_qos(bool is_suspend);
 #endif
 
+extern void set_gpu_policy(bool is_suspend);
+
 bool is_suspend = false;
 
 int decon_log_level = 4;
@@ -985,6 +987,9 @@ blank_exit:
 	set_devfreq_disp_pm_qos(is_suspend);
 	set_devfreq_int_pm_qos(is_suspend);
 #endif
+
+	set_gpu_policy(is_suspend);
+
 	return ret;
 }
 
