@@ -107,10 +107,6 @@
 #include "./platform/exynos/gpu_control.h"
 #endif
 
-#if IS_ENABLED(CONFIG_A2N)
-#include <linux/a2n.h>
-#endif
-
 /* GPU IRQ Tags */
 #define	JOB_IRQ_TAG	0
 #define MMU_IRQ_TAG	1
@@ -122,8 +118,6 @@ static DEFINE_MUTEX(kbase_dev_list_lock);
 static LIST_HEAD(kbase_dev_list);
 
 #define KERNEL_SIDE_DDK_VERSION_STRING "K:" MALI_RELEASE_NAME "(GPL)"
-
-bool gaming_mode = false;
 
 static int kbase_api_handshake(struct kbase_context *kctx,
 			       struct kbase_ioctl_version_check *version)
@@ -2478,13 +2472,6 @@ static ssize_t set_dvfs_period(struct device *dev,
 	int ret;
 	int dvfs_period;
 
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		return -EINVAL;
-	}
-#endif
-
 	kbdev = to_kbase_device(dev);
 	if (!kbdev)
 		return -ENODEV;
@@ -2498,16 +2485,6 @@ static ssize_t set_dvfs_period(struct device *dev,
 
 	kbdev->pm.dvfs_period = dvfs_period;
 	dev_dbg(kbdev->dev, "DVFS period: %dms\n", dvfs_period);
-
-	/* GAMING MODE */
-	if (dvfs_period < 40) {
-		gaming_mode = true;
-		pr_info("[%s:] Gaming mode: ON.\n",__func__);
-	} else {
-		gaming_mode = false;
-		pr_info("[%s:] Gaming mode: OFF.\n",__func__);
-	}
-
 	return count;
 }
 
