@@ -165,8 +165,13 @@ struct od_dbs_tuners {
 	unsigned int sampling_rate;
 	unsigned int sampling_down_factor;
 	unsigned int up_threshold;
+	unsigned int down_threshold;
 	unsigned int io_is_busy;
 	bool boost;
+	bool boost_suspend;
+	bool boost_resume;
+	unsigned int up_threshold_suspend;
+	unsigned int up_threshold_resume;
 };
 
 struct cs_dbs_tuners {
@@ -178,7 +183,6 @@ struct cs_dbs_tuners {
 };
 
 /* Common Governor data across policies */
-struct dbs_data;
 struct common_dbs_data {
 	/* Common across governors */
 	#define GOV_ONDEMAND		0

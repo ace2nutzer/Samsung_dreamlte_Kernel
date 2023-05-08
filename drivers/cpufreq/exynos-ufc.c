@@ -828,7 +828,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 			pr_warn("%s: CPU DVFS: CPU_DVFS_AVOID_SHUTDOWN_TEMP(%u C) reached ! - TEMP: %d C ! - cpu_dvfs_max_temp: %u C - cpu4_dvfs_limit: %u KHz\n",
 					__func__ , CPU_DVFS_AVOID_SHUTDOWN_TEMP, cpu_temp, user_cpu_dvfs_max_temp, cpu4_dvfs_limit);
 
-		} else if (cpu_temp > cpu_dvfs_max_temp) {
+		} else if (cpu_temp >= cpu_dvfs_max_temp) {
 			if (cpu4_dvfs_limit == FREQ_STEP_11)
 				freq = FREQ_STEP_10;
 			else if (cpu4_dvfs_limit == FREQ_STEP_10)

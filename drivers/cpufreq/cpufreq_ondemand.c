@@ -27,13 +27,14 @@ extern unsigned int cpu4_dvfs_limit;
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(50)
+#define DEF_SAMPLING_DOWN_FACTOR		(4)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(95)
-#define MIN_FREQUENCY_UP_THRESHOLD		(45)
+#define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 #define DEF_BOOST				(0)
 #define IO_IS_BUSY				(0)
+#define IGNORE_NICE_LOAD			(0)
 
 /* Cluster 0 little cpu */
 #define DEF_FREQUENCY_STEP_CL0_0               (832000)
@@ -58,16 +59,6 @@ extern unsigned int cpu4_dvfs_limit;
 #define DEF_FREQUENCY_STEP_CL1_9               (2652000)
 #define DEF_FREQUENCY_STEP_CL1_10              (2704000)
 #define DEF_FREQUENCY_STEP_CL1_11              (2808000)
-
-static unsigned int down_threshold = 0;
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND
-static unsigned int up_threshold_suspend = 95;
-static bool boost_suspend = false;
-
-static unsigned int up_threshold_resume = MICRO_FREQUENCY_UP_THRESHOLD;
-static bool boost_resume = DEF_BOOST;
-#endif
 
 static DEFINE_PER_CPU(struct od_cpu_dbs_info_s, od_cpu_dbs_info);
 
@@ -169,7 +160,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 		return;
 
 	/* Check for frequency decrease */
-	if (load < down_threshold) {
+	if (load < od_tuners->down_threshold) {
 		/* Little cpu 0 */
 		if (cpu == 0) {
 			if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
@@ -260,8 +251,8 @@ max_delay:
 
 static void update_down_threshold(struct od_dbs_tuners *od_tuners)
 {
-	down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
-	pr_info("[%s] for CPU - new value: %u\n",__func__, down_threshold);
+	od_tuners->down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
+	pr_info("[%s] for CPU %d - new value: %u\n",__func__, smp_processor_id(), od_tuners->down_threshold);
 }
 
 /************************** sysfs interface ************************/
@@ -383,7 +374,7 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	od_tuners->up_threshold = input;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	up_threshold_resume = input;
+	od_tuners->up_threshold_resume = input;
 #endif
 
 	/* update down_threshold */
@@ -475,7 +466,7 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 	od_tuners->boost = input;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	boost_resume = input;
+	od_tuners->boost_resume = input;
 #endif
 
 	return count;
@@ -490,19 +481,22 @@ show_store_one(od, io_is_busy);
 show_store_one(od, up_threshold);
 show_store_one(od, sampling_down_factor);
 show_store_one(od, ignore_nice_load);
-declare_show_sampling_rate_min(od);
 show_store_one(od, boost);
+show_one(od, down_threshold);
+declare_show_sampling_rate_min(od);
 
 gov_sys_pol_attr_rw(sampling_rate);
 gov_sys_pol_attr_rw(io_is_busy);
 gov_sys_pol_attr_rw(up_threshold);
 gov_sys_pol_attr_rw(sampling_down_factor);
 gov_sys_pol_attr_rw(ignore_nice_load);
-gov_sys_pol_attr_ro(sampling_rate_min);
 gov_sys_pol_attr_rw(boost);
+gov_sys_pol_attr_ro(sampling_rate_min);
+gov_sys_pol_attr_ro(down_threshold);
 
 static struct attribute *dbs_attributes_gov_sys[] = {
 	&sampling_rate_min_gov_sys.attr,
+	&down_threshold_gov_sys.attr,
 	&sampling_rate_gov_sys.attr,
 	&up_threshold_gov_sys.attr,
 	&sampling_down_factor_gov_sys.attr,
@@ -519,6 +513,7 @@ static struct attribute_group od_attr_group_gov_sys = {
 
 static struct attribute *dbs_attributes_gov_pol[] = {
 	&sampling_rate_min_gov_pol.attr,
+	&down_threshold_gov_pol.attr,
 	&sampling_rate_gov_pol.attr,
 	&up_threshold_gov_pol.attr,
 	&sampling_down_factor_gov_pol.attr,
@@ -553,39 +548,29 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		tuners->up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND
-		tuners->up_threshold = up_threshold_resume;
-#endif
-		/*
-		 * In nohz/micro accounting case we set the minimum frequency
-		 * not depending on HZ, but fixed (very low). The deferred
-		 * timer might skip some samples if idle/sleeping as needed.
-		*/
-		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
+		pr_info("%s: Idle micro accounting is supported.\n", __func__);
 	} else {
 		tuners->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND
-		tuners->up_threshold = up_threshold_resume;
-#endif
-		/* For correct statistics, we need 10 ticks for each measure */
-		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
+		pr_info("%s: Idle micro accounting is not supported.\n", __func__);
 	}
 
+	/* For correct statistics, we need 10 ticks for each measure */
+	dbs_data->min_sampling_rate = jiffies_to_usecs(10);
+
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
-	tuners->ignore_nice_load = 0;
+	tuners->ignore_nice_load = IGNORE_NICE_LOAD;
 	tuners->io_is_busy = IO_IS_BUSY;
 	tuners->boost = DEF_BOOST;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	tuners->boost = boost_resume;
+	tuners->boost_suspend = DEF_BOOST;
+	tuners->up_threshold_suspend = DEF_FREQUENCY_UP_THRESHOLD;
+	tuners->boost_resume = DEF_BOOST;
+	tuners->up_threshold_resume = DEF_FREQUENCY_UP_THRESHOLD;
 #endif
 
 	dbs_data->tuners = tuners;
-
 	update_down_threshold(tuners);
-
 	return 0;
 }
 
@@ -628,44 +613,49 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 void update_gov_tunables(bool is_suspend)
 {
-	int cpu;
+	int cpu_lit = 0;
+	int cpu_big = 4;
 	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
 	struct od_cpu_dbs_info_s *dbs_info;
 	struct cpufreq_policy *policy;
 	struct dbs_data *dbs_data;
 
-	for_each_cpu(cpu, &hmp_slow_cpu_mask) {
-		if (cpu_online(cpu)) {
-			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+	for_each_cpu(cpu_lit, &hmp_slow_cpu_mask) {
+		if (cpu_online(cpu_lit)) {
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu_lit);
 			policy = dbs_info->cdbs.shared->policy;
 			dbs_data = policy->governor_data;
 			od_tuners_lit = dbs_data->tuners;
-				if (is_suspend) {
-					od_tuners_lit->up_threshold = up_threshold_suspend;
-					od_tuners_lit->boost = boost_suspend;
-				} else {
-					/* resumed */
-					od_tuners_lit->up_threshold = up_threshold_resume;
-					od_tuners_lit->boost = boost_resume;
-				}
+			if (is_suspend) {
+				od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_suspend;
+				od_tuners_lit->boost = od_tuners_lit->boost_suspend;
+			} else {
+				/* resumed */
+				od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
+				od_tuners_lit->boost = od_tuners_lit->boost_resume;
+			}
+			/* update down_threshold */
+			update_down_threshold(od_tuners_lit);
 			break;
 		}
 	}
 
-	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-		if (cpu_online(cpu)) {
-			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+	for_each_cpu(cpu_big, &hmp_fast_cpu_mask) {
+		if (cpu_online(cpu_big)) {
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu_big);
 			policy = dbs_info->cdbs.shared->policy;
 			dbs_data = policy->governor_data;
 			od_tuners_big = dbs_data->tuners;
 			if (is_suspend) {
-				od_tuners_big->up_threshold = up_threshold_suspend;
-				od_tuners_big->boost = boost_suspend;
+				od_tuners_big->up_threshold = od_tuners_big->up_threshold_suspend;
+				od_tuners_big->boost = od_tuners_big->boost_suspend;
 			} else {
 				/* resumed */
-				od_tuners_big->up_threshold = up_threshold_resume;
-				od_tuners_big->boost = boost_resume;
+				od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
+				od_tuners_big->boost = od_tuners_big->boost_resume;
 			}
+			/* update down_threshold */
+			update_down_threshold(od_tuners_big);
 			break;
 		}
 	}
