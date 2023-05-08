@@ -297,10 +297,11 @@ static int gpu_dvfs_governor_dynamic(struct exynos_context *platform, int utiliz
 
 static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utilization)
 {
-	int max_clock_lev, min_clock_lev;
+	int max_clock_lev, min_clock_lev, dvfs_limit_lev;
 	DVFS_ASSERT(platform);
 	max_clock_lev = gpu_dvfs_get_level(platform->gpu_max_clock);
 	min_clock_lev = gpu_dvfs_get_level(platform->gpu_min_clock);
+	dvfs_limit_lev = gpu_dvfs_get_level(platform->user_max_lock_input);
 
 	/* nothing to do */
 	if ((max_clock_lev == min_clock_lev) && (platform->step == max_clock_lev))
@@ -311,6 +312,9 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 
 		/* if we are already at full speed then break out early */
 		if (platform->step == max_clock_lev)
+			return 0;
+
+		if (dvfs_limit_lev == platform->step)
 			return 0;
 
 		if (!gpu_boost) {

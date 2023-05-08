@@ -153,7 +153,7 @@ enum {
 /**
  * Default period for DVFS sampling
  */
-#define DEFAULT_PM_DVFS_PERIOD 40 /* 40ms */
+#define DEFAULT_PM_DVFS_PERIOD 20 /* 20ms */
 
 /**
  * Power Management poweroff tick granuality. This is in nanoseconds to
