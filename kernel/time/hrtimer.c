@@ -228,7 +228,11 @@ switch_hrtimer_base(struct hrtimer *timer, struct hrtimer_clock_base *base,
 
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	int this_cpu = smp_processor_id();
+#ifdef CONFIG_NO_HZ_COMMON
 	int cpu = get_nohz_timer_target();
+#else
+	int cpu = 0;
+#endif
 #endif
 
 	this_cpu_base = this_cpu_ptr(&hrtimer_bases);
@@ -237,8 +241,12 @@ switch_hrtimer_base(struct hrtimer *timer, struct hrtimer_clock_base *base,
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 	/* Switch the timer base to boot cluster on HMP */
 	if (timer->bounded_to_boot_cluster &&
-		cpumask_test_cpu(this_cpu, &hmp_fast_cpu_mask) &&
-		!pinned && this_cpu_base->migration_enabled) {
+		cpumask_test_cpu(this_cpu, &hmp_fast_cpu_mask) && !pinned
+#ifdef CONFIG_NO_HZ_COMMON
+		&& this_cpu_base->migration_enabled) {
+#else
+		) {
+#endif
 		int bound_cpu = 0;
 
 		if (unlikely(hrtimer_callback_running(timer)))
