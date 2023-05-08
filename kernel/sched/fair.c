@@ -2675,23 +2675,15 @@ unsigned long exynos_scale_freq_capacity(struct sched_domain *sd, int cpu)
  * The default values (512, 256) offer good responsiveness, but may need
  * tweaking suit particular needs.
  */
-
-#ifdef CONFIG_SCHED_HMP
-unsigned int hmp_up_threshold = 700;
-unsigned int hmp_down_threshold = 256;
-unsigned int hmp_semiboost_up_threshold = 400;
-unsigned int hmp_semiboost_down_threshold = 150;
-#elif CONFIG_SCHED_HMP_CUSTOM
-unsigned int hmp_up_threshold = 256;
-unsigned int hmp_down_threshold = 64;
-unsigned int hmp_semiboost_up_threshold = 128;
-unsigned int hmp_semiboost_down_threshold = 32;
-#endif
+static unsigned int hmp_up_threshold = 0;
+static unsigned int hmp_down_threshold = 0;
+static unsigned int hmp_semiboost_up_threshold = 0;
+static unsigned int hmp_semiboost_down_threshold = 0;
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 /* Ex: 256 = /4, 512 = /2, 1024 = x1, 1536 = x1.5, 2048 = x2 */
-u64 hmp_up_compst_ratio = 512; /* HMP UP COMPENSATION RATIO */
-u64 hmp_down_compst_ratio = 2048; /* HMP DOWN COMPENSATION RATIO */
+static u64 hmp_up_compst_ratio = 0; /* HMP UP COMPENSATION RATIO in DTS */
+static u64 hmp_down_compst_ratio = 0; /* HMP DOWN COMPENSATION RATIO in DTS */
 #endif	/* CONFIG_CPU_FREQ_GOV_SCHEDUTIL */
 
 #ifdef CONFIG_SCHED_HMP_TASK_BASED_SOFTLANDING
@@ -5647,13 +5639,13 @@ static struct sched_entity *hmp_get_lightest_task(struct sched_entity* se, int m
  */
 static int hmp_boostpulse_duration = 1000000; /* microseconds */
 static u64 hmp_boostpulse_endtime;
-static int hmp_boost_val;
-static int hmp_family_boost_val;
-static int hmp_semiboost_val;
+static int hmp_boost_val = 1;
+static int hmp_family_boost_val = 1;
+static int hmp_semiboost_val = 1;
 static int hmp_boostpulse;
 static int hmp_active_down_migration;
-static int hmp_aggressive_up_migration;
-static int hmp_aggressive_yield;
+static int hmp_aggressive_up_migration = 1;
+static int hmp_aggressive_yield = 1;
 static int hmp_wakeup_to_idle_cpu;
 static DEFINE_RAW_SPINLOCK(hmp_boost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_family_boost_lock);
@@ -11155,11 +11147,11 @@ static int __init hmp_param_init(void)
 		pr_warn("%s missing semiboost_down_threshold property\n",__func__);
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 	if (of_property_read_u64(hmp_param_node,
-				"up_compst_ratio", &hmp_up_compst_ratio))
+				"hmp_up_compst_ratio", &hmp_up_compst_ratio))
 		pr_warn("%s missing up_compst_ratio property\n",__func__);
 
 	if (of_property_read_u64(hmp_param_node,
-				"down_compst_ratio", &hmp_down_compst_ratio))
+				"hmp_down_compst_ratio", &hmp_down_compst_ratio))
 		pr_warn("%s missing down_compst_ratio property\n",__func__);
 #endif	/* CONFIG_CPU_FREQ_GOV_SCHEDUTIL */
 #else
