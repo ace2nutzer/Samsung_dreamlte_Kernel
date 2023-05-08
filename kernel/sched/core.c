@@ -6703,11 +6703,14 @@ sd_init(struct sched_domain_topology_level *tl, int cpu)
 	return sd;
 }
 
-int __weak cpu_cpu_flags(void)
+static int cpu_cpu_flags(void)
 {
+#ifdef CONFIG_DISABLE_CPU_SCHED_DOMAIN_BALANCE
+	return SD_NO_LOAD_BALANCE;
+#else
 	return 0;
+#endif
 }
-
 
 /*
  * Topology list, bottom-up.
