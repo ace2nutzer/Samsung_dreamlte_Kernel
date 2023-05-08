@@ -43,7 +43,7 @@ static int cpu_temp = 0;
 static bool cpu_dvfs_debug = false;
 extern unsigned int cpu4_max_freq;
 extern int get_cpu_temp(void);
-static unsigned int cpu_dvfs_sleep_time = 8;	/* ms */
+static unsigned int cpu_dvfs_sleep_time = 4;	/* ms */
 static struct pm_qos_request cpu_maxlock_cl1;
 unsigned int cpu4_dvfs_limit = 0;
 static unsigned int cpu_dvfs_min_temp = 0;
@@ -792,7 +792,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 		cpu_temp = get_cpu_temp();
 
 		if (cpu_temp == prev_temp) {
-			msleep(msecs_to_jiffies(cpu_dvfs_sleep_time));
+			msleep(cpu_dvfs_sleep_time);
 			continue;
 		}
 
@@ -879,7 +879,7 @@ static int cpu_dvfs_check_thread(void *nothing)
 
 		prev_temp = cpu_temp;
 		set_cpu_dvfs_limit(freq);
-		msleep(msecs_to_jiffies(cpu_dvfs_sleep_time));
+		msleep(cpu_dvfs_sleep_time);
 		continue;
 	}
 

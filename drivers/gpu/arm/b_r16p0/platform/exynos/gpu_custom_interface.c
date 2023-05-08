@@ -53,7 +53,7 @@ static unsigned int user_gpu_dvfs_max_temp = 60;
 static unsigned int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;
 static bool gpu_dvfs_debug = false;
-static unsigned int gpu_dvfs_sleep_time = 8;	/* ms */
+static unsigned int gpu_dvfs_sleep_time = 4;	/* ms */
 static unsigned int gpu_dvfs_limit = 0;
 static unsigned int gpu_dvfs_min_temp = 0;
 static struct task_struct *gpu_dvfs_thread = NULL;
@@ -2271,7 +2271,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 		gpu_temp = gpu_thermal_data->tmu_read(gpu_thermal_data);
 
 		if (gpu_temp == prev_temp) {
-			msleep(msecs_to_jiffies(gpu_dvfs_sleep_time));
+			msleep(gpu_dvfs_sleep_time);
 			continue;
 		}
 
@@ -2338,7 +2338,7 @@ static int gpu_dvfs_check_thread(void *nothing)
 
 		prev_temp = gpu_temp;
 		set_gpu_dvfs_limit(freq);
-		msleep(msecs_to_jiffies(gpu_dvfs_sleep_time));
+		msleep(gpu_dvfs_sleep_time);
 		continue;
 	}
 
