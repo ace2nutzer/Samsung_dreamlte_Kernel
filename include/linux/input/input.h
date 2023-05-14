@@ -498,16 +498,16 @@ struct t_input_booster_device_tree_gender {
 //______________________________________________________________________________	<<< in DTSI file >>>
 //______________________________________________________________________________	input_booster,type = <4>;	/* BOOSTER_DEVICE_KEYBOARD */
 //______________________________________________________________________________
-struct t_input_booster_device_tree_gender	key_booster_dt = {0,1,};			// type : 0,  level : 1
-struct t_input_booster_device_tree_gender	touchkey_booster_dt = {1,1,};		// type : 1,  level : 1
+struct t_input_booster_device_tree_gender	key_booster_dt = {0,2,};			// type : 0,  level : 2
+struct t_input_booster_device_tree_gender	touchkey_booster_dt = {1,2,};		// type : 1,  level : 2
 struct t_input_booster_device_tree_gender	touch_booster_dt = {2,2,};			// type : 2,  level : 2
-struct t_input_booster_device_tree_gender	multitouch_booster_dt = {3,1,};		// type : 3,  level : 1
-struct t_input_booster_device_tree_gender	keyboard_booster_dt = {4,1,};		// type : 4,  level : 1
-struct t_input_booster_device_tree_gender	mouse_booster_dt = {5,1,};			// type : 5,  level : 1
-struct t_input_booster_device_tree_gender	mouse_wheel_booster_dt = {6,1,};	// type : 6,  level : 1
-struct t_input_booster_device_tree_gender	hover_booster_dt = {7,1,};			// type : 7,  level : 1
-struct t_input_booster_device_tree_gender	pen_booster_dt = {8,1,};			// type : 8,  level : 1
-struct t_input_booster_device_tree_gender	key_two_booster_dt = {9,1,};			// type : 9,  level : 1
+struct t_input_booster_device_tree_gender	multitouch_booster_dt = {3,2,};		// type : 3,  level : 2
+struct t_input_booster_device_tree_gender	keyboard_booster_dt = {4,2,};		// type : 4,  level : 2
+struct t_input_booster_device_tree_gender	mouse_booster_dt = {5,2,};			// type : 5,  level : 2
+struct t_input_booster_device_tree_gender	mouse_wheel_booster_dt = {6,2,};	// type : 6,  level : 2
+struct t_input_booster_device_tree_gender	hover_booster_dt = {7,2,};			// type : 7,  level : 2
+struct t_input_booster_device_tree_gender	pen_booster_dt = {8,2,};			// type : 8,  level : 2
+struct t_input_booster_device_tree_gender	key_two_booster_dt = {9,2,};			// type : 9,  level : 2
 struct t_input_booster_device_tree_infor	*device_tree_infor = NULL;
 
 int ndevice_in_dt;

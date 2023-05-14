@@ -29,9 +29,13 @@
 #include <linux/rcupdate.h>
 #include "input-compat.h"
 
-#if defined(CONFIG_INPUT_BOOSTER) // Input Booster +
+#if defined(CONFIG_INPUT_BOOSTER)
 #include <linux/input/input.h>
-#endif // Input Booster -
+#include <linux/moduleparam.h>
+
+static bool use_input_booster = false;
+module_param(use_input_booster, bool, 0644);
+#endif
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@suse.cz>");
 MODULE_DESCRIPTION("Input core");
@@ -847,13 +851,8 @@ void input_event(struct input_dev *dev,
 	int idx;
 
 	if (is_event_supported(type, dev->evbit, EV_MAX)) {
-
-		spin_lock_irqsave(&dev->event_lock, flags);
-		input_handle_event(dev, type, code, value);
-		spin_unlock_irqrestore(&dev->event_lock, flags);
-
-#if defined(CONFIG_INPUT_BOOSTER) // Input Booster +
-		if(device_tree_infor != NULL) {
+#if defined(CONFIG_INPUT_BOOSTER)
+		if ((device_tree_infor != NULL) && (use_input_booster)) {
 			if (type == EV_SYN && input_count > 0) {
 				pr_debug("[Input Booster1] ==============================================\n");
 				input_booster(dev);
@@ -871,7 +870,10 @@ void input_event(struct input_dev *dev,
 				pr_debug("[Input Booster1] type = %x, code = %x, value =%x   Booster Event Exceeded\n", type, code, value);
 			}
 		}
-#endif  // Input Booster -
+#endif
+		spin_lock_irqsave(&dev->event_lock, flags);
+		input_handle_event(dev, type, code, value);
+		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
 }
 EXPORT_SYMBOL(input_event);
