@@ -2154,10 +2154,7 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 
 	sprintf(buf, "%s[gpu_temp]\t%d °C\n",buf, gpu_temp);
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, user_gpu_dvfs_max_temp);
-	if (!gpu_dvfs_debug)
-		sprintf(buf, "%s[peak_temp]\t%s\n",buf, "enable debug");
-	else
-		sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
 	sprintf(buf, "%s[tjmax]\t\t%d °C\n",buf, (int)GPU_DVFS_TJMAX);
 	sprintf(buf, "%s[dvfs_avoid_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_AVOID_SHUTDOWN_TEMP);
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_SHUTDOWN_TEMP);
@@ -2215,6 +2212,12 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_debug(struct kobject *kobj, struct kobj
 
 	pr_warn("%s: GPU DVFS: invalid input\n", __func__);
 	return -EINVAL;
+}
+
+static ssize_t show_kernel_sysfs_gpu_dvfs_peak_temp(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
+	return strlen(buf);
 }
 
 static void set_gpu_dvfs_limit(unsigned int freq)
@@ -2275,12 +2278,11 @@ static int gpu_dvfs_check_thread(void *nothing)
 			continue;
 		}
 
-		if (unlikely(gpu_dvfs_debug)) {
-			if (gpu_temp > gpu_dvfs_peak_temp) {
-				gpu_dvfs_peak_temp = gpu_temp;
-				pr_info("%s: GPU DVFS: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
-			}
-		}
+		if (gpu_temp > gpu_dvfs_peak_temp)
+			gpu_dvfs_peak_temp = gpu_temp;
+
+		if (gpu_dvfs_debug)
+			pr_info("%s: GPU DVFS: peak_temp: %u C\n", __func__, gpu_dvfs_peak_temp);
 
 		if (gpu_temp >= GPU_DVFS_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
@@ -2371,6 +2373,9 @@ static struct kobj_attribute user_min_clock_attribute =
 static struct kobj_attribute gpu_dvfs_max_temp_attribute =
 	__ATTR(gpu_dvfs_max_temp, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_dvfs_max_temp, set_kernel_sysfs_gpu_dvfs_max_temp);
 
+static struct kobj_attribute gpu_dvfs_peak_temp_attribute =
+	__ATTR(gpu_dvfs_peak_temp, S_IRUGO, show_kernel_sysfs_gpu_dvfs_peak_temp, NULL);
+
 static struct kobj_attribute gpu_dvfs_debug_attribute =
 	__ATTR(gpu_dvfs_debug, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_dvfs_debug, set_kernel_sysfs_gpu_dvfs_debug);
 
@@ -2420,17 +2425,16 @@ static struct attribute *attrs[] = {
 	&user_max_clock_attribute.attr,
 	&user_min_clock_attribute.attr,
 	&gpu_dvfs_max_temp_attribute.attr,
+	&gpu_dvfs_peak_temp_attribute.attr,
 	&gpu_dvfs_debug_attribute.attr,
 	&boost_attribute.attr,
 	&up_threshold_attribute.attr,
-#endif /* #ifdef CONFIG_MALI_DVFS */
+	&gpu_governor_attribute.attr,
+	&gpu_available_governor_attribute.attr,
+#endif
 	&gpu_busy_attribute.attr,
 	&gpu_clock_attribute.attr,
 	&gpu_freq_table_attribute.attr,
-#ifdef CONFIG_MALI_DVFS
-	&gpu_governor_attribute.attr,
-	&gpu_available_governor_attribute.attr,
-#endif /* #ifdef CONFIG_MALI_DVFS */
 	&gpu_model_attribute.attr,
 	&gpu_volt_attribute.attr,
 	&gpu_time_in_state_attribute.attr,

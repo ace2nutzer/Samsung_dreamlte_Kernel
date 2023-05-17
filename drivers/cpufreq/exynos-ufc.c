@@ -592,10 +592,7 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 {
 	sprintf(buf, "%s[cpu_temp]\t%d °C\n",buf, cpu_temp);
 	sprintf(buf, "%s[max_temp]\t%u °C\n",buf, user_cpu_dvfs_max_temp);
-	if (!cpu_dvfs_debug)
-		sprintf(buf, "%s[peak_temp]\t%s\n",buf, "enable debug");
-	else
-		sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
 	sprintf(buf, "%s[tjmax]\t\t%d °C\n",buf, (int)CPU_DVFS_TJMAX);
 	sprintf(buf, "%s[dvfs_avoid_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_AVOID_SHUTDOWN_TEMP);
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_SHUTDOWN_TEMP);
@@ -656,6 +653,12 @@ static ssize_t store_cpu_dvfs_debug(struct kobject *kobj, struct attribute *attr
 
 	pr_warn("%s: CPU DVFS: invalid input\n", __func__);
 	return -EINVAL;
+}
+
+static ssize_t show_cpu_dvfs_peak_temp(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
+	return strlen(buf);
 }
 
 static ssize_t store_cpu_lit_volt(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
@@ -796,12 +799,11 @@ static int cpu_dvfs_check_thread(void *nothing)
 			continue;
 		}
 
-		if (unlikely(cpu_dvfs_debug)) {
-			if (cpu_temp > cpu_dvfs_peak_temp) {
-				cpu_dvfs_peak_temp = cpu_temp;
-				pr_info("%s: CPU DVFS: peak_temp: %u C\n", __func__, cpu_dvfs_peak_temp);
-			}
-		}
+		if (cpu_temp > cpu_dvfs_peak_temp)
+			cpu_dvfs_peak_temp = cpu_temp;
+
+		if (cpu_dvfs_debug)
+			pr_info("%s: CPU DVFS: peak_temp: %u C\n", __func__, cpu_dvfs_peak_temp);
 
 		if (cpu_temp >= CPU_DVFS_SHUTDOWN_TEMP) {
 			freq = FREQ_STEP_0;
@@ -903,6 +905,9 @@ __ATTR(execution_mode_change, 0644,
 static struct global_attr sysfs_cpu_dvfs_max_temp =
 __ATTR(cpu_dvfs_max_temp, 0644,
 		show_cpu_dvfs_max_temp, store_cpu_dvfs_max_temp);
+static struct global_attr sysfs_cpu_dvfs_peak_temp =
+__ATTR(cpu_dvfs_peak_temp, 0444,
+		show_cpu_dvfs_peak_temp, NULL);
 static struct global_attr sysfs_cpu_dvfs_debug =
 __ATTR(cpu_dvfs_debug, 0644,
 		show_cpu_dvfs_debug, store_cpu_dvfs_debug);
@@ -938,6 +943,9 @@ static void init_sysfs(void)
 
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_max_temp.attr))
 		pr_err("failed to create cpu_dvfs_max_temp node\n");
+
+	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_peak_temp.attr))
+		pr_err("failed to create cpu_dvfs_peak_temp node\n");
 
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_debug.attr))
 		pr_err("failed to create cpu_dvfs_debug node\n");
