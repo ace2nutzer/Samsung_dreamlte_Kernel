@@ -401,7 +401,6 @@ static inline void cpufreq_resume(void) {}
 
 /* Policy Notifiers  */
 #define CPUFREQ_ADJUST			(0)
-#define CPUFREQ_INCOMPATIBLE	(1)
 #define CPUFREQ_NOTIFY			(1)
 #define CPUFREQ_START			(2)
 #define CPUFREQ_CREATE_POLICY		(3)
@@ -514,8 +513,6 @@ unsigned int cpufreq_driver_resolve_freq(struct cpufreq_policy *policy,
                                         unsigned int target_freq);
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
-
-int cpufreq_update_freq(int cpu, unsigned int min, unsigned int max);
 
 /* Governor attribute set */
 struct gov_attr_set {
@@ -705,11 +702,12 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 
 
 /*********************************************************************
-*						   CPUFREQ STATS							 *
+*			CPUFREQ STATS				     *
 *********************************************************************/
 
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 
-void sanitize_cpu_dvfs(bool freq, bool temp);
+extern unsigned int cpu4_max_freq;
+void sanitize_cpu_dvfs(bool sanitize);
 
 #endif /* _LINUX_CPUFREQ_H */

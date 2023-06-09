@@ -538,9 +538,7 @@ module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_in
 
 void set_suspend_cpufreq(bool is_suspend)
 {
-	static bool update_cpu0 = false;
-	static bool update_cpu4 = false;
-	int cpu = 0;
+	int cpu;
 
 #ifdef CONFIG_HOTPLUG_CPU
 	should_hotplug_big_cpu();
@@ -557,16 +555,9 @@ void set_suspend_cpufreq(bool is_suspend)
 
 			for_each_cpu(cpu, &hmp_slow_cpu_mask) {
 				if (cpu_online(cpu)) {
-					/* set min/max cpu0 freq for suspend */
-					if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq)) {
-						pr_err("%s: failed to update cpu0 while suspend !\n", __func__);
-						update_cpu0 = false;
-					} else {
-						update_cpu0 = true;
-						break;
-					}
-				} else {
-					update_cpu0 = false;
+					if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq))
+						pr_err("%s: failed to update policy0 for suspend!\n", __func__);
+					break;
 				}
 			}
 		}
@@ -578,42 +569,28 @@ void set_suspend_cpufreq(bool is_suspend)
 
 			for_each_cpu(cpu, &hmp_fast_cpu_mask) {
 				if (cpu_online(cpu)) {
-					/* set min/max cpu4 freq for suspend */
-					if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq)) {
-						pr_err("%s: failed to update cpu4 while suspend !\n", __func__);
-						update_cpu4 = false;
-					} else {
-						update_cpu4 = true;
-						break;
-					}
-				} else {
-					update_cpu4 = false;
+					if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq))
+						pr_err("%s: failed to update policy4 for suspend!\n", __func__);
+					break;
 				}
 			}
 		}
 	} else {
 		/* resumed */
-		/* restore previous min/max cpufreq */
-		if (update_cpu0) {
 			for_each_cpu(cpu, &hmp_slow_cpu_mask) {
 				if (cpu_online(cpu)) {
 					if (cpufreq_update_freq(cpu, cpu0_min_freq, cpu0_max_freq))
-						pr_err("%s: failed to update cpu0 while resume !\n", __func__);
+						pr_err("%s: failed to update policy0 for resume!\n", __func__);
 					break;
 				}
 			}
-		}
-		if (update_cpu4) {
 			for_each_cpu(cpu, &hmp_fast_cpu_mask) {
 				if (cpu_online(cpu)) {
 					if (cpufreq_update_freq(cpu, cpu4_min_freq, cpu4_max_freq))
-						pr_err("%s: failed to update cpu4 while resume !\n", __func__);
+						pr_err("%s: failed to update policy4 for resume!\n", __func__);
 					break;
 				}
 			}
-		}
-		update_cpu0 = false;
-		update_cpu4 = false;
 	}
 
 	update_gov_tunables(is_suspend);
