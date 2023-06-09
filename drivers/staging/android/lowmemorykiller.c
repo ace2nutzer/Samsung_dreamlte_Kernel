@@ -410,13 +410,14 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			rcu_read_unlock();
 			return 0;
 		}
+
 		oom_score_adj = p->signal->oom_score_adj;
 		if (oom_score_adj < min_score_adj) {
 			task_unlock(p);
 			continue;
 		}
-		tasksize = get_mm_rss(p->mm);
 
+		tasksize = get_mm_rss(p->mm);
 #if defined(CONFIG_ZSWAP)
 		if (atomic_read(&zswap_stored_pages)) {
 			lowmem_print(3, "shown tasksize : %d\n", tasksize);
@@ -432,10 +433,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			lowmem_print(3, "real tasksize : %d\n", tasksize);
 		}
 #endif
-
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
+
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
@@ -472,19 +473,19 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			     min_score_adj,
 			     free);
 
-		if (unlikely(lowmem_debug_level > 4))
-			show_memory();
-
 		lowmem_deathpending_timeout = jiffies + HZ;
 		rem = selected_tasksize;
 		lowmem_lmkcount++;
-
-		lowmem_print(4, "lowmem_scan %lu, %x, return %lu\n",
-			     sc->nr_to_scan, sc->gfp_mask, rem);
 	} else {
 		lowmem_print(2, "lowmem_scan: no killable task for oom_score_adj %hd\n",
 				min_score_adj);
 	}
+	lowmem_print(4, "lowmem_scan %lu, %x, return %lu\n",
+			sc->nr_to_scan, sc->gfp_mask, rem);
+
+	if (unlikely(lowmem_debug_level > 4))
+		show_memory();
+
 	rcu_read_unlock();
 
 	if (selected)

@@ -94,23 +94,22 @@ static int hpa_killer(void)
 		}
 
 		oom_score_adj = p->signal->oom_score_adj;
-		tasksize = get_mm_rss(p->mm);
+		if (oom_score_adj <= HPA_MIN_OOMADJ) {
+			task_unlock(p);
+			continue;
+		}
 
+		tasksize = get_mm_rss(p->mm);
 #if defined(CONFIG_ZRAM)
 		if (atomic64_read(&zram_stored_pages)) {
 			tasksize += (int)zram_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
 				/ atomic64_read(&zram_stored_pages);
 		}
 #endif
-
-		if (oom_score_adj <= HPA_MIN_OOMADJ) {
-			task_unlock(p);
-			continue;
-		}
-
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
+
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
