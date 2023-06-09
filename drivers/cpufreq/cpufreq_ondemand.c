@@ -22,8 +22,6 @@
 #include <linux/a2n.h>
 #endif
 
-extern unsigned int cpu4_dvfs_limit;
-
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(95)
 #define DOWN_THRESHOLD_MARGIN			(25)
@@ -86,9 +84,6 @@ static void od_check_cpu(int cpu, unsigned int load)
 		if (policy->cur == policy->max)
 			return;
 
-		if ((cpu) && (policy->cur == cpu4_dvfs_limit))
-			return;
-
 		if (!od_tuners->boost) {
 			/* Little cpu 0 */
 			if (cpu == 0) {
@@ -105,7 +100,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_5)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_6;
 				else
-					requested_freq = policy->max;
+					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
 			/* Big cpu 4 */
 			} else {
 				if (policy->cur == DEF_FREQUENCY_STEP_CL1_0)
@@ -129,7 +124,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL1_9)
 					requested_freq = DEF_FREQUENCY_STEP_CL1_10;
 				else
-					requested_freq = policy->max;
+					requested_freq = DEF_FREQUENCY_STEP_CL1_11;
 			}
 			if (requested_freq > policy->max)
 				requested_freq = policy->max;
@@ -139,7 +134,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 		}
 
 		/* If switching to max speed, apply sampling_down_factor */
-		if ((requested_freq == policy->max) || (requested_freq == cpu4_dvfs_limit))
+		if (requested_freq == policy->max)
 			dbs_info->rate_mult =
 				od_tuners->sampling_down_factor;
 
@@ -176,7 +171,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_2)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_1;
 			else
-				requested_freq = policy->min;
+				requested_freq = DEF_FREQUENCY_STEP_CL0_0;
 		/* Big cpu 4 */
 		} else {
 			if (policy->cur == DEF_FREQUENCY_STEP_CL1_11)
@@ -200,7 +195,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL1_2)
 				requested_freq = DEF_FREQUENCY_STEP_CL1_1;
 			else
-				requested_freq = policy->min;
+				requested_freq = DEF_FREQUENCY_STEP_CL1_0;
 		}
 
 		if (requested_freq < policy->min)
@@ -252,7 +247,7 @@ max_delay:
 static void update_down_threshold(struct od_dbs_tuners *od_tuners)
 {
 	od_tuners->down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
-	pr_info("[%s] for CPU %d - new value: %u\n",__func__, smp_processor_id(), od_tuners->down_threshold);
+	pr_info("[%s] for CPU - new value: %u\n",__func__, od_tuners->down_threshold);
 }
 
 /************************** sysfs interface ************************/
@@ -613,19 +608,18 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 void update_gov_tunables(bool is_suspend)
 {
-	int cpu_lit = 0;
-	int cpu_big = 4;
+	int cpu;
 	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
-	struct od_cpu_dbs_info_s *dbs_info;
-	struct cpufreq_policy *policy;
-	struct dbs_data *dbs_data;
+	struct od_cpu_dbs_info_s *dbs_info_lit, *dbs_info_big;
+	struct cpufreq_policy *policy_lit, *policy_big;
+	struct dbs_data *dbs_data_lit, *dbs_data_big;
 
-	for_each_cpu(cpu_lit, &hmp_slow_cpu_mask) {
-		if (cpu_online(cpu_lit)) {
-			dbs_info = &per_cpu(od_cpu_dbs_info, cpu_lit);
-			policy = dbs_info->cdbs.shared->policy;
-			dbs_data = policy->governor_data;
-			od_tuners_lit = dbs_data->tuners;
+	for_each_cpu(cpu, &hmp_slow_cpu_mask) {
+		if (cpu_online(cpu)) {
+			dbs_info_lit = &per_cpu(od_cpu_dbs_info, cpu);
+			policy_lit = dbs_info_lit->cdbs.shared->policy;
+			dbs_data_lit = policy_lit->governor_data;
+			od_tuners_lit = dbs_data_lit->tuners;
 			if (is_suspend) {
 				od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_suspend;
 				od_tuners_lit->boost = od_tuners_lit->boost_suspend;
@@ -640,12 +634,12 @@ void update_gov_tunables(bool is_suspend)
 		}
 	}
 
-	for_each_cpu(cpu_big, &hmp_fast_cpu_mask) {
-		if (cpu_online(cpu_big)) {
-			dbs_info = &per_cpu(od_cpu_dbs_info, cpu_big);
-			policy = dbs_info->cdbs.shared->policy;
-			dbs_data = policy->governor_data;
-			od_tuners_big = dbs_data->tuners;
+	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+		if (cpu_online(cpu)) {
+			dbs_info_big = &per_cpu(od_cpu_dbs_info, cpu);
+			policy_big = dbs_info_big->cdbs.shared->policy;
+			dbs_data_big = policy_big->governor_data;
+			od_tuners_big = dbs_data_big->tuners;
 			if (is_suspend) {
 				od_tuners_big->up_threshold = od_tuners_big->up_threshold_suspend;
 				od_tuners_big->boost = od_tuners_big->boost_suspend;
