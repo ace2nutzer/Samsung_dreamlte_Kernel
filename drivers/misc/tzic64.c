@@ -79,7 +79,6 @@ static uint32_t exynos_smc_new(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint3
     return reg1;
 }
 
-#if 0
 static int exynos_smc_read_oemflag(uint32_t ctrl_word, uint32_t *val)
 {
 	uint32_t	cmd = 0;
@@ -155,7 +154,7 @@ static int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
 	*val = reg1;
 	return 0;
 }
-#endif
+
 
 static DEFINE_MUTEX(tzic_mutex);
 static struct class *driver_class;
@@ -265,8 +264,7 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				LOG(KERN_INFO "Address is not in user space");
 				return -1;
 			}
-			//exynos_smc_read_oemflag(0x80010001, (uint32_t *) arg);
-			arg = 0;
+			exynos_smc_read_oemflag(0x80010001, (uint32_t *) arg);
 			goto return_default;
 		break;
 
@@ -297,8 +295,7 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			}
 			if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 				LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-				//exynos_smc_read_oemflag_new(param.name, &param.value) ;
-				param.value = 0;
+				exynos_smc_read_oemflag_new(param.name, &param.value) ;
 				LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 				goto return_new_to;
 			} else {
@@ -334,8 +331,7 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				}
 				if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 					LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-					//exynos_smc_read_oemflag_new(param.name, &param.value) ;
-					param.value = 0;
+					exynos_smc_read_oemflag_new(param.name, &param.value) ;
 					LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 					goto return_new_to;
 				} else {
@@ -445,18 +441,20 @@ static int gotoAllCpu(void)
 }
 
 #if 0
-static int tzic_get_tamper_flag(void)
+int tzic_get_tamper_flag(void)
 {
 	uint32_t arg;
 	exynos_smc_read_oemflag(0x80010001, &arg);
 	return arg;
 }
+EXPORT_SYMBOL(tzic_get_tamper_flag);
 
-static int tzic_set_tamper_flag(void)
+int tzic_set_tamper_flag(void)
 {
 	exynos_smc1(SMC_CMD_STORE_BINFO, 0x80010001, 0, 0);
 	return exynos_smc1(SMC_CMD_STORE_BINFO, 0x00000001, 0, 0);
 }
+EXPORT_SYMBOL(tzic_set_tamper_flag);
 #endif
 
 MODULE_LICENSE("GPL v2");
