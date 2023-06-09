@@ -316,7 +316,7 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
 	dev_info(data->dev, "current frequency: %u Khz\n", cur_freq);
 
-	ret = exynos8895_mif_constraint_parse(data, min_freq, max_freq);
+	ret = exynos8895_mif_constraint_parse(data, data->min_freq, data->max_freq);
 	if (ret) {
 		dev_err(data->dev, "failed to parse constraint table\n");
 		return -EINVAL;
