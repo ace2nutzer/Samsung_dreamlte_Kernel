@@ -318,7 +318,7 @@ int kbase_backend_timer_init(struct kbase_device *kbdev)
 #ifdef CONFIG_SCHED_EMS
 	/* backend->scheduling_timer.bounded_to_boot_cluster = true; */
 #endif
-#if defined(CONFIG_SCHED_EHMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_EHMP)
 	backend->scheduling_timer.bounded_to_boot_cluster = true;
 #endif
 

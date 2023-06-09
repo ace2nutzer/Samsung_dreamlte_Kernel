@@ -141,8 +141,6 @@ void gpu_destroy_context(void *ctx)
         platform->ctx_need_qos = false;
 #ifdef CONFIG_HMP_VARIABLE_SCALE
         set_hmp_boost(0);
-        set_hmp_aggressive_up_migration(false);
-        set_hmp_aggressive_yield(false);
 #endif
     }
     mutex_unlock(&platform->gpu_sched_hmp_lock);
@@ -218,8 +216,6 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 				/* set hmp boost */
 				set_hmp_boost(1);
-				set_hmp_aggressive_up_migration(true);
-				set_hmp_aggressive_yield(true);
 #endif
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
@@ -250,8 +246,6 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 #ifdef CONFIG_HMP_VARIABLE_SCALE
 				/* unset hmp boost */
 				set_hmp_boost(0);
-				set_hmp_aggressive_up_migration(false);
-				set_hmp_aggressive_yield(false);
 #endif
 			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);

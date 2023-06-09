@@ -323,11 +323,7 @@ struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
 		 * The kernel thread should not inherit these properties.
 		 */
 		sched_setscheduler_nocheck(task, SCHED_NORMAL, &param);
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-		set_cpus_allowed_ptr(task, &hmp_slow_cpu_mask);
-#else
 		set_cpus_allowed_ptr(task, cpu_all_mask);
-#endif
 	}
 	kfree(create);
 	return task;
@@ -516,11 +512,7 @@ int kthreadd(void *unused)
 	/* Setup a clean context for our children to inherit. */
 	set_task_comm(tsk, "kthreadd");
 	ignore_signals(tsk);
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
-#else
 	set_cpus_allowed_ptr(tsk, cpu_all_mask);
-#endif
 	set_mems_allowed(node_states[N_MEMORY]);
 
 	current->flags |= PF_NOFREEZE;

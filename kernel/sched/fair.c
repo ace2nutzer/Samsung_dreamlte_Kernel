@@ -2588,12 +2588,10 @@ struct hmp_data_struct {
 	int freqinvar_load_scale_enabled;
 #endif
 	int multiplier; /* used to scale the time delta */
-	int semiboost_multiplier;
 	struct attribute_group attr_group;
 	struct attribute *attributes[HMP_DATA_SYSFS_MAX + 1];
 	struct hmp_global_attr attr[HMP_DATA_SYSFS_MAX];
-} hmp_data = {.multiplier = 1 << HMP_VARIABLE_SCALE_SHIFT,
-	      .semiboost_multiplier = 2 << HMP_VARIABLE_SCALE_SHIFT};
+} hmp_data = {.multiplier = 1 << HMP_VARIABLE_SCALE_SHIFT};
 
 static u64 hmp_variable_scale_convert(u64 delta);
 #ifdef CONFIG_HMP_FREQUENCY_INVARIANT_SCALE
@@ -2677,8 +2675,6 @@ unsigned long exynos_scale_freq_capacity(struct sched_domain *sd, int cpu)
  */
 static unsigned int hmp_up_threshold = 0;
 static unsigned int hmp_down_threshold = 0;
-static unsigned int hmp_semiboost_up_threshold = 0;
-static unsigned int hmp_semiboost_down_threshold = 0;
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 /* Ex: 256 = /4, 512 = /2, 1024 = x1, 1536 = x1.5, 2048 = x2 */
@@ -3028,7 +3024,7 @@ __update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 		else {
 			if(!hmp_cpu_is_fastest(cpu) &&
-				sa->hmp_load_avg > hmp_up_threshold)
+				sa->hmp_load_avg >= hmp_up_threshold)
 				cpu_rq(smp_processor_id())->next_balance = jiffies;
 		}
 #endif
@@ -5559,9 +5555,9 @@ static void hmp_offline_cpu(int cpu)
 	if(domain)
 		cpumask_clear_cpu(cpu, &domain->cpus);
 }
+
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 /* must hold runqueue lock for queue se is currently on */
-
 static struct sched_entity *hmp_get_heaviest_task(struct sched_entity* se, int migrate_up)
 {
 	int num_tasks = hmp_max_tasks;
@@ -5634,30 +5630,21 @@ static struct sched_entity *hmp_get_lightest_task(struct sched_entity* se, int m
 
 /*
  * hmp_up_prio: Only up migrate task with high priority (<hmp_up_prio)
- * hmp_next_up_threshold: Delay before next up migration (1024 ~= 1 ms)
- * hmp_next_down_threshold: Delay before next down migration (1024 ~= 1 ms)
  */
 static int hmp_boostpulse_duration = 1000000; /* microseconds */
 static u64 hmp_boostpulse_endtime;
-static int hmp_boost_val = 1;
-static int hmp_family_boost_val = 1;
-static int hmp_semiboost_val = 1;
+static int hmp_boost_val = 0;
+static int hmp_family_boost_val = 0;
 static int hmp_boostpulse;
 static int hmp_active_down_migration;
-static int hmp_aggressive_up_migration = 1;
-static int hmp_aggressive_yield = 1;
 static int hmp_wakeup_to_idle_cpu;
 static DEFINE_RAW_SPINLOCK(hmp_boost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_family_boost_lock);
-static DEFINE_RAW_SPINLOCK(hmp_semiboost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_sysfs_lock);
 static DEFINE_RAW_SPINLOCK(hmp_wakeup_to_idle_cpu_lock);
 
 #define BOOT_BOOST_DURATION 40000000 /* microseconds */
 #define YIELD_CORRECTION_TIME 10000000 /* nanoseconds */
-
-unsigned int hmp_next_up_threshold = 4096;
-unsigned int hmp_next_down_threshold = 4096;
 
 static inline int hmp_boost(void)
 {
@@ -5675,13 +5662,6 @@ static inline int hmp_boost(void)
 static inline int hmp_family_boost(struct task_struct *p)
 {
 	return (is_top_task(p) | hmp_family_boost_val);
-}
-
-static inline int hmp_semiboost(void)
-{
-	if (hmp_semiboost_val)
-		return 1;
-	return 0;
 }
 
 static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_entity *se);
@@ -5802,26 +5782,6 @@ static inline void hmp_load_migration(struct sched_entity * se,
 }
 #endif
 
-static inline void hmp_next_up_delay(struct sched_entity *se, int cpu)
-{
-	/* hack - always use clock from first online CPU */
-	u64 now = cpu_rq(cpumask_first(cpu_online_mask))->clock_task;
-	se->avg.hmp_last_up_migration = now;
-	se->avg.hmp_last_down_migration = 0;
-	cpu_rq(cpu)->hmp_last_up_migration = now;
-	cpu_rq(cpu)->hmp_last_down_migration = 0;
-}
-
-static inline void hmp_next_down_delay(struct sched_entity *se, int cpu)
-{
-	/* hack - always use clock from first online CPU */
-	u64 now = cpu_rq(cpumask_first(cpu_online_mask))->clock_task;
-	se->avg.hmp_last_down_migration = now;
-	se->avg.hmp_last_up_migration = 0;
-	cpu_rq(cpu)->hmp_last_up_migration = now;
-	cpu_rq(cpu)->hmp_last_down_migration = 0;
-}
-
 #ifdef CONFIG_HMP_VARIABLE_SCALE
 /*
  * Heterogenous multiprocessor (HMP) optimizations
@@ -5861,13 +5821,9 @@ static u64 hmp_variable_scale_convert(u64 delta)
 	u64 high = delta >> 32ULL;
 	u64 low = delta & 0xffffffffULL;
 
-	if (hmp_semiboost()) {
-		low *= hmp_data.semiboost_multiplier;
-		high *= hmp_data.semiboost_multiplier;
-	} else {
-		low *= hmp_data.multiplier;
-		high *= hmp_data.multiplier;
-	}
+	low *= hmp_data.multiplier;
+	high *= hmp_data.multiplier;
+
 	return (low >> HMP_VARIABLE_SCALE_SHIFT)
 			+ (high << (32ULL - HMP_VARIABLE_SCALE_SHIFT));
 }
@@ -5923,29 +5879,13 @@ static int hmp_period_from_sysfs(int value)
 	return 0;
 }
 
-static int hmp_semiboost_period_from_sysfs(int value)
-{
-	hmp_data.semiboost_multiplier = (LOAD_AVG_PERIOD << HMP_VARIABLE_SCALE_SHIFT) / value;
-	return 0;
-}
-
 /* max value for threshold is 1024 */
 static int hmp_up_threshold_from_sysfs(int value)
 {
-	if ((value > 1024) || (value < 0))
+	if ((value > 1024) || (value < 1))
 		return -EINVAL;
 
 	hmp_up_threshold = value;
-
-	return 0;
-}
-
-static int hmp_semiboost_up_threshold_from_sysfs(int value)
-{
-	if ((value > 1024) || (value < 0))
-		return -EINVAL;
-
-	hmp_semiboost_up_threshold = value;
 
 	return 0;
 }
@@ -5957,7 +5897,7 @@ static int hmp_down_threshold_from_sysfs(int value)
 
 	raw_spin_lock_irqsave(&hmp_sysfs_lock, flags);
 
-	if ((value > 1024) || (value < 0)) {
+	if ((value > 1024) || (value < 1)) {
 		ret = -EINVAL;
 	} else {
 		hmp_down_threshold = value;
@@ -5970,16 +5910,6 @@ static int hmp_down_threshold_from_sysfs(int value)
 	raw_spin_unlock_irqrestore(&hmp_sysfs_lock, flags);
 
 	return ret;
-}
-
-static int hmp_semiboost_down_threshold_from_sysfs(int value)
-{
-	if ((value > 1024) || (value < 0))
-		return -EINVAL;
-
-	hmp_semiboost_down_threshold = value;
-
-	return 0;
 }
 
 static int hmp_boostpulse_from_sysfs(int value)
@@ -6040,26 +5970,6 @@ static int hmp_family_boost_from_sysfs(int value)
 	return ret;
 }
 
-static int hmp_semiboost_from_sysfs(int value)
-{
-	unsigned long flags;
-	int ret = 0;
-
-	raw_spin_lock_irqsave(&hmp_semiboost_lock, flags);
-	if (value == 1)
-		hmp_semiboost_val++;
-	else if (value == 0)
-		if (hmp_semiboost_val >= 1)
-			hmp_semiboost_val--;
-		else
-			ret = -EINVAL;
-	else
-		ret = -EINVAL;
-	raw_spin_unlock_irqrestore(&hmp_semiboost_lock, flags);
-
-	return ret;
-}
-
 static int hmp_active_dm_from_sysfs(int value)
 {
 	unsigned long flags;
@@ -6071,46 +5981,6 @@ static int hmp_active_dm_from_sysfs(int value)
 	else if (value == 0)
 		if (hmp_active_down_migration >= 1)
 			hmp_active_down_migration--;
-		else
-			ret = -EINVAL;
-	else
-		ret = -EINVAL;
-	raw_spin_unlock_irqrestore(&hmp_sysfs_lock, flags);
-
-	return ret;
-}
-
-static int hmp_aggressive_up_migration_from_sysfs(int value)
-{
-	unsigned long flags;
-	int ret = 0;
-
-	raw_spin_lock_irqsave(&hmp_sysfs_lock, flags);
-	if (value == 1)
-		hmp_aggressive_up_migration++;
-	else if (value == 0)
-		if (hmp_aggressive_up_migration >= 1)
-			hmp_aggressive_up_migration--;
-		else
-			ret = -EINVAL;
-	else
-		ret = -EINVAL;
-	raw_spin_unlock_irqrestore(&hmp_sysfs_lock, flags);
-
-	return ret;
-}
-
-static int hmp_aggressive_yield_from_sysfs(int value)
-{
-	unsigned long flags;
-	int ret = 0;
-
-	raw_spin_lock_irqsave(&hmp_sysfs_lock, flags);
-	if (value == 1)
-		hmp_aggressive_yield++;
-	else if (value == 0)
-		if (hmp_aggressive_yield >= 1)
-			hmp_aggressive_yield--;
 		else
 			ret = -EINVAL;
 	else
@@ -6246,11 +6116,6 @@ int set_hmp_family_boost(int enable)
 	return hmp_family_boost_from_sysfs(enable);
 }
 
-int set_hmp_semiboost(int enable)
-{
-	return hmp_semiboost_from_sysfs(enable);
-}
-
 int set_hmp_boostpulse(int duration)
 {
 	unsigned long flags;
@@ -6274,16 +6139,6 @@ int set_active_down_migration(int enable)
 	return hmp_active_dm_from_sysfs(enable);
 }
 
-int set_hmp_aggressive_up_migration(int enable)
-{
-	return hmp_aggressive_up_migration_from_sysfs(enable);
-}
-
-int set_hmp_aggressive_yield(int enable)
-{
-	return hmp_aggressive_yield_from_sysfs(enable);
-}
-
 int set_hmp_wakeup_to_idle_cpu(int enable)
 {
 	return hmp_wakeup_to_idle_cpu_from_sysfs(enable);
@@ -6292,11 +6147,6 @@ int set_hmp_wakeup_to_idle_cpu(int enable)
 int get_hmp_boost(void)
 {
 	return hmp_boost();
-}
-
-int get_hmp_semiboost(void)
-{
-	return hmp_semiboost();
 }
 
 int set_hmp_up_threshold(int value)
@@ -6358,23 +6208,6 @@ static int hmp_attr_init(void)
 		NULL,
 		hmp_down_threshold_from_sysfs);
 
-	hmp_attr_add("sb_load_avg_period_ms",
-		&hmp_data.semiboost_multiplier,
-		hmp_period_to_sysfs,
-		hmp_semiboost_period_from_sysfs);
-	hmp_attr_add("sb_up_threshold",
-		&hmp_semiboost_up_threshold,
-		NULL,
-		hmp_semiboost_up_threshold_from_sysfs);
-	hmp_attr_add("sb_down_threshold",
-		&hmp_semiboost_down_threshold,
-		NULL,
-		hmp_semiboost_down_threshold_from_sysfs);
-	hmp_attr_add("semiboost",
-		&hmp_semiboost_val,
-		NULL,
-		hmp_semiboost_from_sysfs);
-
 	hmp_attr_add("boostpulse",
 		&hmp_boostpulse,
 		NULL,
@@ -6397,16 +6230,6 @@ static int hmp_attr_init(void)
 		&hmp_active_down_migration,
 		NULL,
 		hmp_active_dm_from_sysfs);
-
-	hmp_attr_add("aggressive_up_migration",
-		&hmp_aggressive_up_migration,
-		NULL,
-		hmp_aggressive_up_migration_from_sysfs);
-
-	hmp_attr_add("aggressive_yield",
-		&hmp_aggressive_yield,
-		NULL,
-		hmp_aggressive_yield_from_sysfs);
 
 	hmp_attr_add("wakeup_to_idle_cpu",
 		&hmp_wakeup_to_idle_cpu,
@@ -6612,7 +6435,7 @@ static inline unsigned int hmp_offload_down(int cpu, struct sched_entity *se)
 	int min_usage;
 	int dest_cpu = NR_CPUS;
 
-	if (hmp_cpu_is_slowest(cpu) || hmp_aggressive_up_migration)
+	if (hmp_cpu_is_slowest(cpu))
 		return NR_CPUS;
 
 	/* Is there an idle CPU in the current domain */
@@ -6832,7 +6655,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 #endif
 				new_cpu = hmp_select_faster_cpu(p, prev_cpu, &lowest_ratio);
 				if (lowest_ratio == 0) {
-					hmp_next_up_delay(&p->se, new_cpu);
 #if defined(CONFIG_SCHED_HMP)
 					trace_sched_hmp_migrate(p, new_cpu, HMP_MIGRATE_FAMILY);
 #endif
@@ -6856,7 +6678,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	prev_cpu = task_cpu(p);
 
 	if (hmp_up_migration(prev_cpu, &new_cpu, &p->se)) {
-		hmp_next_up_delay(&p->se, new_cpu);
 		trace_sched_hmp_migrate(p, new_cpu, HMP_MIGRATE_WAKEUP);
 		return new_cpu;
 	}
@@ -6867,7 +6688,6 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 		 * in which case new_cpu == NR_CPUS
 		 */
 		if (new_cpu < NR_CPUS && new_cpu != prev_cpu) {
-			hmp_next_down_delay(&p->se, new_cpu);
 #ifdef CONFIG_SCHED_HMP_TASK_BASED_SOFTLANDING
 			/*
 			 * if load_avg_ratio is higher than hmp_tbsoftlanding.threshold,
@@ -7253,11 +7073,6 @@ static void yield_task_fair(struct rq *rq)
 
 	if (curr->policy != SCHED_BATCH) {
 		update_rq_clock(rq);
-
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
-		if (hmp_aggressive_yield && cfs_rq->curr)
-			cfs_rq->curr->exec_start -= YIELD_CORRECTION_TIME;
-#endif
 		/*
 		 * Update run-time statistics of the 'current'.
 		 */
@@ -9785,28 +9600,12 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 {
 	struct task_struct *p = task_of(se);
 	int temp_target_cpu;
-	unsigned int up_threshold;
 	unsigned int min_load;
-	u64 now;
 
 	if (hmp_cpu_is_fastest(cpu))
 		return 0;
 
-	if (!hmp_boost()) {
-		if (hmp_semiboost())
-			up_threshold = hmp_semiboost_up_threshold;
-		else
-			up_threshold = hmp_up_threshold;
-
-		if (se->avg.hmp_load_avg < up_threshold)
-			return 0;
-	}
-
-	/* Let the task load settle before doing another up migration */
-	/* hack - always use clock from first online CPU */
-	now = cpu_rq(cpumask_first(cpu_online_mask))->clock_task;
-	if (((now - se->avg.hmp_last_up_migration) >> 10)
-					< hmp_next_up_threshold)
+	if ((!hmp_boost()) && (se->avg.hmp_load_avg < hmp_up_threshold))
 		return 0;
 
 	if (se->avg.last_update_time)
@@ -9821,16 +9620,10 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 			&temp_target_cpu, tsk_cpus_allowed(p));
 
 	if (temp_target_cpu != NR_CPUS) {
-		if (hmp_aggressive_up_migration) {
+		if (min_load == 0) {
 			if (target_cpu)
 				*target_cpu = temp_target_cpu;
 			return 1;
-		} else {
-			if (min_load == 0) {
-				if (target_cpu)
-					*target_cpu = temp_target_cpu;
-				return 1;
-			}
 		}
 	}
 
@@ -9841,41 +9634,24 @@ static unsigned int hmp_up_migration(int cpu, int *target_cpu, struct sched_enti
 static unsigned int hmp_down_migration(int cpu, struct sched_entity *se)
 {
 	struct task_struct *p = task_of(se);
-	u64 now;
 
 	if (hmp_cpu_is_slowest(cpu))
 		return 0;
 
-	/* Let the task load settle before doing another down migration */
-	now = cpu_rq(cpu)->clock_task;
-	if (((now - se->avg.hmp_last_down_migration) >> 10)
-					< hmp_next_down_threshold)
+	if (hmp_boost())
 		return 0;
 
-	if (hmp_aggressive_up_migration) {
-		if (hmp_boost())
-			return 0;
-	} else {
-		if (hmp_domain_min_load(hmp_cpu_domain(cpu), NULL, NULL)) {
-			if (hmp_active_down_migration)
-				return 1;
-		} else if (hmp_boost()) {
-			return 0;
-		}
+	if (hmp_domain_min_load(hmp_cpu_domain(cpu), NULL, NULL)) {
+		if (hmp_active_down_migration)
+			return 1;
 	}
 
 	if (cpumask_intersects(&hmp_slower_domain(cpu)->cpus,
 					tsk_cpus_allowed(p))) {
-		unsigned int down_threshold;
-
-		if (hmp_semiboost())
-			down_threshold = hmp_semiboost_down_threshold;
-		else
-			down_threshold = hmp_down_threshold;
-
-		if (se->avg.hmp_load_avg < down_threshold)
+		if (se->avg.hmp_load_avg < hmp_down_threshold)
 			return 1;
 	}
+
 	return 0;
 }
 
@@ -10244,7 +10020,6 @@ static void hmp_force_up_migration(int this_cpu)
 				force = 1;
 				trace_sched_hmp_migrate(p, target->push_cpu,
 					HMP_MIGRATE_FORCE);
-				hmp_next_up_delay(&p->se, target->push_cpu);
 			}
 		}
 
@@ -10266,7 +10041,6 @@ static void hmp_force_up_migration(int this_cpu)
 				force = 1;
 				trace_sched_hmp_migrate(p, target->push_cpu,
 					HMP_MIGRATE_OFFLOAD);
-				hmp_next_down_delay(&p->se, target->push_cpu);
 			}
 		}
 		raw_spin_unlock_irqrestore(&target->lock, flags);
@@ -10296,7 +10070,6 @@ static unsigned int hmp_idle_pull(int this_cpu)
 	struct rq *target, *rq;
 	unsigned long flags,ratio = 0;
 	unsigned int force=0;
-	unsigned int up_threshold;
 	struct task_struct *p = NULL;
 
 	if (!hmp_cpu_is_slowest(this_cpu))
@@ -10331,12 +10104,8 @@ static unsigned int hmp_idle_pull(int this_cpu)
 		}
 		orig = curr;
 		curr = hmp_get_heaviest_task(curr, 1);
-		if (hmp_semiboost())
-			up_threshold = hmp_semiboost_up_threshold;
-		else
-			up_threshold = hmp_up_threshold;
 
-		if (hmp_boost() || curr->avg.hmp_load_avg > up_threshold)
+		if (hmp_boost() || curr->avg.hmp_load_avg >= hmp_up_threshold)
 			if (curr->avg.hmp_load_avg > ratio) {
 				if (p)
 					put_task_struct(p);
@@ -10360,7 +10129,6 @@ static unsigned int hmp_idle_pull(int this_cpu)
 		force = 1;
 		trace_sched_hmp_migrate(p, target->push_cpu,
 			HMP_MIGRATE_IDLE_PULL);
-		hmp_next_up_delay(&p->se, target->push_cpu);
 		raw_spin_unlock_irqrestore(&target->lock, flags);
 	} else {
 		raw_spin_unlock_irqrestore(&target->lock, flags);
@@ -11137,14 +10905,6 @@ static int __init hmp_param_init(void)
 		hmp_boostpulse_endtime = ktime_to_us(ktime_get()) + duration;
 		pr_info("hmp_boostpulse_endtime is set(%llu)\n",hmp_boostpulse_endtime);
 	}
-
-	if (of_property_read_u32(hmp_param_node,
-			"semiboost_up_threshold",&hmp_semiboost_up_threshold))
-		pr_warn("%s missing semiboost_up_threshold property\n",__func__);
-
-	if (of_property_read_u32(hmp_param_node,
-			"semiboost_down_threshold", &hmp_semiboost_down_threshold))
-		pr_warn("%s missing semiboost_down_threshold property\n",__func__);
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 	if (of_property_read_u64(hmp_param_node,
 				"hmp_up_compst_ratio", &hmp_up_compst_ratio))
@@ -11248,7 +11008,7 @@ static bool need_big_normal(struct sched_entity *se)
 
 	big_nr_running = hmp_domain_sum_nr_running(hmp_faster_domain(0));
 
-	if (se->avg.hmp_load_avg > hmp_up_threshold && big_nr_running > 0) {
+	if (se->avg.hmp_load_avg >= hmp_up_threshold && big_nr_running > 0) {
 		trace_sched_hp_event(cpu, se->avg.hmp_load_avg, big_nr_running,
 				"Switch to normal mode");
 		return true;

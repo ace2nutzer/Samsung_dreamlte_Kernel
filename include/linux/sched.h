@@ -1262,15 +1262,11 @@ struct hmp_domain {
 #ifdef CONFIG_HMP_VARIABLE_SCALE
 extern int set_hmp_boost(int enable);
 #endif
-extern int set_hmp_semiboost(int enable);
 extern int set_hmp_boostpulse(int duration);
 extern int get_hmp_boost(void);
-extern int get_hmp_semiboost(void);
 extern int set_hmp_up_threshold(int value);
 extern int set_hmp_down_threshold(int value);
 extern int set_active_down_migration(int enable);
-extern int set_hmp_aggressive_up_migration(int enable);
-extern int set_hmp_aggressive_yield(int enable);
 #endif /* CONFIG_SCHED_HMP */
 #endif /* CONFIG_SCHED_HMP || CONFIG_SCHED_HMP_CUSTOM */
 

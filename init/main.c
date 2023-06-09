@@ -1253,11 +1253,7 @@ static noinline void __init kernel_init_freeable(void)
 	/*
 	 * init can run on any cpu.
 	 */
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	set_cpus_allowed_ptr(current, &hmp_slow_cpu_mask);
-#else
 	set_cpus_allowed_ptr(current, cpu_all_mask);
-#endif
 
 	cad_pid = task_pid(current);
 
