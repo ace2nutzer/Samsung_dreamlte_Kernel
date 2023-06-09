@@ -746,7 +746,7 @@ static void thermal_zone_device_check(struct work_struct *work)
 
 static struct thermal_zone_device *mngs_tz = NULL;
 
-int get_cpu_temp(void)
+inline int get_cpu_temp(void)
 {
 	int temperature, ret;
 
