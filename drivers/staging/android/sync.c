@@ -394,10 +394,7 @@ int sync_fence_wait(struct sync_fence *fence, long timeout)
 		return ret;
 	} else if (ret == 0) {
 		if (timeout) {
-#if defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
-			pr_info("fence timeout on [%pK] after %dms\n", fence,
-				jiffies_to_msecs(timeout));
-#else
+#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
 			pr_info("fence timeout on [%pK] after %dms\n", fence,
 				jiffies_to_msecs(timeout));
 #endif
@@ -412,10 +409,8 @@ int sync_fence_wait(struct sync_fence *fence, long timeout)
 
 	ret = atomic_read(&fence->status);
 	if (ret) {
-#if defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
 		pr_info("fence error %ld on [%pK]\n", ret, fence);
-#else
-		pr_info("fence error %ld on [%p]\n", ret, fence);
 #endif
 #ifdef CONFIG_MALI_SEC_JOB_STATUS_CHECK
 		pr_info("GPU JOB STATUS DUMP\n");

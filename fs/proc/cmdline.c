@@ -5,7 +5,7 @@
 #include <asm/setup.h>
 #include <linux/slab.h>
 
- static char updated_command_line[COMMAND_LINE_SIZE];
+static char updated_command_line[COMMAND_LINE_SIZE];
 
 static int cmdline_proc_show(struct seq_file *m, void *v)
 {
