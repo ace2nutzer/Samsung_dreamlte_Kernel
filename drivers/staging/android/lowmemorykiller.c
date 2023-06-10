@@ -340,6 +340,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				global_page_state(NR_SHMEM) -
 				global_page_state(NR_UNEVICTABLE) -
 				total_swapcache_pages();
+
 #ifdef CONFIG_CMA
 	unsigned long nr_cma_free = 0, nr_cma_file = 0;
 #endif
@@ -367,6 +368,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		other_file -= nr_cma_file;
 	}
 #endif
+
 	if (lowmem_adj_size < array_size)
 		array_size = lowmem_adj_size;
 	if (lowmem_minfree_size < array_size)
