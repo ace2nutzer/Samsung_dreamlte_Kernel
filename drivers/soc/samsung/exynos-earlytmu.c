@@ -27,6 +27,7 @@
 #include <linux/slab.h>
 #include <soc/samsung/exynos-earlytmu.h>
 #include <soc/samsung/ect_parser.h>
+#include <soc/samsung/tmu.h>
 
 #define EXYNOS_TMU_REG_TRIMINFO		0x0
 #define EXYNOS_TMU_REG_CURRENT_TEMP	0x40
@@ -112,8 +113,10 @@ static int exynos_earlytmu_read(void)
 		break;
 	}
 
-	if (temp > 125)	temp = 125;
-	if (temp < 10)	temp = 10;
+	if (temp > EXYNOS_MAX_TEMP)
+		temp = EXYNOS_MAX_TEMP;
+	if (temp < EXYNOS_MIN_TEMP)
+		temp = EXYNOS_MIN_TEMP;
 
 	return temp;
 }

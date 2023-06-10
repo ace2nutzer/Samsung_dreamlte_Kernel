@@ -4565,8 +4565,8 @@
 		sensors = <61>;
 		sensing_mode = "max";
 		hotplug_enable = <0>;
-		hotplug_in_threshold = <130>;
-		hotplug_out_threshold = <140>;
+		hotplug_in_threshold = <140>;
+		hotplug_out_threshold = <150>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 /*
@@ -4624,7 +4624,7 @@
 			k_po = <100>;
 			k_pu = <85>;
 			k_i = <100>;
-			i_max = <1500>;
+			i_max = <2000>;
 			integral_cutoff = <28>;
 
 			trips {
@@ -4757,7 +4757,7 @@
 			k_po = <60>;
 			k_pu = <100>;
 			k_i = <50>;
-			i_max = <500>;
+			i_max = <1000>;
 			integral_cutoff = <10>;
 
 			trips {
@@ -4872,7 +4872,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4891,7 +4891,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4910,7 +4910,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4929,7 +4929,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4948,7 +4948,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4967,7 +4967,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -4986,7 +4986,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -5005,7 +5005,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -5024,7 +5024,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -5043,7 +5043,7 @@
 			/* for level	:	1_Head, 2_Head, 2_Tail */
 			input_booster,cpu_freqs = <2808000 0>;
 			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <0 0>;
+			input_booster,kfc_freqs = <2002000 0>;
 			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
@@ -5087,16 +5087,14 @@
 				ctrl-type = <PM_QOS_MIN_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2808000 2002000
-					   741000 832000 >;
+				table = < 2808000 2002000 >;
 			};
 
 			max-limit {
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 2808000 2002000
-					   741000 832000 >;
+				table = < 0 0 >;
 			};
 
 		};

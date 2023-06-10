@@ -33,7 +33,7 @@
 #include <linux/input/input.h>
 #include <linux/moduleparam.h>
 
-static bool use_input_booster = false;
+static bool use_input_booster = true;
 module_param(use_input_booster, bool, 0644);
 #endif
 
@@ -521,13 +521,13 @@ DECLARE_STATE_FUNC(press)
 	}
 }
 
-void input_booster_disable(struct t_input_booster *_this)
+static void input_booster_disable(struct t_input_booster *_this)
 {
 	schedule_work(&_this->input_booster_reset_booster_work);
 }
 
 // ********** Detect Events ********** //
-void input_booster(struct input_dev *dev)
+static void input_booster(struct input_dev *dev)
 {
 	int i, j, iTouchID = -1, iTouchSlot = -1;
 #if defined(CONFIG_SOC_EXYNOS7420) // This code should be working properly in Exynos7420(Noble & Zero2) only.
@@ -683,7 +683,7 @@ void input_booster(struct input_dev *dev)
 }
 
 // ********** Init Booster ********** //
-void input_booster_init()
+static void input_booster_init(void)
 {
 	// ********** Load Frequncy data from DTSI **********
 	struct device_node *np;

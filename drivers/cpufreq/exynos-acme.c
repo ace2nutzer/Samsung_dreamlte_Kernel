@@ -1124,32 +1124,12 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	if (!of_property_read_u32(dn, "pm_qos-booting", &val))
 		boot_qos = min(boot_qos, val);
 
-	/*
-	 * Before setting booting pm_qos, ACME driver check thermal condition.
-	 * If necessary, booting pm_qos should be set to frequency
-	 * that considering thermal condition.
-	 * exynos_earlytmu_get_boot_freq function return this frequency.
-	 * 	1. return > 0	: booting pm_qos should be set lower than return value
-	 *	2. return == 0	: booting pm_qos should be set to min_freq of domain
-	 *	3. return < 0	: don't need to apply thermal condition
-	 */
-	freq = exynos_earlytmu_get_boot_freq(domain->id);
-	if (freq >= 0) {
-		/*
-		 * Back up boot_qos value for reset booting pm_qos
-		 * after thermal-throttling is enabled.
-		 */
-		domain->boot_qos = boot_qos;
-
-		val = (unsigned int)freq;
-		val = max(val, domain->min_freq);
-		boot_qos = min(val, boot_qos);
-	}
+	domain->boot_freq = boot_qos;
 
 	pm_qos_update_request_timeout(&domain->max_qos_req,
-			boot_qos, 40 * USEC_PER_SEC);
+			boot_qos, 30 * USEC_PER_SEC);
 	pm_qos_update_request_timeout(&domain->min_qos_req,
-			boot_qos, 40 * USEC_PER_SEC);
+			boot_qos, 30 * USEC_PER_SEC);
 
 	/* In case of factory mode, if jig cable is attached,
 	 * set cpufreq max limit as frequency of "pm_qos-jigbooting" in device tree.
@@ -1363,15 +1343,13 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	domain->min_freq = cal_dfs_get_min_freq(domain->cal_id);
 
 	/*
-	 * If max-freq property exists in device tree, max frequency is
-	 * selected to smaller one between the value defined in device
-	 * tree and CAL. In case of min-freq, min frequency is selected
-	 * to bigger one.
+	 * If max-freq and min-freq property exists in device tree,
+	 * then they will be used.
 	 */
 	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = max(domain->max_freq, val);
+		domain->max_freq = val;
 	if (!of_property_read_u32(dn, "min-freq", &val))
-		domain->min_freq = min(domain->min_freq, val);
+		domain->min_freq = val;
 
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);

@@ -23,14 +23,14 @@
 #endif
 
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(95)
+#define DEF_FREQUENCY_UP_THRESHOLD		(75)
 #define DOWN_THRESHOLD_MARGIN			(25)
 #define DEF_SAMPLING_DOWN_FACTOR		(4)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
-#define DEF_BOOST				(0)
+#define DEF_BOOST				(1)
 #define IO_IS_BUSY				(0)
 #define IGNORE_NICE_LOAD			(0)
 
@@ -558,10 +558,10 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 	tuners->boost = DEF_BOOST;
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-	tuners->boost_suspend = DEF_BOOST;
-	tuners->up_threshold_suspend = DEF_FREQUENCY_UP_THRESHOLD;
-	tuners->boost_resume = DEF_BOOST;
-	tuners->up_threshold_resume = DEF_FREQUENCY_UP_THRESHOLD;
+	tuners->boost_suspend = 0;
+	tuners->up_threshold_suspend = 95;
+	tuners->boost_resume = tuners->boost;
+	tuners->up_threshold_resume = tuners->up_threshold;
 #endif
 
 	dbs_data->tuners = tuners;

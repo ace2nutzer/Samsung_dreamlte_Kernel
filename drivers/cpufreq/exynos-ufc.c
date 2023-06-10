@@ -165,6 +165,7 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 				struct attribute *attr, const char *buf,
 				size_t count)
 {
+#if 0
 	struct list_head *domains = get_domain_list();
 	struct exynos_cpufreq_domain *domain;
 	int input, scale = -1;
@@ -271,6 +272,7 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 #endif
 		set_max = true;
 	}
+#endif
 	return count;
 }
 
@@ -278,6 +280,7 @@ static ssize_t store_cpufreq_min_limit_wo_boost(struct kobject *kobj,
 				struct attribute *attr, const char *buf,
 				size_t count)
 {
+#if 0
 	struct list_head *domains = get_domain_list();
 	struct exynos_cpufreq_domain *domain;
 	int input, scale = -1;
@@ -379,6 +382,7 @@ static ssize_t store_cpufreq_min_limit_wo_boost(struct kobject *kobj,
 
 		set_max = true;
 	}
+#endif
 	return count;
 }
 

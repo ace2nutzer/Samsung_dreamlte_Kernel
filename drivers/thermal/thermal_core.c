@@ -519,7 +519,7 @@ static void handle_critical_trips(struct thermal_zone_device *tz,
 }
 
 #ifdef CONFIG_SEC_DEBUG_HW_PARAM
-#define APO_THROTTLE_TEMP	100000
+#define APO_THROTTLE_TEMP	(EXYNOS_MAX_TEMP * 1000)
 static bool period_check;
 static bool is_apo_check;
 static int trip_temp;

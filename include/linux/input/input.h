@@ -608,7 +608,5 @@ int input_count = 0, key_back = 0, key_home = 0, key_recent = 0;
 
 void input_booster_idle_state(void *__this, int input_booster_event);
 void input_booster_press_state(void *__this, int input_booster_event);
-void input_booster(struct input_dev *dev);
-void input_booster_init(void);
 #endif
 #endif // Input Booster -
