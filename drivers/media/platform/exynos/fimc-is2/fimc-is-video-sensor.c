@@ -984,7 +984,7 @@ static int fimc_is_ssx_start_streaming(struct vb2_queue *vbq,
 
 	ret = fimc_is_queue_start_streaming(queue, device);
 	if (ret) {
-		merr("fimc_is_queue_stop_streaming is fail(%d)", device, ret);
+		merr("fimc_is_queue_start_streaming is fail(%d)", device, ret);
 		goto p_err;
 	}
 

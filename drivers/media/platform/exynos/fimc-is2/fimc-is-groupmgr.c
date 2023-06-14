@@ -2539,7 +2539,7 @@ int fimc_is_group_buffer_finish(struct fimc_is_groupmgr *groupmgr,
 		frame->shot_ext->process_cnt = framemgr->queued_count[FS_PROCESS];
 		frame->shot_ext->complete_cnt = framemgr->queued_count[FS_COMPLETE];
 	} else {
-		mgerr("frame(%d) is not com state(%d)", device, group, index, frame->state);
+		mgerr("frame(%d) is not complete state(%d)", device, group, index, frame->state);
 		frame_manager_print_queues(framemgr);
 		ret = -EINVAL;
 	}

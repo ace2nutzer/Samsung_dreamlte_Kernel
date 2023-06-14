@@ -925,9 +925,18 @@ p_err:
 int fimc_is_queue_stop_streaming(struct fimc_is_queue *queue,
 	void *qdevice)
 {
+	struct vb2_queue *vbq;
 	int ret = 0;
+	unsigned int i;
 
 	BUG_ON(!queue);
+
+	vbq = queue->vbq;
+	if (!vbq) {
+		pr_err("%s: vbq is NULL\n", __func__);
+		ret = -EINVAL;
+		goto p_err;
+	}
 
 	if (!test_bit(FIMC_IS_QUEUE_STREAM_ON, &queue->state)) {
 		err("already stream off(%ld)", queue->state);
@@ -941,6 +950,14 @@ int fimc_is_queue_stop_streaming(struct fimc_is_queue *queue,
 		ret = -EINVAL;
 		goto p_err;
 	}
+
+	vb2_wait_for_all_buffers(vbq);
+
+	for (i = 0; i < vbq->num_buffers; ++i)
+		if (vbq->bufs[i]->state == VB2_BUF_STATE_ACTIVE)
+			vb2_buffer_done(vbq->bufs[i], VB2_BUF_STATE_DONE);
+
+	vb2_wait_for_all_buffers(vbq);
 
 	clear_bit(FIMC_IS_QUEUE_STREAM_ON, &queue->state);
 	clear_bit(FIMC_IS_QUEUE_BUFFER_READY, &queue->state);
