@@ -310,7 +310,7 @@ void *fimc_is_alloc_reserved_buffer(u32 size)
 	sprintf(debugmsg,"%s, %s, %d, 0x%16lx, 0x%8lx",
 		__func__,
 		current->comm,
-		reserved_buf->size,
+		reserved_buf->aligned_size,
 		reserved_buf->kvaddr,
 		(unsigned long)reserved_buf->dvaddr);
 	fimc_is_debug_event_add(FIMC_IS_EVENT_CRITICAL, debugmsg, NULL, NULL, 0);
@@ -348,18 +348,21 @@ void fimc_is_free_reserved_buffer(void *buf)
 			add_free_track(MT_TYPE_RESERVED, (ulong)buf);
 #endif
 #ifdef ENABLE_DBG_EVENT
-	sprintf(debugmsg,"%s, %s, %d, 0x%16lx, 0x%8lx",
-		__func__,
-		current->comm,
-		reserved_buf->size,
-		reserved_buf->kvaddr,
-		(unsigned long)reserved_buf->dvaddr);
-	fimc_is_debug_event_add(FIMC_IS_EVENT_NORMAL, debugmsg, NULL, NULL, 0);
+			sprintf(debugmsg,"%s, %s, %d, 0x%16lx, 0x%8lx",
+				__func__,
+				current->comm,
+				reserved_buf->size,
+				reserved_buf->kvaddr,
+				(unsigned long)reserved_buf->dvaddr);
+			fimc_is_debug_event_add(FIMC_IS_EVENT_NORMAL, debugmsg, NULL, NULL, 0);
 
 #endif
 
-			if (!reserved_buf->dvaddr)
+			if (reserved_buf->dvaddr)
+				lib->reserved_lib_size -= reserved_buf->size;
+			else
 				kfree((void *)reserved_buf->kvaddr);
+
 			list_del(&reserved_buf->list);
 			kfree(reserved_buf);
 
