@@ -97,7 +97,7 @@ static struct pm_qos_constraints device_tput_constraints = {
 	.list = PLIST_HEAD_INIT(device_tput_constraints.list),
 	.target_value = PM_QOS_DEVICE_THROUGHPUT_DEFAULT_VALUE,
 	.default_value = PM_QOS_DEVICE_THROUGHPUT_DEFAULT_VALUE,
-	.type = PM_QOS_FORCE_MAX,
+	.type = PM_QOS_MAX,
 	.notifiers = &device_throughput_notifier,
 };
 static struct pm_qos_object device_throughput_pm_qos = {
@@ -125,7 +125,7 @@ static struct pm_qos_constraints intcam_tput_constraints = {
 	.list = PLIST_HEAD_INIT(intcam_tput_constraints.list),
 	.target_value = PM_QOS_INTCAM_THROUGHPUT_DEFAULT_VALUE,
 	.default_value = PM_QOS_INTCAM_THROUGHPUT_DEFAULT_VALUE,
-	.type = PM_QOS_FORCE_MAX,
+	.type = PM_QOS_MAX,
 	.notifiers = &intcam_throughput_notifier,
 };
 static struct pm_qos_object intcam_throughput_pm_qos = {

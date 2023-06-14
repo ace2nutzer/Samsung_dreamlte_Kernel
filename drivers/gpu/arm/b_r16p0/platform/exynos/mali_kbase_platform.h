@@ -93,6 +93,7 @@ typedef enum {
 #ifdef CONFIG_MALI_ASV_CALIBRATION_SUPPORT
 	ASV_CALI_LOCK,
 #endif
+	DVFS_LOCK,
 	NUMBER_LOCK
 } gpu_dvfs_lock_type;
 
@@ -148,7 +149,7 @@ typedef struct _gpu_dvfs_info {
 	int int_freq;
 	int cpu_little_min_freq;
 	int cpu_middle_min_freq;
-	int cpu_big_max_freq;
+	int cpu_big_min_freq;
 	int g3dm_voltage;
 } gpu_dvfs_info;
 
@@ -241,7 +242,6 @@ struct exynos_context {
 	/* gpu boost lock */
 	int boost_gpu_min_lock;
 	int boost_egl_min_lock;
-	bool boost_is_enabled;
 	bool tmu_status;
 	int tmu_lock_clk[TMU_LOCK_CLK_END];
 	int cold_min_vol;
@@ -279,7 +279,6 @@ struct exynos_context {
 	int balance_retry_count[BMAX_RETRY_CNT];
 	gpu_attribute *attrib;
 	int mo_min_clock;
-	int *save_cpu_max_freq;
 
 	unsigned int g3d_cmu_cal_id;
 #ifdef CONFIG_MALI_PM_QOS
@@ -313,7 +312,7 @@ struct exynos_context {
 #endif
 
 #ifdef CONFIG_MALI_SEC_CL_BOOST
-	bool cl_boost_disable;
+	char cl_boost;
 #endif
 
 	int gpu_set_pmu_duration_reg;

@@ -336,11 +336,6 @@ static int gpu_dvfs_governor_ondemand(struct exynos_context *platform, int utili
 	return 0;
 }
 
-static int gpu_dvfs_decide_next_governor(struct exynos_context *platform)
-{
-	return 0;
-}
-
 void ipa_mali_dvfs_requested(unsigned int freq);
 int gpu_dvfs_decide_next_freq(struct kbase_device *kbdev, int utilization)
 {
@@ -349,14 +344,8 @@ int gpu_dvfs_decide_next_freq(struct kbase_device *kbdev, int utilization)
 	DVFS_ASSERT(platform);
 
 	spin_lock_irqsave(&platform->gpu_dvfs_spinlock, flags);
-	gpu_dvfs_decide_next_governor(platform);
 	gpu_dvfs_get_next_level(platform, utilization);
 	spin_unlock_irqrestore(&platform->gpu_dvfs_spinlock, flags);
-
-#ifdef CONFIG_MALI_SEC_CL_BOOST
-	if (kbdev->pm.backend.metrics.is_full_compute_util && platform->cl_boost_disable == false)
-		platform->step = gpu_dvfs_get_level(platform->gpu_max_clock);
-#endif
 
 #ifdef CONFIG_CPU_THERMAL_IPA
 	ipa_mali_dvfs_requested(platform->table[platform->step].clock);
@@ -429,8 +418,6 @@ int gpu_dvfs_governor_init(struct kbase_device *kbdev)
 		return -1;
 	}
 
-	/* share table_size among governors, as every single governor has same table_size. */
-	platform->save_cpu_max_freq = kmalloc(sizeof(int) * platform->table_size, GFP_KERNEL);
 #if defined(CONFIG_MALI_DVFS) && defined(CONFIG_CPU_THERMAL_IPA)
 	gpu_ipa_dvfs_calc_norm_utilisation(kbdev);
 #endif /* CONFIG_MALI_DVFS && CONFIG_CPU_THERMAL_IPA */

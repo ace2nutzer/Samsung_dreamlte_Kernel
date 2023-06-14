@@ -187,7 +187,7 @@
 		hmp {
 			up_threshold = <256>;
 			down_threshold = <64>;
-			bootboost-duration-us = <40000000>;
+			bootboost-duration-us = <30000000>;
 			down_compensation_timeout = <0>;               /* ms */
 			down_compensation_high_freq = <0>;        /* min qos lock for little cpu */
 			down_compensation_mid_freq = <0>;          /* min qos lock for little cpu */
@@ -561,7 +561,7 @@
 						  2704000  2093000
 						  2652000  2093000
 						  2496000  2093000
-						  2314000  1794000
+						  2314000  2093000
 						  2158000  1794000
 						  1937000  1794000
 						  1703000  1540000
@@ -784,13 +784,13 @@
 		interactive_info = <0 75 0>;
 		gpu_dvfs_table_size = <7 7>; /*<row col>*/
 		gpu_dvfs_table = <
-		                    839000    43   75   1  2093000   0   0
-		                    764000    42   75   1  2093000   0   0
-		                    683000    38   75   1  2093000   0   0
-		                    572000    47   75   1  1794000   0   0
-		                    455000    38   75   1  1540000   0   0
-		                    338000    33   75   1  1352000   0   0
-		                    260000    33   75   1  1014000   0   0 >;
+		                    839000    43   75   1  2093000   2002000   2808000
+		                    764000    42   75   1  2093000   2002000   2808000
+		                    683000    38   75   1  2093000   2002000   2808000
+		                    572000    47   75   1  2093000   2002000   2808000
+		                    455000    38   75   1  1794000   2002000   2808000
+		                    338000    33   75   1  1540000   2002000   2808000
+		                    260000    33   75   1  1352000   2002000   2808000 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
@@ -816,19 +816,19 @@
 		gpu_perf_gathering = <0>;
 		gpu_runtime_pm_delay_time = <50>;
 		gpu_dvfs_polling_time = <30>;
-		gpu_pmqos_int_disable = <0>;
+		gpu_pmqos_int_disable = <1>;
 		gpu_pmqos_mif_max_clock = <0>;
 		gpu_pmqos_mif_max_clock_base = <0>;
 		gpu_cl_dvfs_start_base = <0>;
 		gpu_debug_level = <4>; /*DEBUG(1) INFO(2) WARNING(3) ERROR(4)*/
 		gpu_trace_level = <0>; /*8 = TRACE_ALL*/
-		gpu_mo_min_clock = <338000>;
-		gpu_boost_gpu_min_lock = <0>;
+		gpu_mo_min_clock = <455000>;
+		gpu_boost_gpu_min_lock = <839000>;
 		gpu_boost_egl_min_lock = <0>;
 		gpu_vk_boost_max_lock = <0>;
-		gpu_vk_boost_mif_min_lock = <0>;
+		gpu_vk_boost_mif_min_lock = <2093000>;
 		gpu_bts_support = <1>;
-		gpu_asv_cali_lock_val = <572000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
+		gpu_asv_cali_lock_val = <839000>; /*Should check this value when MALI_ASV_CALIBRATION_SUPPORT is enabled*/
 		gpu_set_pmu_duration_reg = <0x40F0>; /* only for KC for now*/
 		gpu_set_pmu_duration_val = <0xfffff363>; /* only for KC for now*/
 	};
@@ -2488,7 +2488,7 @@
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq, reboot_freq */
 
 		/* Booting value */
-		boot_info = <40 1794000>;
+		boot_info = <30 1794000>;
 		/* boot_qos_timeout, boot_freq */
 
 		use_get_dev = "false";
@@ -2519,7 +2519,7 @@
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
-		boot_info = <40 667000>;
+		boot_info = <30 667000>;
 		/* boot_qos_timeout, boot_freq */
 
 		/* default_dev_profile */
@@ -2551,7 +2551,7 @@
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
-		boot_info = <40 640000>;
+		boot_info = <30 640000>;
 		/* boot_qos_timeout, boot_freq */
 
 		/* default_dev_profile */
@@ -2581,7 +2581,7 @@
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
-		boot_info = <40 214000>;
+		boot_info = <30 214000>;
 		/* boot_qos_timeout, boot_freq */
 
 		/* default dev profile */
@@ -2611,7 +2611,7 @@
 		/* <initial, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
-		boot_info = <40 630000>;
+		boot_info = <30 630000>;
 		/* boot_qos_timeout, boot_freq */
 
 		/* default dev profile */
@@ -3820,7 +3820,7 @@
 				thrd_mb = <1884284>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -3831,7 +3831,7 @@
 				thrd_mb = <2713968>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3842,7 +3842,7 @@
 				thrd_mb = <3267739>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <1>;
@@ -3853,7 +3853,7 @@
 				thrd_mb = <4517358>;
 				freq_mfc = <667000>;
 				freq_int = <667000>;
-				freq_mif = <1794000>;
+				freq_mif = <2093000>;
 				freq_cpu = <0>;
 				freq_kfc = <0>;
 				mo_value = <0>;
@@ -5094,7 +5094,7 @@
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				execution-mode = <AARCH64_MODE>;
 					/* big	    lit */
-				table = < 0 0 >;
+				table = < 2808000 2002000 >;
 			};
 
 		};

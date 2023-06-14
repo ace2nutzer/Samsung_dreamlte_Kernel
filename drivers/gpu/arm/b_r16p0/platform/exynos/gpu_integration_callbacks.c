@@ -39,8 +39,6 @@ static struct gb_qos_request gb_req = {
 static struct gb_qos_request gb_req = {
 		.name = "ehmp_boost",
 };
-#elif defined(CONFIG_HMP_VARIABLE_SCALE)
-extern int set_hmp_boost(int enable);
 #endif
 
 /* MALI_SEC_INTEGRATION */
@@ -121,14 +119,10 @@ void gpu_destroy_context(void *ctx)
 
 	kctx->ctx_status = CTX_DESTROYED;
 
-#ifdef CONFIG_MALI_DVFS
-	gpu_dvfs_boost_lock(GPU_DVFS_BOOST_UNSET);
-#endif
 #if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)
 	platform = (struct exynos_context *) kbdev->platform_context;
 	mutex_lock(&platform->gpu_sched_hmp_lock);
-	if (platform->ctx_need_qos)
-	{
+	if (platform->ctx_need_qos) {
 		platform->ctx_need_qos = false;
 		gb_qos_update_request(&gb_req, 0);
 	}
@@ -137,12 +131,8 @@ void gpu_destroy_context(void *ctx)
 #elif defined(CONFIG_SCHED_HMP) || defined (CONFIG_SCHED_HMP_CUSTOM)
     platform = (struct exynos_context *) kbdev->platform_context;
     mutex_lock(&platform->gpu_sched_hmp_lock);
-    if (platform->ctx_need_qos) {
+    if (platform->ctx_need_qos)
         platform->ctx_need_qos = false;
-#ifdef CONFIG_HMP_VARIABLE_SCALE
-        set_hmp_boost(0);
-#endif
-    }
     mutex_unlock(&platform->gpu_sched_hmp_lock);
 #endif
 #ifdef CONFIG_MALI_VK_BOOST
@@ -150,16 +140,11 @@ void gpu_destroy_context(void *ctx)
 	mutex_lock(&platform->gpu_vk_boost_lock);
 
 	if (kctx->ctx_vk_need_qos) {
-		pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->table[platform->step].mem_freq);
 		kctx->ctx_vk_need_qos = false;
 		platform->ctx_vk_need_qos = false;
 	}
 
 	mutex_unlock(&platform->gpu_vk_boost_lock);
-#endif
-#ifdef CONFIG_MALI_SEC_CL_BOOST
-	platform = (struct exynos_context *) kbdev->platform_context;
-	platform->cl_boost_disable = false;
 #endif
 #endif /* MALI_SEC_PROBE_TEST */
 }
@@ -167,8 +152,10 @@ void gpu_destroy_context(void *ctx)
 int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 {
 	struct kbase_device *kbdev;
+	struct exynos_context *platform;
 
 	kbdev = kctx->kbdev;
+	platform = (struct exynos_context *)kbdev->platform_context;
 
 	switch (flags)
 	{
@@ -176,8 +163,6 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_STEP_UP_MAX_GPU_LIMIT:
 		{
 #ifdef CONFIG_MALI_DVFS
-			struct exynos_context *platform = (struct exynos_context *)kbdev->platform_context;
-
 			if (!platform->using_max_limit_clock) {
 				platform->using_max_limit_clock = true;
 			}
@@ -187,7 +172,6 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_RESTORE_MAX_GPU_LIMIT:
 		{
 #ifdef CONFIG_MALI_DVFS
-			struct exynos_context *platform = (struct exynos_context *)kbdev->platform_context;
 
 			if (platform->using_max_limit_clock) {
 				platform->using_max_limit_clock = false;
@@ -198,28 +182,11 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_SET_MIN_LOCK:
 		{
 #if defined(CONFIG_MALI_PM_QOS)
-			struct exynos_context *platform;
-			platform = (struct exynos_context *) kbdev->platform_context;
-#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
-			if (!platform->ctx_need_qos) {
+			if (!platform->ctx_need_qos)
 				platform->ctx_need_qos = true;
-				/* set hmp boost */
-				gb_qos_update_request(&gb_req, 100);
-			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
-			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_SET);
-#elif defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
-			mutex_lock(&platform->gpu_sched_hmp_lock);
-			if (!platform->ctx_need_qos) {
-				platform->ctx_need_qos = true;
-#if defined(CONFIG_HMP_VARIABLE_SCALE)
-				/* set hmp boost */
-				set_hmp_boost(1);
-#endif
-			}
-			mutex_unlock(&platform->gpu_sched_hmp_lock);
-			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_SET);
 #endif
 #endif /* CONFIG_MALI_PM_QOS */
 			break;
@@ -228,28 +195,11 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_UNSET_MIN_LOCK:
 		{
 #if defined(CONFIG_MALI_PM_QOS)
-			struct exynos_context *platform;
-			platform = (struct exynos_context *) kbdev->platform_context;
-#if defined(CONFIG_SCHED_EMS) || defined(CONFIG_SCHED_EHMP)
+#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
-			if (platform->ctx_need_qos) {
+			if (platform->ctx_need_qos)
 				platform->ctx_need_qos = false;
-				/* unset hmp boost */
-				gb_qos_update_request(&gb_req, 0);
-			}
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
-			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_RESET);
-#elif defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
-			mutex_lock(&platform->gpu_sched_hmp_lock);
-			if (platform->ctx_need_qos) {
-				platform->ctx_need_qos = false;
-#ifdef CONFIG_HMP_VARIABLE_SCALE
-				/* unset hmp boost */
-				set_hmp_boost(0);
-#endif
-			}
-			mutex_unlock(&platform->gpu_sched_hmp_lock);
-			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_RESET);
 #endif
 #endif /* CONFIG_MALI_PM_QOS */
 			break;
@@ -257,20 +207,12 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_SET_VK_BOOST_LOCK:
 		{
 #if defined(CONFIG_MALI_PM_QOS) && defined(CONFIG_MALI_VK_BOOST)
-			struct exynos_context *platform;
-			platform = (struct exynos_context *) kbdev->platform_context;
 
 			mutex_lock(&platform->gpu_vk_boost_lock);
-
 			if (!kctx->ctx_vk_need_qos) {
 				kctx->ctx_vk_need_qos = true;
 				platform->ctx_vk_need_qos = true;
 			}
-
-			if (platform->ctx_vk_need_qos == true && platform->max_lock == platform->gpu_vk_boost_max_clk_lock) {
-				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->gpu_vk_boost_mif_min_clk_lock);
-			}
-
 			mutex_unlock(&platform->gpu_vk_boost_lock);
 #endif
 			break;
@@ -278,17 +220,12 @@ int gpu_vendor_dispatch(struct kbase_context *kctx, u32 flags)
 	case KBASE_FUNC_UNSET_VK_BOOST_LOCK:
 		{
 #if defined(CONFIG_MALI_PM_QOS) && defined(CONFIG_MALI_VK_BOOST)
-			struct exynos_context *platform;
-			platform = (struct exynos_context *) kbdev->platform_context;
 
 			mutex_lock(&platform->gpu_vk_boost_lock);
-
 			if (kctx->ctx_vk_need_qos) {
 				kctx->ctx_vk_need_qos = false;
 				platform->ctx_vk_need_qos = false;
-				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->table[platform->step].mem_freq);
 			}
-
 			mutex_unlock(&platform->gpu_vk_boost_lock);
 #endif
 			break;

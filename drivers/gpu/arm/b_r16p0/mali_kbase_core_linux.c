@@ -119,8 +119,6 @@ static LIST_HEAD(kbase_dev_list);
 
 #define KERNEL_SIDE_DDK_VERSION_STRING "K:" MALI_RELEASE_NAME "(GPL)"
 
-bool gpu_always_on = false;
-
 static int kbase_api_handshake(struct kbase_context *kctx,
 			       struct kbase_ioctl_version_check *version)
 {
@@ -1532,58 +1530,6 @@ static ssize_t show_policy(struct device *dev, struct device_attribute *attr, ch
 	return ret;
 }
 
-/**
- * set_policy - Store callback for the power_policy sysfs file.
- *
- * This function is called when the power_policy sysfs file is written to.
- * It matches the requested policy against the available policies and if a
- * matching policy is found calls kbase_pm_set_policy() to change the
- * policy.
- *
- * @dev:	The device with sysfs file is for
- * @attr:	The attributes of the sysfs file
- * @buf:	The value written to the sysfs file
- * @count:	The number of bytes written to the sysfs file
- *
- * Return: @count if the function succeeded. An error code on failure.
- */
-static ssize_t set_policy(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct kbase_device *kbdev;
-	const struct kbase_pm_policy *new_policy = NULL;
-	const struct kbase_pm_policy *const *policy_list;
-	int policy_count;
-	int i;
-
-	kbdev = to_kbase_device(dev);
-
-	if (!kbdev)
-		return -ENODEV;
-
-	policy_count = kbase_pm_list_policies(&policy_list);
-
-	for (i = 0; i < policy_count; i++) {
-		if (sysfs_streq(policy_list[i]->name, buf)) {
-			new_policy = policy_list[i];
-			break;
-		}
-	}
-
-	if (!new_policy) {
-		dev_err(dev, "power_policy: policy not found\n");
-		return -EINVAL;
-	}
-
-	if (sysfs_streq(buf, "always_on"))
-		gpu_always_on = true;
-	else
-		gpu_always_on = false;
-
-	kbase_pm_set_policy(kbdev, new_policy);
-
-	return count;
-}
-
 /*
  * The sysfs file power_policy.
  *
@@ -1591,7 +1537,7 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
  * determining which policy is currently active, and changing the active
  * policy.
  */
-static DEVICE_ATTR(power_policy, S_IRUGO | S_IWUSR, show_policy, set_policy);
+static DEVICE_ATTR(power_policy, S_IRUGO, show_policy, NULL);
 
 /*
  * show_core_mask - Show callback for the core_mask sysfs file.

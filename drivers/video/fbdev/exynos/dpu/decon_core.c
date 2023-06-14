@@ -53,8 +53,6 @@ extern void set_devfreq_disp_pm_qos(bool is_suspend);
 extern void set_devfreq_int_pm_qos(bool is_suspend);
 #endif
 
-extern void set_gpu_policy(bool is_suspend);
-
 bool is_suspend = false;
 
 int decon_log_level = 4;
@@ -924,7 +922,7 @@ err:
 	return ret;
 }
 
-static void suspend_handler_thread(struct work_struct *suspend_handler_work)
+static void suspend_resume_handler_thread(struct work_struct *suspend_resume_handler_work)
 {
 #ifdef CONFIG_PM_DEVFREQ
 	set_devfreq_disp_pm_qos(is_suspend);
@@ -935,9 +933,8 @@ static void suspend_handler_thread(struct work_struct *suspend_handler_work)
 	set_suspend_cpufreq(is_suspend);
 #endif
 	update_gov_tunables(is_suspend);
-	set_gpu_policy(is_suspend);
 }
-static DECLARE_WORK(suspend_handler_work, suspend_handler_thread);
+static DECLARE_WORK(suspend_resume_handler_work, suspend_resume_handler_thread);
 
 static int decon_blank(int blank_mode, struct fb_info *info)
 {
@@ -990,7 +987,7 @@ blank_exit:
 	else
 		is_suspend = true;
 
-	schedule_work(&suspend_handler_work);
+	schedule_work(&suspend_resume_handler_work);
 
 	return ret;
 }

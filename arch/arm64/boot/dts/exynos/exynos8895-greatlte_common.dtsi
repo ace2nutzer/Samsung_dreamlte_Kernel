@@ -254,11 +254,10 @@
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <2>;
 				};
-
 				buck2_reg: BUCK2 {
 					regulator-name = "vdd_cpucl0";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <1500000>;
+					regulator-max-microvolt = <1300000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <1>;
@@ -267,7 +266,7 @@
 				buck3_reg: BUCK3 {
 					regulator-name = "vdd_cpucl1";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <1500000>;
+					regulator-max-microvolt = <1300000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <1>;
@@ -294,7 +293,7 @@
 				buck6_reg: BUCK6 {
 					regulator-name = "vdd_g3d";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <1100000>;
+					regulator-max-microvolt = <900000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <2>;
@@ -1997,7 +1996,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L2>;
+				default_mif = <DVFS_MIF_L0>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 				default_hpg = <1>;
@@ -2249,7 +2248,7 @@
 
 				dual_sync_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_capture_int = <DVFS_INT_L5>;
 				dual_sync_capture_i2c = <0>;
 				dual_sync_capture_hpg = <1>;
@@ -2263,7 +2262,7 @@
 
 				dual_sync_video_fhd_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_fhd_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_video_fhd_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_video_fhd_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_video_fhd_capture_int = <DVFS_INT_L5>;
 				dual_sync_video_fhd_capture_i2c = <0>;
 				dual_sync_video_fhd_capture_hpg = <1>;
@@ -2277,7 +2276,7 @@
 
 				dual_sync_video_uhd_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_uhd_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_video_uhd_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_video_uhd_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_video_uhd_capture_int = <DVFS_INT_L5>;
 				dual_sync_video_uhd_capture_i2c = <0>;
 				dual_sync_video_uhd_capture_hpg = <1>;
@@ -2291,7 +2290,7 @@
 
 				dual_sync_video_uhd_capture_swvdis_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_uhd_capture_swvdis_cam = <DVFS_CAM_L2>;
-				dual_sync_video_uhd_capture_swvdis_mif = <DVFS_MIF_L2>;
+				dual_sync_video_uhd_capture_swvdis_mif = <DVFS_MIF_L0>;
 				dual_sync_video_uhd_capture_swvdis_int = <DVFS_INT_L0>;
 				dual_sync_video_uhd_capture_swvdis_i2c = <0>;
 				dual_sync_video_uhd_capture_swvdis_hpg = <6>;
@@ -2354,7 +2353,7 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
 				video_high_speed_240fps_int = <DVFS_INT_L2>;
 				video_high_speed_240fps_i2c = <0>;
 				video_high_speed_240fps_hpg = <1>;
@@ -2368,7 +2367,7 @@
 
 				max_int_cam = <DVFS_INT_CAM_L0>;
 				max_cam = <DVFS_CAM_L0>;
-				max_mif = <DVFS_MIF_L2>;
+				max_mif = <DVFS_MIF_L0>;
 				max_int = <DVFS_INT_L0>;
 				max_i2c = <0>;
 				max_hpg = <1>;
@@ -2379,7 +2378,7 @@
 
 				default_int_cam = <DVFS_INT_CAM_L0>;
 				default_cam = <DVFS_CAM_L0>;
-				default_mif = <DVFS_MIF_L2>;
+				default_mif = <DVFS_MIF_L0>;
 				default_int = <DVFS_INT_L0>;
 				default_i2c = <0>;
 
@@ -2589,13 +2588,13 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
 				video_high_speed_240fps_int = <DVFS_INT_L2>;
 				video_high_speed_240fps_i2c = <0>;
 
 				max_int_cam = <DVFS_INT_CAM_L0>;
 				max_cam = <DVFS_CAM_L0>;
-				max_mif = <DVFS_MIF_L2>;
+				max_mif = <DVFS_MIF_L0>;
 				max_int = <DVFS_INT_L0>;
 				max_i2c = <0>;
 			};

@@ -708,7 +708,7 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 
 extern unsigned int cpu4_max_freq;
-extern void sanitize_cpu_dvfs(bool sanitize, bool oc);
+extern void sanitize_cpu_dvfs(bool sanitize);
 
 #ifdef CONFIG_HOTPLUG_CPU
 extern void should_hotplug_big_cpu(void);
