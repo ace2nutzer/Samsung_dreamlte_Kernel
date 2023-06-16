@@ -247,7 +247,7 @@ max_delay:
 static void update_down_threshold(struct od_dbs_tuners *od_tuners)
 {
 	od_tuners->down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
-	pr_info("[%s] for CPU - new value: %u\n",__func__, od_tuners->down_threshold);
+	pr_info("[%s] for CPU policy%d - new value: %u\n",__func__, od_tuners->policy_nr, od_tuners->down_threshold);
 }
 
 /************************** sysfs interface ************************/
@@ -566,6 +566,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 
 	dbs_data->tuners = tuners;
 	update_down_threshold(tuners);
+
 	return 0;
 }
 
@@ -605,56 +606,56 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 	.owner			= THIS_MODULE,
 };
 
-#ifdef CONFIG_CPU_FREQ_SUSPEND
 void update_gov_tunables(bool is_suspend)
 {
-	int cpu;
-	struct od_dbs_tuners *od_tuners_lit, *od_tuners_big;
-	struct od_cpu_dbs_info_s *dbs_info_lit, *dbs_info_big;
-	struct cpufreq_policy *policy_lit, *policy_big;
-	struct dbs_data *dbs_data_lit, *dbs_data_big;
+	struct od_dbs_tuners *od_tuners;
+	struct od_cpu_dbs_info_s *dbs_info;
+	struct cpufreq_policy *policy;
+	struct dbs_data *dbs_data;
+	int cpu = 0;
 
 	for_each_cpu(cpu, &hmp_slow_cpu_mask) {
 		if (cpu_online(cpu)) {
-			dbs_info_lit = &per_cpu(od_cpu_dbs_info, cpu);
-			policy_lit = dbs_info_lit->cdbs.shared->policy;
-			dbs_data_lit = policy_lit->governor_data;
-			od_tuners_lit = dbs_data_lit->tuners;
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+			policy = dbs_info->cdbs.shared->policy;
+			dbs_data = policy->governor_data;
+			od_tuners = dbs_data->tuners;
+			od_tuners->policy_nr = cpu;
 			if (is_suspend) {
-				od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_suspend;
-				od_tuners_lit->boost = od_tuners_lit->boost_suspend;
+				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
+				od_tuners->boost = od_tuners->boost_suspend;
 			} else {
 				/* resumed */
-				od_tuners_lit->up_threshold = od_tuners_lit->up_threshold_resume;
-				od_tuners_lit->boost = od_tuners_lit->boost_resume;
+				od_tuners->up_threshold = od_tuners->up_threshold_resume;
+				od_tuners->boost = od_tuners->boost_resume;
 			}
 			/* update down_threshold */
-			update_down_threshold(od_tuners_lit);
+			update_down_threshold(od_tuners);
 			break;
 		}
 	}
 
 	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
 		if (cpu_online(cpu)) {
-			dbs_info_big = &per_cpu(od_cpu_dbs_info, cpu);
-			policy_big = dbs_info_big->cdbs.shared->policy;
-			dbs_data_big = policy_big->governor_data;
-			od_tuners_big = dbs_data_big->tuners;
+			dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
+			policy = dbs_info->cdbs.shared->policy;
+			dbs_data = policy->governor_data;
+			od_tuners = dbs_data->tuners;
+			od_tuners->policy_nr = cpu;
 			if (is_suspend) {
-				od_tuners_big->up_threshold = od_tuners_big->up_threshold_suspend;
-				od_tuners_big->boost = od_tuners_big->boost_suspend;
+				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
+				od_tuners->boost = od_tuners->boost_suspend;
 			} else {
 				/* resumed */
-				od_tuners_big->up_threshold = od_tuners_big->up_threshold_resume;
-				od_tuners_big->boost = od_tuners_big->boost_resume;
+				od_tuners->up_threshold = od_tuners->up_threshold_resume;
+				od_tuners->boost = od_tuners->boost_resume;
 			}
 			/* update down_threshold */
-			update_down_threshold(od_tuners_big);
+			update_down_threshold(od_tuners);
 			break;
 		}
 	}
 }
-#endif
 
 static int __init cpufreq_gov_dbs_init(void)
 {

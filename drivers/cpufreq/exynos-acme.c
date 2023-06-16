@@ -29,10 +29,6 @@
 #include <linux/a2n.h>
 #endif
 
-#ifdef CONFIG_HOTPLUG_CPU
-extern void should_hotplug_big_cpu(void);
-#endif
-
 /*
  * list head of cpufreq domain
  */
@@ -466,14 +462,6 @@ module_param(cpu4_suspend_min_freq, uint, 0644);
 
 static unsigned int cpu4_suspend_max_freq = 0;
 
-extern unsigned int cpu0_min_freq;
-extern unsigned int cpu0_max_freq;
-
-extern unsigned int cpu4_min_freq;
-extern unsigned int cpu4_max_freq;
-
-extern void update_gov_tunables(bool);
-
 static int set_cpu0_suspend_max_freq(const char *buf, struct kernel_param *kp)
 {
 	unsigned int tmp;
@@ -592,8 +580,6 @@ void set_suspend_cpufreq(bool is_suspend)
 				}
 			}
 	}
-
-	update_gov_tunables(is_suspend);
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND
 

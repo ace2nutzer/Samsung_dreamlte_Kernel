@@ -38,6 +38,7 @@
 #ifdef CONFIG_SEC_DEBUG
 #include <linux/sec_debug.h>
 #endif
+#include <linux/cpufreq.h>
 
 #include "decon.h"
 #include "dsim.h"
@@ -45,10 +46,6 @@
 #include "../../../../staging/android/sw_sync.h"
 #include "dpp.h"
 #include "displayport.h"
-
-#ifdef CONFIG_CPU_FREQ_SUSPEND
-extern void set_suspend_cpufreq(bool is_suspend);
-#endif
 
 #ifdef CONFIG_PM_DEVFREQ
 extern void set_devfreq_mif_pm_qos(bool is_suspend);
@@ -937,6 +934,7 @@ static void suspend_handler_thread(struct work_struct *suspend_handler_work)
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 	set_suspend_cpufreq(is_suspend);
 #endif
+	update_gov_tunables(is_suspend);
 	set_gpu_policy(is_suspend);
 }
 static DECLARE_WORK(suspend_handler_work, suspend_handler_thread);
