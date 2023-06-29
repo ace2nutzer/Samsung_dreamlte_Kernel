@@ -163,12 +163,12 @@ enum {
  * -# Power off one or more shader cores
  * -# Power off the entire GPU
  */
-#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (400000) /* 400us */
+#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (800000) /* 800us */
 
 /**
  * Power Manager number of ticks before shader cores are powered off
  */
-#define DEFAULT_PM_POWEROFF_TICK_SHADER (2) /* 400-800us */
+#define DEFAULT_PM_POWEROFF_TICK_SHADER (10) /* 400-800us */
 
 /**
  * Default scheduling tick granuality
@@ -181,23 +181,23 @@ enum {
  * This defines the time-slice for a job (which may be different from that of a
  * context)
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS       (1) /* 100ms-200ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS       (10) /* 1000ms-2000ms */
 
 /**
  * Default minimum number of scheduling ticks before CL jobs are soft-stopped.
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (1) /* 100ms-200ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (10) /* 1000ms-2000ms */
 
 /**
  * Default minimum number of scheduling ticks before jobs are hard-stopped
  */
-#define DEFAULT_JS_HARD_STOP_TICKS_SS    (50) /* 5s */
-#define DEFAULT_JS_HARD_STOP_TICKS_SS_8408  (300) /* 30s */
+#define DEFAULT_JS_HARD_STOP_TICKS_SS    (50) /* 5.0s */
+#define DEFAULT_JS_HARD_STOP_TICKS_SS_8408  (300) /* 30.0s */
 
 /**
  * Default minimum number of scheduling ticks before CL jobs are hard-stopped.
  */
-#define DEFAULT_JS_HARD_STOP_TICKS_CL    (50) /* 5s */
+#define DEFAULT_JS_HARD_STOP_TICKS_CL    (50) /* 5.0s */
 
 /**
  * Default minimum number of scheduling ticks before jobs are hard-stopped

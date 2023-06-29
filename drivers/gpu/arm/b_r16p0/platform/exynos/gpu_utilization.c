@@ -34,7 +34,7 @@ static void gpu_dvfs_update_utilization(struct kbase_device *kbdev)
 
 	DVFS_ASSERT(platform);
 
-#if defined(CONFIG_MALI_DVFS) && defined(CONFIG_CPU_THERMAL_IPA)
+#if defined(CONFIG_MALI_DVFS)
 	if (platform->time_tick < platform->gpu_dvfs_time_interval) {
 		platform->time_tick++;
 		platform->time_busy += kbdev->pm.backend.metrics.values.time_busy;
@@ -44,7 +44,7 @@ static void gpu_dvfs_update_utilization(struct kbase_device *kbdev)
 		platform->time_idle = kbdev->pm.backend.metrics.values.time_idle;
 		platform->time_tick = 0;
 	}
-#endif /* CONFIG_MALI_DVFS && CONFIG_CPU_THERMAL_IPA */
+#endif
 
 	spin_lock_irqsave(&platform->gpu_dvfs_spinlock, flags);
 

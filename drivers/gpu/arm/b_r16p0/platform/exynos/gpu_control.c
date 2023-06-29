@@ -565,7 +565,7 @@ int gpu_asv_calibration_start(void)
 		gpu_asv_cali_wq = create_workqueue("g3d_asv_cali");
 	}
 
-	queue_delayed_work_on(0, gpu_asv_cali_wq,
+	queue_delayed_work(gpu_asv_cali_wq,
 			&gpu_asv_cali_stop_work, msecs_to_jiffies(15000));	/* 15 second */
 
 	return 0;

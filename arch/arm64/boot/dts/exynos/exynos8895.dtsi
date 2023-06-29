@@ -311,7 +311,7 @@
 
 	cpu_hotplug {
 		compatible = "exynos,cpu_hotplug";
-		boot_lock_time = <40>;
+		boot_lock_time = <30>;
 	};
 
 	exynos-pmu {
@@ -807,15 +807,15 @@
 		gpu_temp_throttling_level_num = <6>;
 		gpu_temp_throttling = <839000 764000 683000 572000 455000 338000>;
 		gpu_power_coeff = <625>;
-		gpu_dvfs_time_interval = <5>; /*1 tick : 10ms*/
+		gpu_dvfs_time_interval = <10>; /* 1 tick: 2 ms */
 		gpu_default_wakeup_lock = <1>;
 		gpu_dynamic_abb = <0>;
 		gpu_early_clk_gating = <0>;
 		gpu_dvs = <0>;
 		gpu_inter_frame_pm = <1>;
 		gpu_perf_gathering = <0>;
-		gpu_runtime_pm_delay_time = <50>;
-		gpu_dvfs_polling_time = <30>;
+		gpu_runtime_pm_delay_time = <1000>;
+		gpu_dvfs_polling_time = <20>;
 		gpu_pmqos_int_disable = <1>;
 		gpu_pmqos_mif_max_clock = <0>;
 		gpu_pmqos_mif_max_clock_base = <0>;
@@ -2481,7 +2481,7 @@
 		devfreq_domain_name = "dvfs_mif";
 
 		/* Delay time */
-		use_delay_time = "true";
+		use_delay_time = "false";
 		delay_time_list = "20";
 
 		freq_info = <1794000 1014000 546000 546000 2093000 1794000>;
@@ -2547,7 +2547,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <690000 640000 640000 640000 690000 640000>;
+		freq_info = <640000 640000 640000 640000 690000 640000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -2577,7 +2577,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <630000 214000 134000 134000 630000 214000>;
+		freq_info = <214000 214000 134000 134000 630000 214000>;
 		/* <initial_freq, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */
@@ -2607,7 +2607,7 @@
 		/* Delay time */
 		use_delay_time = "false";
 
-		freq_info = <690000 630000 630000 630000 690000 630000>;
+		freq_info = <630000 630000 630000 630000 690000 630000>;
 		/* <initial, default_qos, suspend_freq, min, max, reboot_freq> */
 
 		/* Booting value */

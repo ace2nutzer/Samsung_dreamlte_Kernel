@@ -211,16 +211,16 @@ struct exynos_context {
 		int highspeed_delay;
 		int delay_count;
 	} interactive;
+
+	int gpu_dvfs_time_interval;
+	int time_tick;
+	u32 time_busy;
+	u32 time_idle;
 #ifdef CONFIG_CPU_THERMAL_IPA
 	int norm_utilisation;
 	int freq_for_normalisation;
 	unsigned long long power;
-	int time_tick;
-	u32 time_busy;
-	u32 time_idle;
-
 	int ipa_power_coeff_gpu;
-	int gpu_dvfs_time_interval;
 #endif /* CONFIG_CPU_THERMAL_IPA */
 #endif /* CONFIG_MALI_DVFS */
 

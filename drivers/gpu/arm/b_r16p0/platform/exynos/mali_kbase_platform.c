@@ -305,8 +305,8 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 				of_data_int, TMU_LOCK_CLK_END);
 #ifdef CONFIG_CPU_THERMAL_IPA
 	gpu_update_config_data_int(np, "gpu_power_coeff", &platform->ipa_power_coeff_gpu);
-	gpu_update_config_data_int(np, "gpu_dvfs_time_interval", &platform->gpu_dvfs_time_interval);
 #endif /* CONFIG_CPU_THERMAL_IPA */
+	gpu_update_config_data_int(np, "gpu_dvfs_time_interval", &platform->gpu_dvfs_time_interval);
 	gpu_update_config_data_bool(np, "gpu_default_wakeup_lock", &platform->wakeup_lock);
 	gpu_update_config_data_bool(np, "gpu_dynamic_abb", &platform->dynamic_abb_status);
 	gpu_update_config_data_int(np, "gpu_dvfs_polling_time", &platform->polling_speed);
