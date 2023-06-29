@@ -17,18 +17,18 @@
 static void __iomem *fvmap_base = NULL;
 static void __iomem *sram_fvmap_base = NULL;
 
-int init_margin_table[10];
+static int init_margin_table[10];
 
-int set_mif_volt;
-int set_int_volt;
-int set_cpucl0_volt;
-int set_cpucl1_volt;
-int set_g3d_volt;
-int set_intcam_volt;
-int set_cam_volt;
-int set_disp_volt;
-int set_g3dm_volt;
-int set_cp_volt;
+static int set_mif_volt;
+static int set_int_volt;
+static int set_cpucl0_volt;
+static int set_cpucl1_volt;
+static int set_g3d_volt;
+static int set_intcam_volt;
+static int set_cam_volt;
+static int set_disp_volt;
+static int set_g3dm_volt;
+static int set_cp_volt;
 
 static int __init get_mif_volt(char *str)
 {
@@ -110,12 +110,17 @@ static int __init get_cp_volt(char *str)
 }
 early_param("cp", get_cp_volt);
 
-int fvmap_set_raw_voltage_table(unsigned int id, int uV)
+static int fvmap_set_raw_voltage_table(unsigned int id, unsigned int uV)
 {
 	struct fvmap_header *fvmap_header;
 	struct rate_volt_header *fv_table;
 	int num_of_lv;
 	int idx, i;
+
+	if (!IS_ACPM_VCLK(id)) {
+		pr_warn("%s: dvfs_id: %u is not ACPM_VCLK! - return ...\n", __func__, ACPM_VCLK_TYPE | id);
+		return 0;
+	}
 
 	idx = GET_IDX(id);
 
@@ -123,8 +128,10 @@ int fvmap_set_raw_voltage_table(unsigned int id, int uV)
 	fv_table = sram_fvmap_base + fvmap_header[idx].o_ratevolt;
 	num_of_lv = fvmap_header[idx].num_of_lv;
 
-	for (i = 0; i < num_of_lv; i++)
-		fv_table->table[i].volt += uV;
+	for (i = 0; i < num_of_lv; i++) {
+		fv_table->table[i].volt = uV;
+		pr_info("%s: dvfs_id: %u - rate %u - volt %u\n", __func__, ACPM_VCLK_TYPE | id, fv_table->table[i].rate, uV);
+	}
 
 	return 0;
 }
@@ -136,8 +143,10 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 	int idx, i;
 	int num_of_lv;
 
-	if (!IS_ACPM_VCLK(id))
+	if (!IS_ACPM_VCLK(id)) {
+		pr_warn("%s: dvfs_id: %u is not ACPM_VCLK! - return ...\n", __func__, ACPM_VCLK_TYPE | id);
 		return 0;
+	}
 
 	idx = GET_IDX(id);
 
@@ -145,14 +154,16 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 	fv_table = fvmap_base + fvmap_header[idx].o_ratevolt;
 	num_of_lv = fvmap_header[idx].num_of_lv;
 
-	for (i = 0; i < num_of_lv; i++)
+	for (i = 0; i < num_of_lv; i++) {
 		table[i] = fv_table->table[i].volt;
+		pr_info("%s: dvfs_id: %u - rate %u - volt %u\n", __func__, ACPM_VCLK_TYPE | id, fv_table->table[i].rate, table[i]);
+	}
 
 	return num_of_lv;
 
 }
 
-int fvmap_get_raw_voltage_table(unsigned int id)
+static int fvmap_get_raw_voltage_table(unsigned int id)
 {
 	struct fvmap_header *fvmap_header;
 	struct rate_volt_header *fv_table;
@@ -160,17 +171,21 @@ int fvmap_get_raw_voltage_table(unsigned int id)
 	int num_of_lv;
 	unsigned int table[20];
 
+	if (!IS_ACPM_VCLK(id)) {
+		pr_warn("%s: dvfs_id: %u is not ACPM_VCLK! - return ...\n", __func__, ACPM_VCLK_TYPE | id);
+		return 0;
+	}
+
 	idx = GET_IDX(id);
 
 	fvmap_header = sram_fvmap_base;
 	fv_table = sram_fvmap_base + fvmap_header[idx].o_ratevolt;
 	num_of_lv = fvmap_header[idx].num_of_lv;
 
-	for (i = 0; i < num_of_lv; i++)
+	for (i = 0; i < num_of_lv; i++) {
 		table[i] = fv_table->table[i].volt;
-
-	for (i = 0; i < num_of_lv; i++)
-		printk("dvfs id : %d  %d Khz : %d uv\n", ACPM_VCLK_TYPE | id, fv_table->table[i].rate, table[i]);
+		pr_info("%s: dvfs_id: %u - rate %u - volt %u\n", __func__, ACPM_VCLK_TYPE | id, fv_table->table[i].rate, table[i]);
+	}
 
 	return 0;
 }
@@ -385,6 +400,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 			if (clk_node->pll_con1)
 				clk_node->pll_con1 += fvaddr_offset - paddr_offset;
 		}
+
 	}
 	/* print custom dvfs table in kmsg */
 	print_fvmap();
