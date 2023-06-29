@@ -167,4 +167,7 @@ struct exynos_tmu_data {
 	void (*tmu_clear_irqs)(struct exynos_tmu_data *data);
 };
 
+extern struct exynos_tmu_data *cpu_tmu_data;
+extern struct exynos_tmu_data *gpu_tmu_data;
+
 #endif /* _EXYNOS_TMU_H */

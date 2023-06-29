@@ -707,7 +707,12 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 
+extern unsigned int cpu0_min_freq;
+extern unsigned int cpu0_max_freq;
+
+extern unsigned int cpu4_min_freq;
 extern unsigned int cpu4_max_freq;
+
 extern void sanitize_cpu_dvfs(bool sanitize);
 
 #ifdef CONFIG_HOTPLUG_CPU
@@ -715,15 +720,8 @@ extern void should_hotplug_big_cpu(void);
 #endif
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-extern unsigned int cpu0_min_freq;
-extern unsigned int cpu0_max_freq;
-
-extern unsigned int cpu4_min_freq;
-extern unsigned int cpu4_max_freq;
-
 extern void set_suspend_cpufreq(bool is_suspend);
-#endif
-
 extern void update_gov_tunables(bool is_suspend);
+#endif
 
 #endif /* _LINUX_CPUFREQ_H */

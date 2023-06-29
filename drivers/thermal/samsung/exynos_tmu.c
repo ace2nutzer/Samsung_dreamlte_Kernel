@@ -146,18 +146,22 @@
 #define EXYNOS_TMU_NUM_PROBE_SHIFT		(16)
 #define EXYNOS_TMU_NUM_PROBE_MASK		(0x7)
 
-#define TOTAL_SENSORS	8
-#define DEFAULT_BALANCE_OFFSET	20
+#define TOTAL_SENSORS			20
+#define DEFAULT_BALANCE_OFFSET		20
+#define GPU_TEMP_OFFSET			5
 
-static bool suspended;
-static bool is_cpu_hotplugged_out;
+struct exynos_tmu_data *cpu_tmu_data = NULL;
+struct exynos_tmu_data *gpu_tmu_data = NULL;
+
+static bool suspended = false;
+static bool is_cpu_hotplugged_out = false;
 static DEFINE_MUTEX (thermal_suspend_lock);
 
 /* list of multiple instance for each thermal sensor */
 static LIST_HEAD(dtm_dev_list);
 struct cpufreq_frequency_table gpu_freq_table[10];
 
-static u32 global_avg_con;
+static u32 global_avg_con = 0;
 
 static void exynos_report_trigger(struct exynos_tmu_data *p)
 {
@@ -841,7 +845,6 @@ exynos_tmu_curr_temp(struct device *dev,
 
 static DEVICE_ATTR(curr_temp, S_IRUGO, exynos_tmu_curr_temp, NULL);
 
-
 static struct attribute *exynos_thermal_sensor_attributes[] = {
 	&dev_attr_curr_temp.attr,
 	NULL
@@ -986,6 +989,10 @@ static int exynos8895_tmu_read(struct exynos_tmu_data *data)
 		default :
 			break;
 	}
+
+	/* GPU temp fix */
+	if (data->id == 2)
+		result -= GPU_TEMP_OFFSET;
 
 	return result;
 }
@@ -1280,6 +1287,7 @@ static int gpu_cooling_table_init(struct platform_device *pdev)
 static int gpu_cooling_table_init(struct platform_device *pdev) {return 0;}
 #endif
 
+#ifdef CONFIG_CPU_THERMAL
 #ifdef CONFIG_SEC_DEBUG_HW_PARAM
 static u64 last_time, curr_time;
 extern struct thermal_data_devices thermal_data_info[THERMAL_ZONE_MAX];
@@ -1328,11 +1336,16 @@ static int exynos_throttle_cpu_hotplug(void *p, int temp)
 
 	return ret;
 }
+#endif // CONFIG_CPU_THERMAL
 
 static struct thermal_zone_of_device_ops exynos_hotplug_sensor_ops = {
 	.get_temp = exynos_get_temp,
 	.set_emul_temp = exynos_tmu_set_emulation,
+#ifdef CONFIG_CPU_THERMAL
 	.throttle_cpu_hotplug = exynos_throttle_cpu_hotplug,
+#else
+	.throttle_cpu_hotplug = 0,
+#endif
 };
 
 static struct thermal_zone_of_device_ops exynos_sensor_ops = {
@@ -1401,14 +1414,10 @@ static int exynos_cpufreq_cooling_register(struct exynos_tmu_data *data)
 		return -ENODEV;
 	}
 
+	cpu_tmu_data = data;
+
 	return ret;
 }
-
-//#ifdef CONFIG_GPU_THERMAL
-
-#ifdef CONFIG_MALI_DEBUG_KERNEL_SYSFS
-struct exynos_tmu_data *gpu_thermal_data = NULL;
-#endif
 
 static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data)
 {
@@ -1466,15 +1475,10 @@ static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data)
 		return -ENODEV;
 	}
 
-#ifdef CONFIG_MALI_DEBUG_KERNEL_SYSFS
-	gpu_thermal_data = data;
-#endif
+	gpu_tmu_data = data;
 
 	return ret;
 }
-//#else
-//static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data) {return 0;}
-//#endif
 
 #ifdef CONFIG_ISP_THERMAL
 static int exynos_isp_cooling_register(struct exynos_tmu_data *data)
@@ -1762,15 +1766,17 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 
 	INIT_WORK(&data->irq_work, exynos_tmu_work);
 
+#ifdef CONFIG_CPU_THERMAL
+	if (data->hotplug_enable)
+		pm_qos_add_request(&thermal_cpu_hotplug_request,
+					PM_QOS_CPU_ONLINE_MAX,
+					PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
+#endif
+
 	/*
 	 * data->tzd must be registered before calling exynos_tmu_initialize(),
 	 * requesting irq and calling exynos_tmu_control().
 	 */
-	if(data->hotplug_enable)
-		pm_qos_add_request(&thermal_cpu_hotplug_request,
-					PM_QOS_CPU_ONLINE_MAX,
-					PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
-
 	data->tzd = thermal_zone_of_sensor_register(&pdev->dev, 0, data,
 						    data->hotplug_enable ?
 						    &exynos_hotplug_sensor_ops :

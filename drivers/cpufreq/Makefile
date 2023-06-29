@@ -45,6 +45,10 @@ obj-$(CONFIG_X86_AMD_FREQ_SENSITIVITY)	+= amd_freq_sensitivity.o
 obj-$(CONFIG_X86_SFI_CPUFREQ)		+= sfi-cpufreq.o
 
 ##################################################################################
+# EXYNOS THERMAL
+THERMAL_PATH = $(srctree)/drivers/thermal/samsung/
+ccflags-y += -I$(THERMAL_PATH)
+
 # ARM SoC drivers
 obj-$(CONFIG_ARM_BIG_LITTLE_CPUFREQ)	+= arm_big_little.o
 # big LITTLE per platform glues. Keep DT_BL_CPUFREQ as the last entry in all big

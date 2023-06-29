@@ -25,8 +25,6 @@
 #include <soc/samsung/cal-if.h>
 #include "../governor.h"
 
-#define USE_MIN_MAX_FREQ_FROM_DT
-
 static struct exynos_devfreq_data *_data = NULL;
 
 static int exynos8895_devfreq_disp_cmu_dump(struct exynos_devfreq_data *data)
@@ -113,17 +111,13 @@ static int exynos8895_devfreq_disp_set_freq(struct device *dev, u32 new_freq,
 
 static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *data)
 {
-	u32 max_freq, min_freq;
-	unsigned long tmp_max, tmp_min;
+	u32 max_freq = 0, min_freq = 0, cur_freq = 0;
+	unsigned long tmp_max = 0, tmp_min = 0;
 	struct dev_pm_opp *target_opp;
 	u32 flags = 0;
-	int i;
+	int i = 0, ret = 0;
 
-#ifdef USE_MIN_MAX_FREQ_FROM_DT
-	max_freq = data->max_freq;
-#else
-	max_freq = (u32)cal_dfs_get_max_freq(data->dfs_id);
-#endif
+	max_freq = cal_dfs_get_max_freq(data->dfs_id);
 	if (!max_freq) {
 		dev_err(data->dev, "failed to get max frequency\n");
 		return -EINVAL;
@@ -135,7 +129,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	if (max_freq < data->max_freq) {
 		rcu_read_lock();
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_max = (unsigned long)max_freq;
+		tmp_max = max_freq;
 		target_opp = devfreq_recommended_opp(data->dev, &tmp_max, flags);
 		if (IS_ERR(target_opp)) {
 			rcu_read_unlock();
@@ -143,7 +137,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			return PTR_ERR(target_opp);
 		}
 
-		data->max_freq = (u32)dev_pm_opp_get_freq(target_opp);
+		data->max_freq = dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 
@@ -151,11 +145,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	if (data->min_freq > data->max_freq)
 		data->min_freq = data->max_freq;
 
-#ifdef USE_MIN_MAX_FREQ_FROM_DT
-	min_freq = data->min_freq;
-#else
-	min_freq = (u32)cal_dfs_get_min_freq(data->dfs_id);
-#endif
+	min_freq = cal_dfs_get_min_freq(data->dfs_id);
 	if (!min_freq) {
 		dev_err(data->dev, "failed to get min frequency\n");
 		return -EINVAL;
@@ -167,7 +157,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	if (min_freq > data->min_freq) {
 		rcu_read_lock();
 		flags &= ~DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_min = (unsigned long)min_freq;
+		tmp_min = min_freq;
 		target_opp = devfreq_recommended_opp(data->dev, &tmp_min, flags);
 		if (IS_ERR(target_opp)) {
 			rcu_read_unlock();
@@ -175,7 +165,7 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			return PTR_ERR(target_opp);
 		}
 
-		data->min_freq = (u32)dev_pm_opp_get_freq(target_opp);
+		data->min_freq = dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 
@@ -185,8 +175,20 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	for (i = 0; i < data->max_state; i++) {
 		if (data->opp_list[i].freq > data->max_freq ||
 			data->opp_list[i].freq < data->min_freq)
-			dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq);
+			dev_pm_opp_disable(data->dev, data->opp_list[i].freq);
 	}
+
+	if (data->max_freq < data->boot_freq) {
+		data->boot_freq = data->max_freq;
+		data->devfreq_profile.initial_freq = data->max_freq;
+	}
+
+	ret = cal_dfs_set_rate(data->dfs_id, data->boot_freq);
+	if (ret)
+		dev_err(data->dev, "failed to set boot_freq %u Khz to CAL\n", data->boot_freq);
+	cur_freq = cal_dfs_get_rate(data->dfs_id);
+	dev_info(data->dev, "cur_freq: %u Khz - boot_freq: %u Khz - min_freq: %u Khz - max_freq: %u Khz\n",
+			cur_freq, data->boot_freq, data->min_freq, data->max_freq);
 
 	return 0;
 }

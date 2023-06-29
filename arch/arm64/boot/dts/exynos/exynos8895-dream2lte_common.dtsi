@@ -230,11 +230,11 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pmic_irq &pm_wrsti &g3d_dvs &smpl_warn>;
 			gpios = <&gpb1 3 0>, <&gpb1 2 0x2>;
-			smpl_warn_en = <1>; /* 1 : enable , 0 : disable*/
+			smpl_warn_en = <0>; /* 1 : enable , 0 : disable*/
 			/* range of smpl_warn_vth */
 			/* 0x00 : 2.1V, 0x20 : 2.3V, 0x40 : 2.5V, 0x60 : 2.7V 0x80 : 2.9V */
 			/* 0xA0 : 3.1V, 0xC0 : 3.3V, 0xE0 : 3.5V */
-			smpl_warn_vth = <0x80>;
+			smpl_warn_vth = <0xE0>;
 			/* LowBat_Hys[4:3] 00(100mV), 01(200mV), 10(300mV), 11(400mV) */
 			smpl_warn_hys = <0x00>;
 			adc_mode = <1>; /* 0 : disable, 1 : current meter, 2 : power meter */
@@ -267,7 +267,7 @@
 				buck2_reg: BUCK2 {
 					regulator-name = "vdd_cpucl0";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <1300000>;
+					regulator-max-microvolt = <1350000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <1>;
@@ -276,7 +276,7 @@
 				buck3_reg: BUCK3 {
 					regulator-name = "vdd_cpucl1";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <1300000>;
+					regulator-max-microvolt = <1350000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <1>;
@@ -303,7 +303,7 @@
 				buck6_reg: BUCK6 {
 					regulator-name = "vdd_g3d";
 					regulator-min-microvolt = <450000>;
-					regulator-max-microvolt = <900000>;
+					regulator-max-microvolt = <950000>;
 					regulator-always-on;
 					regulator-ramp-delay = <12000>;
 					regulator-initial-mode = <2>;

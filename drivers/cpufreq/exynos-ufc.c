@@ -31,45 +31,63 @@
 #include <linux/a2n.h>
 #endif
 
+#if defined(CONFIG_EXYNOS_THERMAL)
+#include "exynos_tmu.h"
+#endif
+
 /*********************************************************************
  *                          SYSFS INTERFACES                         *
  *********************************************************************/
 
 /* custom DVFS */
-static unsigned int user_cpu_dvfs_max_temp = 60;
+static unsigned int user_cpu_dvfs_max_temp = 75; /* boot temp */
+static unsigned int __user_cpu_dvfs_max_temp = 55;
 static unsigned int cpu_dvfs_max_temp = 0;
 static unsigned int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
-static unsigned int cpu_dvfs_sleep_time = 4;	/* ms */
+static unsigned int cpu_dvfs_sleep_time = 6;	/* ms */
 static unsigned int cpu4_dvfs_limit = 0;
+static unsigned int cpu0_dvfs_limit = 0;
 static unsigned int cpu_dvfs_min_temp = 0;
 static unsigned int user_cpu0_min_limit = 0;
 static unsigned int user_cpu4_min_limit = 0;
 static struct task_struct *cpu_dvfs_thread = NULL;
+static struct pm_qos_request cpu_maxlock_cl0;
 static struct pm_qos_request cpu_maxlock_cl1;
 static struct pm_qos_request cpu_minlock_cl0;
 static struct pm_qos_request cpu_minlock_cl1;
 
-#define CPU_DVFS_RANGE_TEMP_MIN			(50)	/* °C */
-#define CPU_DVFS_TJMAX				(100)	/* °C */
-#define CPU_DVFS_AVOID_SHUTDOWN_TEMP		(105)	/* °C */
-#define CPU_DVFS_SHUTDOWN_TEMP			(110)	/* °C */
-#define CPU_DVFS_MARGIN_TEMP			(10)	/* °C */
-#define CPU_DVFS_STEP_DOWN_TEMP			(5)	/* °C */
+#define CPU_DVFS_RANGE_TEMP_MIN		(45)	/* °C */
+#define CPU_DVFS_TJMAX			(100)	/* °C */
+#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
+#define CPU_DVFS_SHUTDOWN_TEMP		(110)	/* °C */
+#define CPU_DVFS_MARGIN_TEMP		(10)	/* °C */
+#define CPU_DVFS_STEP_DOWN_TEMP		(5)	/* °C */
+#define CPU_DVFS_DEBUG			(0)
 
 /* Cluster 1 big cpu */
-#define FREQ_STEP_0               (741000)
-#define FREQ_STEP_1               (962000)
-#define FREQ_STEP_2               (1170000)
-#define FREQ_STEP_3               (1469000)
-#define FREQ_STEP_4               (1703000)
-#define FREQ_STEP_5               (1937000)
-#define FREQ_STEP_6               (2158000)
-#define FREQ_STEP_7               (2314000)
-#define FREQ_STEP_8               (2496000)
-#define FREQ_STEP_9               (2652000)
-#define FREQ_STEP_10              (2704000)
-#define FREQ_STEP_11              (2808000)
+#define FREQ_STEP_CL1_0               (741000)
+#define FREQ_STEP_CL1_1               (962000)
+#define FREQ_STEP_CL1_2               (1170000)
+#define FREQ_STEP_CL1_3               (1469000)
+#define FREQ_STEP_CL1_4               (1703000)
+#define FREQ_STEP_CL1_5               (1937000)
+#define FREQ_STEP_CL1_6               (2158000)
+#define FREQ_STEP_CL1_7               (2314000)
+#define FREQ_STEP_CL1_8               (2496000)
+#define FREQ_STEP_CL1_9               (2652000)
+#define FREQ_STEP_CL1_10              (2704000)
+#define FREQ_STEP_CL1_11              (2808000)
+
+/* Cluster 0 little cpu */
+#define FREQ_STEP_CL0_0               (832000)
+#define FREQ_STEP_CL0_1               (1053000)
+#define FREQ_STEP_CL0_2               (1248000)
+#define FREQ_STEP_CL0_3               (1456000)
+#define FREQ_STEP_CL0_4               (1690000)
+#define FREQ_STEP_CL0_5               (1794000)
+#define FREQ_STEP_CL0_6               (1898000)
+#define FREQ_STEP_CL0_7               (2002000)
 
 static DEFINE_MUTEX(poweroff_lock);
 
@@ -657,15 +675,19 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)CPU_DVFS_SHUTDOWN_TEMP);
 	sprintf(buf, "%s[cpu4_max_freq]\t%u KHz\n",buf, cpu4_max_freq);
 	sprintf(buf, "%s[cpu4_dvfs_limit]\t%u KHz\n",buf, cpu4_dvfs_limit);
+	sprintf(buf, "%s[cpu0_max_freq]\t%u KHz\n",buf, cpu0_max_freq);
+	sprintf(buf, "%s[cpu0_dvfs_limit]\t%u KHz\n",buf, cpu0_dvfs_limit);
+
 	return strlen(buf);
 }
 
 static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
+	static bool init = false;
 	unsigned int tmp = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
+	if (!a2n_allow && init) {
 		pr_err("[%s] a2n: unprivileged access !\n",__func__);
 		goto err;
 	}
@@ -676,14 +698,21 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 			pr_err("%s: CPU DVFS: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_TJMAX);
 			goto err;
 		}
+		goto out;
 	}
 
-	user_cpu_dvfs_max_temp = tmp;
-	sanitize_cpu_dvfs(false);
-	return count;
+	if (!init) {
+		init = true;
+		tmp = __user_cpu_dvfs_max_temp;
+		goto out;
+	}
 err:
 	pr_err("%s: CPU DVFS: invalid cmd\n", __func__);
 	return -EINVAL;
+out:
+	user_cpu_dvfs_max_temp = tmp;
+	sanitize_cpu_dvfs(false);
+	return count;
 }
 
 static ssize_t show_cpu_dvfs_peak_temp(struct kobject *kobj, struct attribute *attr, char *buf)
@@ -694,8 +723,8 @@ static ssize_t show_cpu_dvfs_peak_temp(struct kobject *kobj, struct attribute *a
 
 static ssize_t store_cpu_lit_volt(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
-	int id = 3; /* dvfs_cpucl1 */
-	unsigned int rate, volt;
+	const char id = 3; /* dvfs_cpucl1 */
+	unsigned int rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
@@ -705,7 +734,7 @@ static ssize_t store_cpu_lit_volt(struct kobject *kobj, struct attribute *attr, 
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 1400000))
+		if ((volt < 450000) || (volt > 1350000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl1 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
@@ -718,8 +747,8 @@ err:
 
 static ssize_t store_cpu_big_volt(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
-	int id = 2; /* dvfs_cpucl0 */
-	unsigned int rate, volt;
+	const char id = 2; /* dvfs_cpucl0 */
+	unsigned int rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
@@ -729,7 +758,7 @@ static ssize_t store_cpu_big_volt(struct kobject *kobj, struct attribute *attr, 
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 1400000))
+		if ((volt < 450000) || (volt > 1350000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl0 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
@@ -742,7 +771,7 @@ err:
 
 static ssize_t store_update_dvfs_table(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
-	unsigned int id, rate, volt;
+	unsigned int id = 0, rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
@@ -772,16 +801,27 @@ static ssize_t store_print_dvfs_table(struct kobject *kobj, struct attribute *at
 	return -EINVAL;
 }
 
-static inline void set_cpu_dvfs_limit(unsigned int freq)
+static inline void set_cpu_dvfs_limit(unsigned int cpu, unsigned int freq)
 {
-	if (freq > cpu4_max_freq)
-		freq = cpu4_max_freq;
+	if (cpu == 4) {
+		if (freq > cpu4_max_freq)
+			freq = cpu4_max_freq;
 
-	if (cpu4_dvfs_limit == freq)
-		return;
+		if (cpu4_dvfs_limit == freq)
+			return;
 
-	pm_qos_update_request(&cpu_maxlock_cl1, freq);
-	cpu4_dvfs_limit = freq;
+		pm_qos_update_request(&cpu_maxlock_cl1, freq);
+		cpu4_dvfs_limit = freq;
+	} else {
+		if (freq > cpu0_max_freq)
+			freq = cpu0_max_freq;
+
+		if (cpu0_dvfs_limit == freq)
+			return;
+
+		pm_qos_update_request(&cpu_maxlock_cl0, freq);
+		cpu0_dvfs_limit = freq;
+	}
 }
 
 inline void sanitize_cpu_dvfs(bool sanitize)
@@ -797,12 +837,17 @@ inline void sanitize_cpu_dvfs(bool sanitize)
 
 static inline int cpu_dvfs_check_thread(void *nothing)
 {
-	static unsigned int freq = 0;
+	unsigned int big_freq = 0, lit_freq = 0;
 	static unsigned int prev_temp = 0;
 
 	while (!kthread_should_stop()) {
-		if (!cpu4_max_freq) {
-			pr_warn("%s: CPU DVFS: cpufreq driver not ready!\n", __func__);
+		if (!cpu4_max_freq || !cpu0_max_freq) {
+			pr_warn("%s: CPU DVFS: cpufreq driver not ready! - Trying again after 500 ms ...\n", __func__);
+			msleep(500);
+			continue;
+		}
+		if (cpu_tmu_data == NULL) {
+			pr_warn("%s: CPU DVFS: cpu_tmu_data is not ready! - Trying again after 500 ms ...\n", __func__);
 			msleep(500);
 			continue;
 		}
@@ -810,27 +855,32 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 	}
 
 	sanitize_cpu_dvfs(false);
-	freq = cpu4_dvfs_limit;
+	cpu4_dvfs_limit = cpu4_max_freq;
+	cpu0_dvfs_limit = cpu0_max_freq;
 	pr_info("%s: CPU DVFS: kthread started successfully.\n", __func__);
 
 	while (!kthread_should_stop()) {
 
-		cpu_temp = get_cpu_temp();
+		cpu_temp = cpu_tmu_data->tmu_read(cpu_tmu_data);
 
 		if (cpu_temp == prev_temp) {
 			msleep(cpu_dvfs_sleep_time);
 			continue;
 		}
 
-		if (cpu_temp > cpu_dvfs_peak_temp)
+		if (cpu_temp > cpu_dvfs_peak_temp) {
 			cpu_dvfs_peak_temp = cpu_temp;
+#if CPU_DVFS_DEBUG
+			pr_info("%s: CPU DVFS: peak_temp: %d C\n", __func__, cpu_dvfs_peak_temp);
+#endif
+		}
 
 		if (cpu_temp >= CPU_DVFS_SHUTDOWN_TEMP) {
 			pr_err("%s: CPU DVFS: CPU_DVFS_SHUTDOWN_TEMP %u C reached! - CUUR_TEMP: %d C ! - cal cpu_dvfs_max_temp: %u C - cpu4_dvfs_limit: %u KHz\n", 
 					__func__ , CPU_DVFS_SHUTDOWN_TEMP, cpu_temp, cpu_dvfs_max_temp, cpu4_dvfs_limit);
 			sanitize_cpu_dvfs(true);
-			freq = FREQ_STEP_0;
-			set_cpu_dvfs_limit(freq);
+			big_freq = FREQ_STEP_CL1_0;
+			set_cpu_dvfs_limit(4, big_freq);
 			pr_err("%s: CPU DVFS: shutting down ...\n", __func__);
 			mutex_lock(&poweroff_lock);
 			/*
@@ -847,56 +897,87 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 			pr_warn("%s: CPU DVFS: CPU_DVFS_AVOID_SHUTDOWN_TEMP %u C reached! - CURR_TEMP: %d C ! - cal cpu_dvfs_max_temp: %u C, calibrating to: %u C ... - cpu4_dvfs_limit: %u KHz\n", 
 					__func__ , CPU_DVFS_AVOID_SHUTDOWN_TEMP, cpu_temp, cpu_dvfs_max_temp, (cpu_dvfs_max_temp - CPU_DVFS_STEP_DOWN_TEMP), cpu4_dvfs_limit);
 			sanitize_cpu_dvfs(true);
-			if (cpu4_dvfs_limit > FREQ_STEP_7)
-				freq = FREQ_STEP_7;
+			big_freq = FREQ_STEP_CL1_5;
 			goto out;
 		}
 
 		if (cpu_temp >= cpu_dvfs_max_temp) {
-			if (cpu4_dvfs_limit > FREQ_STEP_7)
-				freq = FREQ_STEP_7;
-			else if (cpu4_dvfs_limit == FREQ_STEP_7)
-				freq = FREQ_STEP_6;
-			else if (cpu4_dvfs_limit == FREQ_STEP_6)
-				freq = FREQ_STEP_5;
-			else if (cpu4_dvfs_limit == FREQ_STEP_5)
-				freq = FREQ_STEP_4;
-			else if (cpu4_dvfs_limit == FREQ_STEP_4)
-				freq = FREQ_STEP_3;
-			else if (cpu4_dvfs_limit == FREQ_STEP_3)
-				freq = FREQ_STEP_2;
-			else if (cpu4_dvfs_limit == FREQ_STEP_2)
-				freq = FREQ_STEP_1;
+			if (cpu4_dvfs_limit > FREQ_STEP_CL1_7)
+				big_freq = FREQ_STEP_CL1_7;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_7)
+				big_freq = FREQ_STEP_CL1_6;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_6)
+				big_freq = FREQ_STEP_CL1_5;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_5)
+				big_freq = FREQ_STEP_CL1_4;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_4)
+				big_freq = FREQ_STEP_CL1_3;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_3)
+				big_freq = FREQ_STEP_CL1_2;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_2)
+				big_freq = FREQ_STEP_CL1_1;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_1)
+				big_freq = FREQ_STEP_CL1_0;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_7)
+				lit_freq = FREQ_STEP_CL0_6;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_6)
+				lit_freq = FREQ_STEP_CL0_5;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_5)
+				lit_freq = FREQ_STEP_CL0_4;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_4)
+				lit_freq = FREQ_STEP_CL0_3;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_3)
+				lit_freq = FREQ_STEP_CL0_2;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_2)
+				lit_freq = FREQ_STEP_CL0_1;
 			else
-				freq = FREQ_STEP_0;
+				lit_freq = FREQ_STEP_CL0_0;
 
 		} else if (cpu_temp <= cpu_dvfs_min_temp) {
-			if (cpu4_dvfs_limit == FREQ_STEP_0)
-				freq = FREQ_STEP_1;
-			else if (cpu4_dvfs_limit == FREQ_STEP_1)
-				freq = FREQ_STEP_2;
-			else if (cpu4_dvfs_limit == FREQ_STEP_2)
-				freq = FREQ_STEP_3;
-			else if (cpu4_dvfs_limit == FREQ_STEP_3)
-				freq = FREQ_STEP_4;
-			else if (cpu4_dvfs_limit == FREQ_STEP_4)
-				freq = FREQ_STEP_5;
-			else if (cpu4_dvfs_limit == FREQ_STEP_5)
-				freq = FREQ_STEP_6;
-			else if (cpu4_dvfs_limit == FREQ_STEP_6)
-				freq = FREQ_STEP_7;
-			else if (cpu4_dvfs_limit == FREQ_STEP_7)
-				freq = FREQ_STEP_8;
-			else if (cpu4_dvfs_limit == FREQ_STEP_8)
-				freq = FREQ_STEP_9;
-			else if (cpu4_dvfs_limit == FREQ_STEP_9)
-				freq = FREQ_STEP_10;
+			if (cpu4_dvfs_limit == FREQ_STEP_CL1_0)
+				big_freq = FREQ_STEP_CL1_1;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_1)
+				big_freq = FREQ_STEP_CL1_2;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_2)
+				big_freq = FREQ_STEP_CL1_3;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_3)
+				big_freq = FREQ_STEP_CL1_4;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_4)
+				big_freq = FREQ_STEP_CL1_5;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_5)
+				big_freq = FREQ_STEP_CL1_6;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_6)
+				big_freq = FREQ_STEP_CL1_7;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_7)
+				big_freq = FREQ_STEP_CL1_8;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_8)
+				big_freq = FREQ_STEP_CL1_9;
+			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_9)
+				big_freq = FREQ_STEP_CL1_10;
 			else
-				freq = FREQ_STEP_11;
+				big_freq = FREQ_STEP_CL1_11;
+
+			if (cpu0_dvfs_limit == FREQ_STEP_CL0_0)
+				lit_freq = FREQ_STEP_CL0_1;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_1)
+				lit_freq = FREQ_STEP_CL0_2;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_2)
+				lit_freq = FREQ_STEP_CL0_3;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_3)
+				lit_freq = FREQ_STEP_CL0_4;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_4)
+				lit_freq = FREQ_STEP_CL0_5;
+			else if (cpu0_dvfs_limit == FREQ_STEP_CL0_5)
+				lit_freq = FREQ_STEP_CL0_6;
+			else
+				lit_freq = FREQ_STEP_CL0_7;
 		}
 out:
 		prev_temp = cpu_temp;
-		set_cpu_dvfs_limit(freq);
+		if (big_freq)
+			set_cpu_dvfs_limit(4, big_freq);
+		if (lit_freq)
+			set_cpu_dvfs_limit(0, lit_freq);
 		msleep(cpu_dvfs_sleep_time);
 		continue;
 	}
@@ -1114,6 +1195,10 @@ static int __init exynos_ufc_init(void)
 	pm_qos_add_request(&cpu_online_max_qos_req,
 			PM_QOS_CPU_ONLINE_MAX,
 			PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
+
+	pm_qos_add_request(&cpu_maxlock_cl0,
+			PM_QOS_CLUSTER0_FREQ_MAX,
+			PM_QOS_CLUSTER0_FREQ_MAX_DEFAULT_VALUE);
 
 	pm_qos_add_request(&cpu_maxlock_cl1,
 			PM_QOS_CLUSTER1_FREQ_MAX,

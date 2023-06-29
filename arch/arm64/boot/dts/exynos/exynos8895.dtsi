@@ -487,7 +487,7 @@
 	};
 
 	cpufreq {
-		cpufreq_domain0: domain@0 {
+		domain@0 {
 			device_type = "cpufreq-domain";
 			sibling-cpus = "0-3";
 			cal-id = <ACPM_DVFS_CPUCL1>;
@@ -803,9 +803,9 @@
 		gpu_default_voltage = <0>;
 		gpu_cold_minimum_vol = <0>;
 		gpu_voltage_offset_margin = <37500>;
-		gpu_tmu_control = <1>;
-		gpu_temp_throttling_level_num = <6>;
-		gpu_temp_throttling = <839000 764000 683000 572000 455000 338000>;
+		gpu_tmu_control = <0>;
+		gpu_temp_throttling_level_num = <7>;
+		gpu_temp_throttling = <839000 764000 683000 572000 455000 338000 260000>;
 		gpu_power_coeff = <625>;
 		gpu_dvfs_time_interval = <10>; /* 1 tick: 2 ms */
 		gpu_default_wakeup_lock = <1>;
@@ -2498,12 +2498,12 @@
 		gov_name = "interactive";
 		use_reg = "false";
 
-		use_tmu = "true";
+		use_tmu = "false";
 		use_cl_dvfs = "false";
 		use_sw_clk = "false";
 		dfs_id = <ACPM_DVFS_MIF>;
 		acpm-ipc-channel = <1>;
-		use_acpm = "true";
+		use_acpm = "false";
 	};
 
 	devfreq_1: devfreq_int@17000020 {
@@ -2530,12 +2530,12 @@
 		gov_name = "interactive";
 		use_reg = "false";
 
-		use_tmu = "true";
+		use_tmu = "false";
 		use_cl_dvfs = "false";
 		use_sw_clk = "false";
 		dfs_id = <ACPM_DVFS_INT>;
 		acpm-ipc-channel = <1>;
-		use_acpm = "true";
+		use_acpm = "false";
 	};
 
 	devfreq_2: devfreq_intcam@17000030 {
@@ -2562,7 +2562,7 @@
 		gov_name = "interactive";
 		use_reg = "false";
 
-		use_tmu = "true";
+		use_tmu = "false";
 		use_cl_dvfs = "false";
 		use_sw_clk = "false";
 		dfs_id = <ACPM_DVFS_INTCAM>;
@@ -2592,7 +2592,7 @@
 		gov_name = "interactive";
 		use_reg = "false";
 
-		use_tmu = "true";
+		use_tmu = "false";
 		use_cl_dvfs = "false";
 		use_sw_clk = "false";
 		dfs_id = <ACPM_DVFS_DISP>;
@@ -2622,7 +2622,7 @@
 		gov_name = "interactive";
 		use_reg = "false";
 
-		use_tmu = "true";
+		use_tmu = "false";
 		use_cl_dvfs = "false";
 		use_sw_clk = "false";
 		dfs_id = <ACPM_DVFS_CAM>;
@@ -2645,13 +2645,13 @@
 		devfreq_mif {
 			dm-index = <DM_MIF>;
 			available = "true";
-			policy_use = "true";
+			policy_use = "false";
 			cal_id = <ACPM_DVFS_MIF>;
 		};
 		devfreq_int {
 			dm-index = <DM_INT>;
 			available = "true";
-			policy_use = "true";
+			policy_use = "false";
 			cal_id = <ACPM_DVFS_INT>;
 		};
 		devfreq_intcam {
@@ -4562,7 +4562,7 @@
 		interrupts = <0 451 0>;
 		tmu_name = "MNGS";
 		id = <0>;
-		sensors = <61>;
+		sensors = <4>;
 		sensing_mode = "max";
 		hotplug_enable = <0>;
 		hotplug_in_threshold = <140>;
@@ -4576,7 +4576,7 @@
 		interrupts = <0 451 0>;
 		tmu_name = "APOLLO";
 		id = <1>;
-		sensors = <2>;
+		sensors = <4>;
 		sensing_mode = "max";
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
@@ -4587,18 +4587,19 @@
 		interrupts = <0 452 0>;
 		tmu_name = "GPU";
 		id = <2>;
-		sensors = <1>;
+		sensors = <20>;
 		sensing_mode = "max";
 		/* gpu cooling related table */
 		/* flags, driver_data(index), frequency */
-		gpu_idx_num = <7>;
+		gpu_idx_num = <8>;
 		gpu_cooling_table = < 0 0 839000
 				      0 1 764000
 				      0 2 683000
 				      0 3 572000
 				      0 4 455000
 				      0 5 338000
-				      0 6 TABLE_END>;
+				      0 6 260000
+				      0 7 TABLE_END>;
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 /*
@@ -4608,44 +4609,44 @@
 		interrupts = <0 452 0>;
 		tmu_name = "ISP";
 		id = <3>;
-		sensors = <6>;
+		sensors = <20>;
 		sensing_mode = "max";
 		#include "exynos8895-tmu-sensor-conf.dtsi"
 	};
 */
 	thermal-zones {
 		mngs_thermal: CPU {
-			zone_name  = "MNGS_THERMAL";
+			zone_name  = "CPU_THERMAL";
 			polling-delay-passive = <0>;
 			polling-delay = <0>;
 			thermal-sensors = <&tmuctrl_0>;
-			governor = "power_allocator";
-			sustainable-power = <2000>;
+			governor = "user_space";
+			sustainable-power = <0>;
 			k_po = <100>;
 			k_pu = <85>;
 			k_i = <100>;
-			i_max = <2000>;
+			i_max = <1500>;
 			integral_cutoff = <28>;
 
 			trips {
 				mngs_cold: mngs-cold {
-					temperature = <20000>;
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <20000>; // millicelsius
+					hysteresis = <5000>; // millicelsius
 					type = "active";
 				};
 				mngs_alert0: mngs-alert0 {
-					temperature = <140000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <130000>;
+					hysteresis = <2000>;
 					type = "active";
 				};
 				mngs_alert1: mngs-alert1 {
-					temperature = <145000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <140000>;
+					hysteresis = <5000>;
 					type = "passive";
 				};
 				mngs_hot: mngs-hot {
-					temperature = <150000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <150000>;
+					hysteresis = <5000>;
 					type = "hot";
 				};
 			};
@@ -4662,51 +4663,51 @@
 			};
 		};
 /*
-		apo_thermal: APOLLO {
-			zone_name  = "APO_THERMAL";
+		apo_thermal: CPU-LIT {
+			zone_name  = "CPU_LIT_THERMAL";
 			polling-delay-passive = <0>;
 			polling-delay = <0>;
 			thermal-sensors = <&tmuctrl_1>;
 
 			trips {
 				apo_alert0: apo-alert0 {
-					temperature = <20000>; // millicelsius
-					hysteresis = <10000>; // millicelsius
+					temperature = <20000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert1: apo-alert1 {
-					temperature = <144000>;
-					hysteresis = <10000>;
+					temperature = <140000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert2: apo-alert2 {
 					temperature = <145000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert3: apo-alert3 {
 					temperature = <146000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert4: apo-alert4 {
 					temperature = <147000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert5: apo-alert5 {
 					temperature = <148000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_alert6: apo-alert6 {
 					temperature = <149000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				apo_hot: apo-hot {
 					temperature = <150000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "hot";
 				};
 			};
@@ -4714,35 +4715,35 @@
 			cooling-maps {
 				map0 {
 				     trip = <&apo_alert0>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map1 {
 				     trip = <&apo_alert1>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 			       };
 				map2 {
 				     trip = <&apo_alert2>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map3 {
 				     trip = <&apo_alert3>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map4 {
 				     trip = <&apo_alert4>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map5 {
 				     trip = <&apo_alert5>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 			       };
 				map6 {
 				     trip = <&apo_alert6>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 				map7 {
 				     trip = <&apo_hot>;
-				     cooling-device = <&cpufreq_domain0 0 0>;
+				     cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 			};
 		};
@@ -4752,33 +4753,33 @@
 			polling-delay-passive = <0>;
 			polling-delay = <0>;
 			thermal-sensors = <&tmuctrl_2>;
-			governor = "power_allocator";
-			sustainable-power = <2000>;
+			governor = "user_space";
+			sustainable-power = <0>;
 			k_po = <60>;
 			k_pu = <100>;
 			k_i = <50>;
-			i_max = <1000>;
+			i_max = <500>;
 			integral_cutoff = <10>;
 
 			trips {
 				gpu_cold: gpu-cold {
 					temperature = <20000>;
-					hysteresis = <10000>; /* millicelsius */
+					hysteresis = <5000>;
 					type = "active";
 				};
 				gpu_alert0: gpu-alert0 {
-					temperature = <140000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <140000>;
+					hysteresis = <2000>;
 					type = "active";
 				};
 				gpu_alert1: gpu-alert1 {
-					temperature = <145000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <145000>;
+					hysteresis = <5000>;
 					type = "passive";
 				};
 				gpu_hot: gpu-hot {
-					temperature = <150000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
+					temperature = <150000>;
+					hysteresis = <5000>;
 					type = "hot";
 				};
 			};
@@ -4803,28 +4804,28 @@
 
 			trips {
 				isp_alert0: isp-alert0 {
-					temperature = <20000>; // millicelsius
-					hysteresis = <10000>; // millicelsius
+					temperature = <20000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				isp_alert1: isp-alert1 {
 					temperature = <135000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				isp_alert2: isp-alert2 {
 					temperature = <140000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				isp_alert3: isp-alert3 {
 					temperature = <145000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "active";
 				};
 				isp_hot: isp-hot {
 					temperature = <150000>;
-					hysteresis = <10000>;
+					hysteresis = <5000>;
 					type = "hot";
 				};
 			};
@@ -4848,7 +4849,6 @@
 				};
 				map4 {
 				     trip = <&isp_hot>;
-				     // Corresponds to HW trip
 				     cooling-device = <&fimc_is THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 			};

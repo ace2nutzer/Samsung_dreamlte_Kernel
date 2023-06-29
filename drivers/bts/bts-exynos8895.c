@@ -17,22 +17,21 @@
 #include <linux/slab.h>
 
 #include <soc/samsung/bts.h>
+#include <soc/samsung/cal-if.h>
 #include "cal_bts8895.h"
 
 #define BTS_DBG(x...)		if (exynos_bts_log) pr_info(x)
 
+#define ACPM_DVFS_MIF		(0x0B040000)
 #define NUM_CHANNEL		4
 #define MIF_UTIL		65
 #define INT_UTIL		70
-#define INITIAL_MIF_FREQ	1794000
-
 #define QBUSY_DEFAULT          4
 #define QFULL_LOW_DEFAULT      0xa
 #define QFULL_HIGH_DEFAULT     0x10
 static unsigned int exynos_qbusy = QBUSY_DEFAULT;
 static unsigned int exynos_qfull_low = QFULL_LOW_DEFAULT;
 static unsigned int exynos_qfull_high = QFULL_HIGH_DEFAULT;
-
 
 static int exynos_bts_log;
 static unsigned int exynos_mif_util = MIF_UTIL;
@@ -46,7 +45,7 @@ static unsigned int *exynos_qmax_w;
 static unsigned int exynos_nqmax_w;
 static unsigned int *exynos_tq;
 static unsigned int exynos_ntq;
-static unsigned int exynos_mif_freq = INITIAL_MIF_FREQ;
+static unsigned int exynos_mif_freq;
 
 enum bts_index {
 	BTS_IDX_CP,
@@ -1147,14 +1146,17 @@ static void bts_initialize_domains(void)
 		bts_set_qbusy(smc_config[i].va_base, exynos_qbusy);
 	for (i = 0; i < ARRAY_SIZE(trex_sci_irps); i++)
 		bts_trex_init(trex_sci_irps[i].va_base);
+
 	spin_lock(&bts_lock);
 	for (bts = exynos_bts;
-	     bts <= &exynos_bts[ARRAY_SIZE(exynos_bts) - 1]; bts++) {
+			bts <= &exynos_bts[ARRAY_SIZE(exynos_bts) - 1]; bts++) {
 		if (!bts->enable)
 			continue;
 		bts_set_ip_table(bts);
 	}
 	spin_unlock(&bts_lock);
+
+	exynos_mif_freq = cal_dfs_get_rate(ACPM_DVFS_MIF);
 	exynos_bts_mif_update(exynos_mif_freq);
 }
 

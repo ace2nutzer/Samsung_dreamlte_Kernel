@@ -30,6 +30,7 @@
 
 #include <soc/samsung/exynos-devfreq.h>
 #include <soc/samsung/exynos-dm.h>
+#include <soc/samsung/cal-if.h>
 
 static struct class *devfreq_class;
 
@@ -973,24 +974,34 @@ static ssize_t available_governors_show(struct device *d,
 }
 static DEVICE_ATTR_RO(available_governors);
 
+static unsigned int get_target_freq(struct device *dev)
+{
+	struct devfreq *devfreq = to_devfreq(dev);
+	struct device *parent = dev->parent;
+	struct platform_device *pdev = container_of(parent, struct platform_device, dev);
+	struct exynos_devfreq_data *data = platform_get_drvdata(pdev);
+	unsigned int cur_freq;
+
+	cur_freq = (u32)cal_dfs_get_rate(data->dfs_id);
+	if (!cur_freq) {
+		pr_warn("%s: failed to get freq from CAL, falling back to devfreq->previous_freq!\n", __func__);
+		cur_freq = devfreq->previous_freq;
+	}
+
+	return cur_freq;
+}
+
 static ssize_t cur_freq_show(struct device *dev, struct device_attribute *attr,
 			     char *buf)
 {
-	unsigned long freq;
-	struct devfreq *devfreq = to_devfreq(dev);
-
-	if (devfreq->profile->get_cur_freq &&
-		!devfreq->profile->get_cur_freq(devfreq->dev.parent, &freq))
-			return sprintf(buf, "%lu\n", freq);
-
-	return sprintf(buf, "%lu\n", devfreq->previous_freq);
+	return sprintf(buf, "%u\n", get_target_freq(dev));
 }
 static DEVICE_ATTR_RO(cur_freq);
 
 static ssize_t target_freq_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%lu\n", to_devfreq(dev)->previous_freq);
+	return sprintf(buf, "%u\n", get_target_freq(dev));
 }
 static DEVICE_ATTR_RO(target_freq);
 

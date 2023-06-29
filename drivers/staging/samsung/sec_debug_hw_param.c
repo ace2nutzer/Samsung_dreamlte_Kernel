@@ -42,7 +42,9 @@ enum ids_info {
 };
 
 extern int asv_ids_information(enum ids_info id);
+#ifdef CONFIG_CPU_THERMAL
 extern struct thermal_data_devices thermal_data_info[THERMAL_ZONE_MAX];
+#endif
 
 /*
  * LPDDR4 (JESD209-4) MR5 Manufacturer ID
@@ -84,7 +86,6 @@ static unsigned long smd_offset;
 static unsigned int lpddr4_size;
 static char warranty = 'D';
 
-#if 1	/* DDR training result structure */
 #define KC_DDR_TRN_DATA_BASE 0x16509000
 #define NUM_OF_TRN_OFFSET_INFO          (2)
 #define NUM_OF_TRN_DLL_INFO             (1)
@@ -190,8 +191,6 @@ struct phy_trn_data_t {
 	struct phy_trn_soc_vref_info_t      soc_vref[2][PHY_RANK_ALL];
 	struct phy_trn_memory_vref_info_t   memory_vref[2][PHY_RANK_ALL];
 };
-
-#endif	/* DDR training result structure */
 
 static int __init sec_hw_param_get_hw_rev(char *arg)
 {
@@ -482,6 +481,7 @@ static ssize_t sec_hw_param_extra_info_show(struct kobject *kobj,
 	return info_size;
 }
 
+#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 static ssize_t sec_hw_param_extrb_info_show(struct kobject *kobj,
 					    struct kobj_attribute *attr, char *buf)
 {
@@ -496,6 +496,7 @@ static ssize_t sec_hw_param_extrb_info_show(struct kobject *kobj,
 
 	return info_size;
 }
+#endif
 
 static ssize_t sec_hw_param_extrc_info_show(struct kobject *kobj,
 						struct kobj_attribute *attr, char *buf)
@@ -557,6 +558,7 @@ static ssize_t sec_hw_param_smd_info_store(struct kobject *kobj,
 	return count;
 }
 
+#ifdef CONFIG_CPU_THERMAL
 static ssize_t sec_hw_param_thermal_info_show(struct kobject *kobj,
 					  struct kobj_attribute *attr,
 					  char *buf)
@@ -706,6 +708,7 @@ static ssize_t sec_hw_param_thermal_info_show(struct kobject *kobj,
 
 	return info_size;
 }
+#endif
 
 static struct kobj_attribute sec_hw_param_ap_info_attr =
         __ATTR(ap_info, 0440, sec_hw_param_ap_info_show, NULL);
@@ -716,8 +719,10 @@ static struct kobj_attribute sec_hw_param_ddr_info_attr =
 static struct kobj_attribute sec_hw_param_extra_info_attr =
 	__ATTR(extra_info, 0440, sec_hw_param_extra_info_show, NULL);
 
+#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 static struct kobj_attribute sec_hw_param_extrb_info_attr =
 	__ATTR(extrb_info, 0440, sec_hw_param_extrb_info_show, NULL);
+#endif
 
 static struct kobj_attribute sec_hw_param_extrc_info_attr =
 	__ATTR(extrc_info, 0440, sec_hw_param_extrc_info_show, NULL);
@@ -731,19 +736,25 @@ static struct kobj_attribute sec_hw_param_pcb_info_attr =
 static struct kobj_attribute sec_hw_param_smd_info_attr =
 	__ATTR(smd_info, 0660, NULL, sec_hw_param_smd_info_store);
 
+#ifdef CONFIG_CPU_THERMAL
 static struct kobj_attribute sec_hw_param_thermal_info_attr =
 	__ATTR(thermal_info, 0440, sec_hw_param_thermal_info_show, NULL);
+#endif
 
 static struct attribute *sec_hw_param_attributes[] = {
 	&sec_hw_param_ap_info_attr.attr,
 	&sec_hw_param_ddr_info_attr.attr,
 	&sec_hw_param_extra_info_attr.attr,
+#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 	&sec_hw_param_extrb_info_attr.attr,
+#endif
 	&sec_hw_param_extrc_info_attr.attr,
 	&sec_hw_param_extrm_info_attr.attr,
 	&sec_hw_param_pcb_info_attr.attr,
 	&sec_hw_param_smd_info_attr.attr,
+#ifdef CONFIG_CPU_THERMAL
 	&sec_hw_param_thermal_info_attr.attr,
+#endif
 	NULL,
 };
 
@@ -760,7 +771,7 @@ static int __init sec_hw_param_init(void)
 
 	ret = sysfs_create_group(&dev->kobj, &sec_hw_param_attr_group);
 	if (ret)
-		pr_err("%s : could not create sysfs noden", __func__);
+		pr_err("%s : could not create sysfs node", __func__);
 
 	return 0;
 }
