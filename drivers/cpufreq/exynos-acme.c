@@ -526,7 +526,7 @@ module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_in
 
 void set_suspend_cpufreq(bool is_suspend)
 {
-	int cpu;
+	int cpu = 0;
 
 #ifdef CONFIG_HOTPLUG_CPU
 	should_hotplug_big_cpu();
@@ -537,7 +537,6 @@ void set_suspend_cpufreq(bool is_suspend)
 
 	if (is_suspend) {
 		if (cpu0_suspend_max_freq) {
-
 			if (!cpu0_suspend_min_freq)
 				cpu0_suspend_min_freq = cpu0_min_freq;
 
@@ -551,7 +550,6 @@ void set_suspend_cpufreq(bool is_suspend)
 		}
 
 		if (cpu4_suspend_max_freq) {
-
 			if (!cpu4_suspend_min_freq)
 				cpu4_suspend_min_freq = cpu4_min_freq;
 
@@ -565,20 +563,20 @@ void set_suspend_cpufreq(bool is_suspend)
 		}
 	} else {
 		/* resumed */
-			for_each_cpu(cpu, &hmp_slow_cpu_mask) {
-				if (cpu_online(cpu)) {
-					if (cpufreq_update_freq(cpu, cpu0_min_freq, cpu0_max_freq))
-						pr_err("%s: failed to update policy0 for resume!\n", __func__);
-					break;
-				}
+		for_each_cpu(cpu, &hmp_slow_cpu_mask) {
+			if (cpu_online(cpu)) {
+				if (cpufreq_update_freq(cpu, cpu0_min_freq, cpu0_max_freq))
+					pr_err("%s: failed to update policy0 for resume!\n", __func__);
+				break;
 			}
-			for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-				if (cpu_online(cpu)) {
-					if (cpufreq_update_freq(cpu, cpu4_min_freq, cpu4_max_freq))
-						pr_err("%s: failed to update policy4 for resume!\n", __func__);
-					break;
-				}
+		}
+		for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+			if (cpu_online(cpu)) {
+				if (cpufreq_update_freq(cpu, cpu4_min_freq, cpu4_max_freq))
+					pr_err("%s: failed to update policy4 for resume!\n", __func__);
+				break;
 			}
+		}
 	}
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND

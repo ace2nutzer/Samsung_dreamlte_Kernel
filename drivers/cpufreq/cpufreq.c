@@ -746,20 +746,16 @@ static ssize_t store_user_scaling_max_freq
 
 	temp = new_policy.max;
 	ret = cpufreq_set_policy(policy, &new_policy);
-	if (!ret) {
-		policy->user_policy.max = temp;
-		if (policy->cpu == 0) {
-			cpu0_max_freq = temp;
-		} else {
-			cpu4_max_freq = temp;
-			sanitize_cpu_dvfs(false);
-		}
-	} else {
+	if (ret)
 		goto err;
-	}
 
+	policy->user_policy.max = temp;
+	if (policy->cpu == 0)
+		cpu0_max_freq = temp;
+	else
+		cpu4_max_freq = temp;
+	sanitize_cpu_dvfs(false);
 	return count;
-
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
@@ -1330,11 +1326,15 @@ static int cpufreq_online(unsigned int cpu)
 		policy->user_policy.min = policy->min;
 		policy->user_policy.max = policy->max;
 		if (policy->cpu == 0) {
-			cpu0_min_freq = policy->min;
-			cpu0_max_freq = policy->max;
+			if (!cpu0_min_freq || !cpu0_max_freq) {
+				cpu0_min_freq = policy->min;
+				cpu0_max_freq = policy->max;
+			}
 		} else {
-			cpu4_min_freq = policy->min;
-			cpu4_max_freq = policy->max;
+			if (!cpu4_min_freq || !cpu4_max_freq) {
+				cpu4_min_freq = policy->min;
+				cpu4_max_freq = policy->max;
+			}
 		}
 
 		write_lock_irqsave(&cpufreq_driver_lock, flags);
