@@ -2150,6 +2150,7 @@ static inline void sanitize_gpu_dvfs(bool sanitize)
 	if (!sanitize) {
 		gpu_dvfs_max_temp = user_gpu_dvfs_max_temp;
 		gpu_dvfs_peak_temp = 0;
+		set_gpu_dvfs_limit(platform->gpu_max_clock);
 	} else {
 		gpu_dvfs_max_temp -= GPU_DVFS_STEP_DOWN_TEMP;
 	}
@@ -2611,6 +2612,8 @@ static int __init gpu_dvfs_init(void)
 #else
 	set_cpus_allowed_ptr(gpu_dvfs_thread, cpu_all_mask);
 #endif
+
+	set_user_nice(gpu_dvfs_thread, MIN_NICE);
 
 	return 0;
 

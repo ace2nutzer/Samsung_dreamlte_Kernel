@@ -829,6 +829,8 @@ inline void sanitize_cpu_dvfs(bool sanitize)
 	if (!sanitize) {
 		cpu_dvfs_max_temp = user_cpu_dvfs_max_temp;
 		cpu_dvfs_peak_temp = 0;
+		set_cpu_dvfs_limit(4, cpu4_max_freq);
+		set_cpu_dvfs_limit(0, cpu0_max_freq);
 	} else {
 		cpu_dvfs_max_temp -= CPU_DVFS_STEP_DOWN_TEMP;
 	}
@@ -1262,6 +1264,8 @@ static int __init exynos_ufc_init(void)
 #else
 	set_cpus_allowed_ptr(cpu_dvfs_thread, cpu_all_mask);
 #endif
+
+	set_user_nice(cpu_dvfs_thread, MIN_NICE);
 
 	pr_info("Initialized Exynos UFC(User-Frequency-Ctrl) driver\n");
 
