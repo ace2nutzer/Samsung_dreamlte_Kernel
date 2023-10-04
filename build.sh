@@ -12,11 +12,7 @@ OUTPUT=$HOME/a2n_kernel_g950x_9.x
 AIK=$HOME/AIK-Linux
 
 	cd $SOURCE_PATH
-
 	rm arch/arm64/boot/dts/exynos/*dtb*
-
-	make -j$JOBS $DEFCONFIG
-
 	make -j$JOBS $@
 
 	# copy modules

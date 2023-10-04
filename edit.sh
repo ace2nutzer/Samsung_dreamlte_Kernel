@@ -12,7 +12,7 @@ JOBS=2
 cd $SOURCE_PATH
 
 make -j$JOBS $DEFCONFIG
-
 make -j$JOBS menuconfig
-
+cp .config arch/arm64/configs/$DEFCONFIG
+make -j$JOBS $DEFCONFIG
 cp .config arch/arm64/configs/$DEFCONFIG
