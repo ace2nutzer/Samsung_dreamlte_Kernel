@@ -720,8 +720,10 @@ extern void should_hotplug_big_cpu(void);
 #endif
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-extern void set_suspend_cpufreq(bool is_suspend);
-extern void update_gov_tunables(bool is_suspend);
+extern void set_suspend_cpufreq(void);
+extern void update_gov_tunables(void);
 #endif
+
+extern bool is_suspend;
 
 #endif /* _LINUX_CPUFREQ_H */

@@ -25,6 +25,8 @@
 #include <soc/samsung/cal-if.h>
 #include "../governor.h"
 
+extern bool is_suspend;
+
 static struct exynos_devfreq_data *_data = NULL;
 
 static int exynos8895_devfreq_disp_cmu_dump(struct exynos_devfreq_data *data)
@@ -59,7 +61,7 @@ static int exynos8895_devfreq_disp_suspend(struct exynos_devfreq_data *data)
 	return 0;
 }
 
-void set_devfreq_disp_pm_qos(bool is_suspend)
+void set_devfreq_disp_pm_qos(void)
 {
 	if (_data == NULL) {
 		pr_err("%s: _data is NULL !!\n", __func__);

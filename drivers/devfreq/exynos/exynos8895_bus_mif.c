@@ -38,6 +38,8 @@
 #include "../../soc/samsung/acpm/acpm_ipc.h"
 #include "exynos_ppmu.h"
 
+extern bool is_suspend;
+
 static struct exynos_devfreq_data *_data = NULL;
 
 static int exynos8895_devfreq_mif_cmu_dump(struct exynos_devfreq_data *data)
@@ -71,7 +73,7 @@ static int exynos8895_devfreq_mif_suspend(struct exynos_devfreq_data *data)
 	return 0;
 }
 
-void set_devfreq_mif_pm_qos(bool is_suspend)
+void set_devfreq_mif_pm_qos(void)
 {
 	if (_data == NULL) {
 		pr_err("%s: _data is NULL !!\n", __func__);

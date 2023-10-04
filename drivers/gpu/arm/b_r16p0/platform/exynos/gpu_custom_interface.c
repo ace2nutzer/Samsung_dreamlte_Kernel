@@ -45,6 +45,7 @@
 
 extern struct kbase_device *pkbdev;
 extern bool gpu_always_on;
+extern bool is_suspend;
 
 static struct exynos_context *platform = NULL;
 
@@ -200,7 +201,7 @@ static ssize_t set_clock(struct device *dev, struct device_attribute *attr, cons
 }
 #endif
 
-void set_gpu_policy(bool is_suspend)
+void set_gpu_policy(void)
 {
 	const struct kbase_pm_policy *new_policy = NULL;
 	const struct kbase_pm_policy *const *policy_list;

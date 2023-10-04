@@ -524,7 +524,7 @@ out:
 }
 module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_int, &cpu4_suspend_max_freq, 0664);
 
-void set_suspend_cpufreq(bool is_suspend)
+void set_suspend_cpufreq(void)
 {
 	int cpu = 0;
 

@@ -606,7 +606,7 @@ struct cpufreq_governor cpufreq_gov_ondemand = {
 	.owner			= THIS_MODULE,
 };
 
-void update_gov_tunables(bool is_suspend)
+void update_gov_tunables(void)
 {
 	struct od_dbs_tuners *od_tuners;
 	struct od_cpu_dbs_info_s *dbs_info;
