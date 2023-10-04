@@ -380,7 +380,7 @@ void gpu_dvfs_timer_control(bool enable)
 		cancel_delayed_work(platform->delayed_work);
 		flush_workqueue(platform->dvfs_wq);
 	} else if (!kbdev->pm.backend.metrics.timer_active && enable) {
-		queue_delayed_work(platform->dvfs_wq,
+		queue_delayed_work_on(0, platform->dvfs_wq,
 				platform->delayed_work, msecs_to_jiffies(platform->polling_speed));
 		spin_lock_irqsave(&platform->gpu_dvfs_spinlock, flags);
 		platform->down_requirement = platform->table[platform->step].down_staycount;

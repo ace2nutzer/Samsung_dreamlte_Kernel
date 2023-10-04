@@ -484,7 +484,7 @@ static void dvfs_callback(struct work_struct *data)
 #ifdef CONFIG_MALI_RT_PM
 	if (metrics->timer_active)
 #endif
-		queue_delayed_work(platform->dvfs_wq,
+		queue_delayed_work_on(0, platform->dvfs_wq,
 				platform->delayed_work, msecs_to_jiffies(platform->polling_speed));
 
 	spin_unlock_irqrestore(&metrics->lock, flags);
@@ -505,8 +505,8 @@ void gpu_pm_metrics_init(void *dev)
 	platform->dvfs_wq = create_workqueue("g3d_dvfs");
 	platform->delayed_work = &kbdev->pm.backend.metrics.work;
 
-	queue_delayed_work(platform->dvfs_wq,
-		platform->delayed_work, msecs_to_jiffies(platform->polling_speed));
+	queue_delayed_work_on(0, platform->dvfs_wq,
+			platform->delayed_work, msecs_to_jiffies(platform->polling_speed));
 }
 
 void gpu_pm_metrics_term(void *dev)
