@@ -307,8 +307,8 @@ HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-format-overf
 HOSTCXXFLAGS = -O3 -fomit-frame-pointer -fno-strict-aliasing
 
 # Host specific Flags
-HOSTCFLAGS   += -march=core2 -mcpu=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -pipe
-HOSTCXXFLAGS += -march=core2 -mcpu=core2 -mtune=core2 -mfpmath=sse -mssse3 -mhard-float -pipe
+HOSTCFLAGS   += -march=core2 -mcpu=core2 -mtune=core2 -pipe
+HOSTCXXFLAGS += -march=core2 -mcpu=core2 -mtune=core2 -pipe
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
