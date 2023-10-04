@@ -16,7 +16,7 @@
 
 #define DISP_FACTOR		100UL
 #define PPC			2UL
-#define LCD_REFRESH_RATE	60UL
+#define LCD_REFRESH_RATE	63UL
 #define MULTI_FACTOR 		(1UL << 10)
 
 u64 dpu_bts_calc_aclk_disp(struct decon_device *decon,
@@ -407,11 +407,11 @@ void dpu_bts_init(struct decon_device *decon)
 		* Decon2-DP : various resolutions are available
 		* therefore, set max resolution clock at init phase to avoid underrun
 		*/
-		decon->bts.resol_clk = (u32)((u64)4096 * 2160 * LCD_REFRESH_RATE * 11
+		decon->bts.resol_clk = (u32)((u64)4096 * 2160 * 60 * 11
 				/ 10 / 1000 + 1);
 	} else {
 		/*
-		 * Resol clock(KHZ) = lcd width x lcd height x 60(refresh rate) x
+		 * Resol clock(KHZ) = lcd width x lcd height x 63(refresh rate) x
 		 *               1.1(10% margin) x comp_ratio(1/3 DSC) / 2(2PPC) /
 		 *		1000(for KHZ) + 1(for raising to a unit)
 		 */
