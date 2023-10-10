@@ -50,7 +50,7 @@ extern bool is_suspend;
 static struct exynos_context *platform = NULL;
 
 /* custom DVFS */
-static unsigned int user_gpu_dvfs_max_temp = 55;
+static unsigned int user_gpu_dvfs_max_temp = 60; /* °C */
 static unsigned int gpu_dvfs_max_temp = 0;
 static unsigned int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;

@@ -40,8 +40,7 @@
  *********************************************************************/
 
 /* custom DVFS */
-static unsigned int user_cpu_dvfs_max_temp = 75; /* boot temp */
-static unsigned int __user_cpu_dvfs_max_temp = 55;
+static unsigned int user_cpu_dvfs_max_temp = 60; /* °C */
 static unsigned int cpu_dvfs_max_temp = 0;
 static unsigned int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
@@ -683,11 +682,10 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 
 static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
 {
-	static bool init = false;
 	unsigned int tmp = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow && init) {
+	if (!a2n_allow) {
 		pr_err("[%s] a2n: unprivileged access !\n",__func__);
 		goto err;
 	}
@@ -698,12 +696,6 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 			pr_err("%s: CPU DVFS: out of range %d - %d\n", __func__ , (int)CPU_DVFS_RANGE_TEMP_MIN , (int)CPU_DVFS_TJMAX);
 			goto err;
 		}
-		goto out;
-	}
-
-	if (!init) {
-		init = true;
-		tmp = __user_cpu_dvfs_max_temp;
 		goto out;
 	}
 err:
