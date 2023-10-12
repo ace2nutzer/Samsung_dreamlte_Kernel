@@ -63,6 +63,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 		}
 		KBASE_DEBUG_ASSERT(platform->step >= 0);
 #ifdef CONFIG_MALI_VK_BOOST /* VK JOB Boost */
+		mutex_lock(&platform->gpu_sched_hmp_lock);
+		mutex_lock(&platform->gpu_vk_boost_lock);
 		if ((platform->ctx_need_qos || platform->ctx_vk_need_qos || (platform->env_data.utilization == 100)) && (!gpu_pmqos_ongoing)) {
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 			set_hmp_boost(1);
@@ -79,6 +81,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			}
 			gpu_pmqos_ongoing = true;
 		}
+		mutex_unlock(&platform->gpu_vk_boost_lock);
+		mutex_unlock(&platform->gpu_sched_hmp_lock);
 #endif
 		break;
 	case GPU_CONTROL_PM_QOS_RESET:
@@ -86,6 +90,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "%s: PM QOS ERROR : pm_qos deinit -> reset\n", __func__);
 			return -ENOENT;
 		}
+		mutex_lock(&platform->gpu_sched_hmp_lock);
+		mutex_lock(&platform->gpu_vk_boost_lock);
 		if (!platform->ctx_need_qos && !platform->ctx_vk_need_qos && (platform->env_data.utilization < 100) && gpu_pmqos_ongoing) {
 			gpu_dvfs_boost_lock(GPU_DVFS_BOOST_UNSET);
 			pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
@@ -97,6 +103,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 #endif
 			gpu_pmqos_ongoing = false;
 		}
+		mutex_unlock(&platform->gpu_vk_boost_lock);
+		mutex_unlock(&platform->gpu_sched_hmp_lock);
 		break;
 	case GPU_CONTROL_PM_QOS_EGL_SET:
 		if (!platform->is_pm_qos_init) {
