@@ -68,6 +68,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 		if ((platform->ctx_need_qos || platform->ctx_vk_need_qos || (platform->env_data.utilization == 100)) && (!gpu_pmqos_ongoing)) {
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 			set_hmp_boost(1);
+			set_hmp_aggressive_up_migration(true);
+			set_hmp_aggressive_yield(true);
 #endif
 			if (platform->cl_boost) {
 				gpu_dvfs_boost_lock(GPU_DVFS_BOOST_SET);
@@ -100,6 +102,8 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 #ifdef CONFIG_HMP_VARIABLE_SCALE
 			/* unset hmp boost */
 			set_hmp_boost(0);
+			set_hmp_aggressive_up_migration(false);
+			set_hmp_aggressive_yield(false);
 #endif
 			gpu_pmqos_ongoing = false;
 		}
