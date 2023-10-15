@@ -607,7 +607,7 @@ int gpu_pm_get_dvfs_utilisation(struct kbase_device *kbdev, int *util_gl_share, 
 
 	if (compute_time > 0 && total_time > 0) {
 		compute_time_rate = (100 * compute_time) / total_time;
-		if (compute_time_rate == 100)
+		if (compute_time_rate >= 50)
 			kbdev->pm.backend.metrics.is_full_compute_util = true;
 		else
 			kbdev->pm.backend.metrics.is_full_compute_util = false;

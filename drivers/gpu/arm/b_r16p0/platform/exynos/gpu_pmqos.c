@@ -65,7 +65,7 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 #ifdef CONFIG_MALI_VK_BOOST /* VK JOB Boost */
 		mutex_lock(&platform->gpu_sched_hmp_lock);
 		mutex_lock(&platform->gpu_vk_boost_lock);
-		if ((platform->ctx_need_qos || platform->ctx_vk_need_qos || (platform->env_data.utilization == 100)) && (!gpu_pmqos_ongoing)) {
+		if ((platform->ctx_need_qos || platform->ctx_vk_need_qos || (pkbdev->pm.backend.metrics.is_full_compute_util)) && (!gpu_pmqos_ongoing)) {
 #if defined(CONFIG_HMP_VARIABLE_SCALE)
 			set_hmp_boost(1);
 			set_hmp_aggressive_up_migration(true);
@@ -94,7 +94,7 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 		}
 		mutex_lock(&platform->gpu_sched_hmp_lock);
 		mutex_lock(&platform->gpu_vk_boost_lock);
-		if (!platform->ctx_need_qos && !platform->ctx_vk_need_qos && (platform->env_data.utilization < 100) && gpu_pmqos_ongoing) {
+		if (!platform->ctx_need_qos && !platform->ctx_vk_need_qos && (!pkbdev->pm.backend.metrics.is_full_compute_util) && gpu_pmqos_ongoing) {
 			gpu_dvfs_boost_lock(GPU_DVFS_BOOST_UNSET);
 			pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, 0);
