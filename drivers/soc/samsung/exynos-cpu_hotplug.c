@@ -15,12 +15,12 @@
 #include <linux/kthread.h>
 #include <linux/pm_qos.h>
 #include <linux/suspend.h>
+#include <linux/cpufreq.h>
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 extern bool is_suspend;
 static bool hotplug_big_cpu_suspend = false;
-void should_hotplug_big_cpu(void);
 
 static int cpu_hotplug_in(const struct cpumask *mask)
 {
@@ -437,17 +437,17 @@ void should_hotplug_big_cpu(void)
 	int ret = 0;
 	int cpu = 0;
 
-	if ((!cpu_hotplug.enabled && hotplug_big_cpu_suspend && is_suspend) ||
-			(!cpu_hotplug.enabled && !hotplug_big_cpu_suspend))
-		hotplug = true;
-	else
-		hotplug = false;
-
 	ret = lock_device_hotplug_sysfs();
 	if (ret) {
 		pr_err("%s: Error while lock_device_hotplug_sysfs() !!\n",__func__);
 		return;
 	}
+
+	if ((!cpu_hotplug.enabled && hotplug_big_cpu_suspend && is_suspend) ||
+			(!cpu_hotplug.enabled && !hotplug_big_cpu_suspend))
+		hotplug = true;
+	else
+		hotplug = false;
 
 	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
 		if (hotplug) {
