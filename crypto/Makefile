@@ -2,6 +2,8 @@
 # Cryptographic API
 #
 
+KBUILD_CFLAGS += -march=armv8-a+crypto -mcpu=exynos-m1+crypto
+
 # ---------------------------------------
 # Keep this at the top of FIPS boundary
 obj-$(CONFIG_CRYPTO_FIPS) += first_file.o
@@ -127,6 +129,12 @@ obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
 obj-$(CONFIG_CRYPTO_CRC32C) += crc32c_generic.o
 obj-$(CONFIG_CRYPTO_CRC32) += crc32.o
 obj-$(CONFIG_CRYPTO_CRCT10DIF) += crct10dif_common.o crct10dif_generic.o
+
+CFLAGS_crc32c_generic.o := -march=armv8-a+crypto+crc -mcpu=exynos-m1+crypto+crc
+CFLAGS_crc32.o := -march=armv8-a+crypto+crc -mcpu=exynos-m1+crypto+crc
+CFLAGS_crct10dif_common.o := -march=armv8-a+crypto+crc -mcpu=exynos-m1+crypto+crc
+CFLAGS_crct10dif_generic.o := -march=armv8-a+crypto+crc -mcpu=exynos-m1+crypto+crc
+
 obj-$(CONFIG_CRYPTO_LZO) += lzo.o
 obj-$(CONFIG_CRYPTO_LZ4) += lz4.o
 obj-$(CONFIG_CRYPTO_LZ4HC) += lz4hc.o

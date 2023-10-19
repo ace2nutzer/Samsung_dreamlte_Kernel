@@ -303,8 +303,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-format-overflow -O3 -fomit-frame-pointer -fno-strict-aliasing -std=gnu89
-HOSTCXXFLAGS = -O3 -fomit-frame-pointer -fno-strict-aliasing
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-format-overflow -O2 -fomit-frame-pointer -fno-strict-aliasing -std=gnu89
+HOSTCXXFLAGS = -O2 -fomit-frame-pointer -fno-strict-aliasing
 
 # Host specific Flags
 HOSTCFLAGS   += -march=core2 -mcpu=core2 -mtune=core2 -pipe
@@ -412,9 +412,9 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	:= $(call cc-option,-Oz,-Os)
 else
 ifdef CONFIG_PROFILE_ALL_BRANCHES
-KBUILD_CFLAGS	:= -O3
+KBUILD_CFLAGS	:= -O2
 else
-KBUILD_CFLAGS   := -O3
+KBUILD_CFLAGS   := -O2
 endif
 endif
 
@@ -427,8 +427,8 @@ KBUILD_CFLAGS   += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -pipe
 
 # Target specific Flags
-CFLAGS_ABI	:= -march=armv8-a+crc+crypto \
-		   -mcpu=exynos-m1+crc+crypto \
+CFLAGS_ABI	:= -march=armv8-a \
+		   -mcpu=exynos-m1 \
 		   -mtune=exynos-m1 \
 		   -mgeneral-regs-only
 

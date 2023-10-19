@@ -8,6 +8,8 @@
 # published by the Free Software Foundation.
 #
 
+KBUILD_CFLAGS += -march=armv8-a+crypto -mcpu=exynos-m1+crypto
+
 #Keep this at the top
 obj-$(CONFIG_CRYPTO_FIPS) += first_file_asm.o
 
@@ -30,15 +32,22 @@ aes-ce-ccm-y := aes-ce-ccm-glue.o aes-ce-ccm-core.o
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_BLK) += aes-ce-blk.o
 aes-ce-blk-y := aes-glue-ce.o aes-ce.o
-CFLAGS_aes-glue-ce.o	:= -DUSE_V8_CRYPTO_EXTENSIONS
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_NEON_BLK) += aes-neon-blk.o
 aes-neon-blk-y := aes-glue-neon.o aes-neon.o
 
+CFLAGS_aes-neon-blk.o := -march=armv8-a -mcpu=exynos-m1
+CFLAGS_aes-glue-neon.o := -march=armv8-a -mcpu=exynos-m1
+CFLAGS_aes-neon.o := -march=armv8-a -mcpu=exynos-m1
+
 AFLAGS_aes-ce.o		:= -DINTERLEAVE=4
 AFLAGS_aes-neon.o	:= -DINTERLEAVE=4
 
+CFLAGS_aes-glue-ce.o	:= -DUSE_V8_CRYPTO_EXTENSIONS
+
 obj-$(CONFIG_CRYPTO_CRC32_ARM64) += crc32-arm64.o
+
+CFLAGS_crc32-arm64.o	:= -march=armv8-a+crypto+crc -mcpu=exynos-m1+crypto+crc
 
 $(obj)/aes-glue-%.o: $(src)/aes-glue.c FORCE
 	$(call if_changed_rule,cc_o_c)
