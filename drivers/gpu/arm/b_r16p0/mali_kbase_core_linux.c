@@ -1591,7 +1591,7 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
  * determining which policy is currently active, and changing the active
  * policy.
  */
-static DEVICE_ATTR(power_policy, S_IRUGO | S_IWUSR, show_policy, set_policy);
+static DEVICE_ATTR(power_policy, S_IRUGO | S_IRUGO, show_policy, set_policy);
 
 /*
  * show_core_mask - Show callback for the core_mask sysfs file.
