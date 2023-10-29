@@ -776,7 +776,7 @@ static ssize_t store_cpu_lit_volt(struct kobject *kobj, struct attribute *attr, 
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 1350000))
+		if ((volt < 450000) || (volt > 1400000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl1 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
@@ -800,7 +800,7 @@ static ssize_t store_cpu_big_volt(struct kobject *kobj, struct attribute *attr, 
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 1350000))
+		if ((volt < 450000) || (volt > 1400000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl0 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);

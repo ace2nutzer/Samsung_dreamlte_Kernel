@@ -322,12 +322,14 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 
 			/* hardcoded g3d voltages */
 			if (strcmp(vclk->name, "dvfs_g3d") == 0) {
-				if (raw_rvh->table[j].rate == 683000)
+				if (raw_rvh->table[j].rate == 572000)
 					raw_rvh->table[j].volt = 750000;
-				else if (raw_rvh->table[j].rate == 764000)
+				else if (raw_rvh->table[j].rate == 683000)
 					raw_rvh->table[j].volt = 800000;
-				else if (raw_rvh->table[j].rate == 839000)
+				else if (raw_rvh->table[j].rate == 764000)
 					raw_rvh->table[j].volt = 850000;
+				else if (raw_rvh->table[j].rate == 839000)
+					raw_rvh->table[j].volt = 900000;
 			}
 
 			/* hardcoded cpucl1 voltages */
@@ -338,7 +340,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 				else if (raw_rvh->table[j].rate == 1898000)
 					raw_rvh->table[j].volt = 1150000;
 				else if (raw_rvh->table[j].rate == 2002000)
-					raw_rvh->table[j].volt = 1250000;
+					raw_rvh->table[j].volt = 1300000;
 			}
 
 			/* hardcoded cpucl0 voltages */
@@ -351,7 +353,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 				else if (raw_rvh->table[j].rate == 2704000)
 					raw_rvh->table[j].volt = 1150000;
 				else if (raw_rvh->table[j].rate == 2808000)
-					raw_rvh->table[j].volt = 1250000;
+					raw_rvh->table[j].volt = 1300000;
 			}
 
 			/* patch mif for devfreq */

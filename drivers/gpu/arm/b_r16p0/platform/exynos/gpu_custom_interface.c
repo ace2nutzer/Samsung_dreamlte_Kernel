@@ -1892,7 +1892,7 @@ static ssize_t set_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attri
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 950000))
+		if ((volt < 450000) || (volt > 1000000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		gpu_dvfs_update_asv_table(pkbdev);
