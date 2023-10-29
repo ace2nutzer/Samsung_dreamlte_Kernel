@@ -14,6 +14,7 @@
 #include "include/sec_battery.h"
 #include <linux/sec_ext.h>
 #include <linux/sec_debug.h>
+#include <linux/cpufreq.h>
 
 #if defined(CONFIG_SEC_ABC)
 #include <linux/sti/abc_common.h>
@@ -23,12 +24,18 @@
 #include <linux/a2n.h>
 #endif
 
+#if ((defined(CONFIG_CAMERA_DREAM) && defined(CONFIG_CAMERA_DREAM2)) || (defined(CONFIG_CAMERA_GREAT) && defined(CONFIG_CAMERA_DREAM)) \
+	|| (defined(CONFIG_CAMERA_GREAT) && defined(CONFIG_CAMERA_DREAM2)))
+#error "Charger Control: unified build for S8/S8+/Note8 is not supported!"
+#endif
+
 bool sleep_mode = false;
 
-/* Fix compiler warning */
-#ifndef CONFIG_CAMERA_GREAT
-#define CONFIG_CAMERA_GREAT 0
-#endif
+/* DVFS DEVICE VOLTAGE HANDLER */
+extern void sanitize_gpu_dvfs(bool sanitize);
+int dvfs_device_vol = 0; /* mV */
+int dvfs_device_vol_peak = 4400; /* mV */
+struct mutex dvfs_device_vol_lock;
 
 /* Charger Control */
 #ifdef CONFIG_CAMERA_DREAM2
@@ -40,7 +47,8 @@ static unsigned int usbcd_curr_max = 1800;
 static unsigned int lpm_ac_curr_max = 2300;
 static unsigned int lpm_usbpd_curr_max = 2300;
 static unsigned int lpm_usbcd_curr_max = 2300;
-#elif CONFIG_CAMERA_GREAT
+#endif
+#ifdef CONFIG_CAMERA_GREAT
 static bool is_s8_plus = false;
 static bool is_note8 = true;
 static unsigned int ac_curr_max = 1700;
@@ -49,7 +57,8 @@ static unsigned int usbcd_curr_max = 1700;
 static unsigned int lpm_ac_curr_max = 2200;
 static unsigned int lpm_usbpd_curr_max = 2200;
 static unsigned int lpm_usbcd_curr_max = 2200;
-#else
+#endif
+#ifdef CONFIG_CAMERA_DREAM
 static bool is_s8_plus = false;
 static bool is_note8 = false;
 static unsigned int ac_curr_max = 1500;
@@ -77,23 +86,21 @@ static int batt_temp = 0;
 bool water_detect = true;
 #endif
 static bool is_charger = false;
-static bool afc_init = false;
 
 /* battery care & battery idle mode */
+extern void enable_blue_led(bool);
 static bool batt_idle = false;
 static unsigned int batt_care = 101; /* disabled */
 static bool battery_idle = false;
 static unsigned int batt_level = 0;
-extern void enable_blue_led(bool);
 static unsigned int batt_max_temp = 40; /* °C */
 static unsigned int lpm_batt_max_temp = 45; /* LPM */
 
 static struct sec_battery_info *_battery;
 
-extern void set_afc_disable(bool);
 extern unsigned int bootmode;
 
-#define CHARGER_CONTROL_VERSION		"3.2"
+#define CHARGER_CONTROL_VERSION		"3.3"
 
 static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_reset_soc),
@@ -379,6 +386,20 @@ char *sec_bat_charge_mode_str[] = {
 	"Buck-Off",
 };
 
+inline void update_device_vol(void)
+{
+	union power_supply_propval value = {0, };
+
+	if (likely(_battery))
+		psy_do_property(_battery->pdata->fuelgauge_name, get,
+				POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
+
+	if (likely(value.intval > 0))
+		dvfs_device_vol = value.intval;
+	else
+		dvfs_device_vol = dvfs_device_vol_peak;
+}
+
 void sec_bat_set_misc_event(struct sec_battery_info *battery,
 	unsigned int misc_event_val, unsigned int misc_event_mask)
 {
@@ -594,8 +615,6 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 			} else if (battery->chg_limit_recovery_cable == SEC_BATTERY_CABLE_9V_TA) {
 				muic_afc_set_voltage(SEC_INPUT_VOLTAGE_9V);
 			}
-			//pr_info("%s: cable_type(%d), chg_limit_recovery_cable(%d) vbus_by_siop(%d)\n", __func__,
-				//battery->cable_type, battery->chg_limit_recovery_cable, battery->vbus_chg_by_siop);
 		} else if (!battery->chg_limit && is_hv_wire_type(battery->cable_type) && (battery->chg_temp > battery->pdata->chg_high_temp)) {
 			*input_current = battery->pdata->chg_input_limit_current;
 			*charging_current = battery->pdata->chg_charging_limit_current;
@@ -926,6 +945,7 @@ void sec_bat_set_decrease_iout(struct sec_battery_info *battery)
 
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
+	static bool afc_init = false;
 	union power_supply_propval value = {0, };
 
 	int input_current = USB_CURRENT_UNCONFIGURED,
@@ -1186,7 +1206,6 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 			value);
 #endif
 	}
-
 	if (is_charger) {
 		if (batt_idle) {
 			sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
@@ -1211,7 +1230,6 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 			pr_info("%s: Battery IDLE enabled by user, Battery Care level: %u %% \n", __func__, batt_care);
 		}
 	}
-
 	mutex_unlock(&battery->iolock);
 	return 0;
 }
@@ -1416,7 +1434,9 @@ static ssize_t s8_plus_mode_show(struct kobject *kobj,
 	return strlen(buf);
 }
 SEC_BAT_ATTR_RO(s8_plus_mode);
-#elif CONFIG_CAMERA_GREAT
+#endif
+
+#ifdef CONFIG_CAMERA_GREAT
 static ssize_t note8_mode_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
@@ -1438,7 +1458,9 @@ static ssize_t note8_mode_show(struct kobject *kobj,
 	return strlen(buf);
 }
 SEC_BAT_ATTR_RO(note8_mode);
-#else
+#endif
+
+#ifdef CONFIG_CAMERA_DREAM
 static ssize_t s8_mode_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
@@ -1745,9 +1767,11 @@ static struct attribute *sec_bat_attrs[] = {
 	&batt_temp_attr.attr,
 #ifdef CONFIG_CAMERA_DREAM2
 	&s8_plus_mode_attr.attr,
-#elif CONFIG_CAMERA_GREAT
+#endif
+#ifdef CONFIG_CAMERA_GREAT
 	&note8_mode_attr.attr,
-#else
+#endif
+#ifdef CONFIG_CAMERA_DREAM
 	&s8_mode_attr.attr,
 #endif
 #if defined(CONFIG_CCIC_WATER_DETECT)
@@ -2467,12 +2491,12 @@ static void sec_bat_aging_check(struct sec_battery_info *battery)
 
 	if (battery->pdata->num_age_step <= 0 || battery->batt_cycle < 0)
 		return;
-/*
+
 	if (battery->temperature < 50) {
 		pr_info("%s: [AGE] skip (temperature:%d)\n", __func__, battery->temperature);
 		return;
 	}
-*/
+
 	for (calc_step = battery->pdata->num_age_step - 1; calc_step >= 0; calc_step--) {
 		if (battery->pdata->age_data[calc_step].cycle <= battery->batt_cycle)
 			break;
@@ -4081,7 +4105,7 @@ static void sec_bat_monitor_work(
 	dev_dbg(battery->dev, "%s: Start\n", __func__);
 	c_ts = ktime_to_timespec(ktime_get_boottime());
 
-	// reset some flags
+	/* reset some flags */
 	if (battery->cable_type == SEC_BATTERY_CABLE_NONE && battery->status == POWER_SUPPLY_STATUS_DISCHARGING) {
 		is_charger = false;
 		charging_curr = 0;
@@ -4090,8 +4114,6 @@ static void sec_bat_monitor_work(
 		battery_idle = false;
 		enable_blue_led(false);
 		batt_level = 0;
-		afc_init = false;
-		set_afc_disable(false); /* AFC auto fix */
 	} else {
 		is_charger = true;
 	}
@@ -4368,6 +4390,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 	int wire_current = 0;
 
 	dev_info(battery->dev, "%s: Start\n", __func__);
+
 	sec_bat_set_current_event(battery, SEC_BAT_CURRENT_EVENT_SKIP_HEATING_CONTROL,
 				  SEC_BAT_CURRENT_EVENT_SKIP_HEATING_CONTROL);
 #if defined(CONFIG_CCIC_NOTIFIER)
@@ -4752,6 +4775,8 @@ static void sec_bat_cable_work(struct work_struct *work)
 	queue_delayed_work(battery->monitor_wqueue, &battery->monitor_work, 0);
 end_of_cable_work:
 	wake_unlock(&battery->cable_wake_lock);
+	sanitize_cpu_dvfs(false);
+	sanitize_gpu_dvfs(false);
 	dev_info(battery->dev, "%s: End\n", __func__);
 }
 
@@ -7309,9 +7334,11 @@ static int sec_bat_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 #ifdef CONFIG_SEC_FACTORY
+
 		psy_do_property(battery->pdata->fuelgauge_name, get,
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
 		battery->voltage_now = value.intval;
+
 		dev_err(battery->dev,
 			"%s: voltage now(%d)\n", __func__, battery->voltage_now);
 #endif
@@ -10031,6 +10058,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 	mutex_init(&battery->sbmlock);
 	sec_bat_init_sbm(battery);
 #endif
+	mutex_init(&dvfs_device_vol_lock);
 
 	dev_dbg(battery->dev, "%s: ADC init\n", __func__);
 
@@ -10441,6 +10469,7 @@ err_irq:
 	mutex_destroy(&battery->sbmlock);
 	sec_bat_exit_sbm(battery);
 #endif	
+	mutex_destroy(&dvfs_device_vol_lock);
 	kfree(pdata);
 err_bat_free:
 	kfree(battery);
@@ -10489,6 +10518,7 @@ static int sec_battery_remove(struct platform_device *pdev)
 	mutex_destroy(&battery->sbmlock);
 	sec_bat_exit_sbm(battery);
 #endif
+	mutex_destroy(&dvfs_device_vol_lock);
 
 #ifdef CONFIG_OF
 	adc_exit(battery);

@@ -94,6 +94,7 @@ static ssize_t muic_set_uart_en(struct device *dev,
 		pmuic->is_rustproof = true;
 	} else {
 		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
+		return -EINVAL;
 	}
 
 	pr_info("%s:%s uart_en(%d)\n", MUIC_DEV_NAME, __func__,
@@ -139,6 +140,7 @@ static ssize_t muic_set_uart_sel(struct device *dev,
 		switch_to_cp_uart(pmuic);
 	} else {
 		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
+		return -EINVAL;
 	}
 
 	pr_info("%s:%s uart_path(%d)\n", MUIC_DEV_NAME, __func__,
@@ -180,6 +182,7 @@ static ssize_t muic_set_usb_sel(struct device *dev,
 		pdata->usb_path = MUIC_PATH_USB_CP;
 	} else {
 		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
+		return -EINVAL;
 	}
 
 	pr_info("%s:%s usb_path(%d)\n", MUIC_DEV_NAME, __func__,
@@ -271,7 +274,7 @@ static ssize_t muic_set_otg_test(struct device *dev,
 		pmuic->is_otg_test = false;
 	} else {
 		pr_warn("%s:%s Wrong command\n", MUIC_DEV_NAME, __func__);
-		return count;
+		return -EINVAL;
 	}
 
 	if (pvendor && pvendor->start_otg_test) {
@@ -331,26 +334,25 @@ static ssize_t muic_set_usb_to_ta(struct device *dev,
 {
 	muic_data_t *pmuic = dev_get_drvdata(dev);
 	struct vendor_ops *pvendor = pmuic->regmapdesc->vendorops;
-	u8 val;
 
 	pr_info("%s buf:%s\n", __func__, buf);
 	if (!strncmp(buf, "0", 1)) {
 		if (pvendor->usb_to_ta)
-			val = pvendor->usb_to_ta(pmuic->regmapdesc, 0);
+			pvendor->usb_to_ta(pmuic->regmapdesc, 0);
 		else {
 			pr_err("%s: No Vendor API ready.\n", __func__);
-			val = -EINVAL;
+			return -ENODEV;
 		}
 	} else if (!strncmp(buf, "1", 1)) {
 		if (pvendor->usb_to_ta)
-			val = pvendor->usb_to_ta(pmuic->regmapdesc, 1);
+			pvendor->usb_to_ta(pmuic->regmapdesc, 1);
 		else {
 			pr_err("%s: No Vendor API ready.\n", __func__);
-			val = -EINVAL;
+			return -ENODEV;
 		}
 	} else {
 		pr_warn("%s:%s Wrong command\n", MUIC_DEV_NAME, __func__);
-		return count;
+		return -EINVAL;
 	}
 
 	return count;
@@ -460,7 +462,7 @@ static ssize_t muic_set_apo_factory(struct device *dev,
 		mode = "FACTORY_MODE";
 	} else {
 		pr_warn("%s:%s Wrong command\n", MUIC_DEV_NAME, __func__);
-		return count;
+		return -EINVAL;
 	}
 
 	pr_info("%s:%s apo factory=%s\n", MUIC_DEV_NAME, __func__, mode);
@@ -520,11 +522,10 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 #endif
 
 	/* Disable AFC */
-	//if (!strncasecmp(buf, "1", 1))
-		//pdata->afc_disable = true;
-
+	if (!strncasecmp(buf, "1", 1))
+		pdata->afc_disable = true;
 	/* Enable AFC */
-	if (!strncasecmp(buf, "0", 1))
+	else if (!strncasecmp(buf, "0", 1))
 		pdata->afc_disable = false;
 	else {
 		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
@@ -553,9 +554,12 @@ static ssize_t muic_set_afc_disable(struct device *dev,
 		POWER_SUPPLY_EXT_PROP_HV_DISABLE, psy_val);
 #endif
 
+	/* for factory self charging test (AFC-> NORMAL TA) */
+	if (pmuic->is_factory_start)
+		hv_set_afc_by_user(pmuic->phv, pdata->afc_disable ? false: true);
+
 	return count;
 }
-
 #if defined(CONFIG_MUIC_HV_12V) && defined(CONFIG_SEC_FACTORY)
 static ssize_t muic_store_afc_set_voltage(struct device *dev,
 				    struct device_attribute *attr,
@@ -571,7 +575,7 @@ static ssize_t muic_store_afc_set_voltage(struct device *dev,
 		hv_muic_change_afc_voltage(pmuic, MUIC_HV_12V);			
 	} else {
 		pr_warn("%s:%s invalid value\n", MUIC_DEV_NAME, __func__);
-		return count;
+		return -EINVAL;
 	}
 
 	return count;

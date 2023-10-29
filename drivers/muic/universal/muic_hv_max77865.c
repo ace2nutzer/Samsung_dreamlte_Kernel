@@ -125,7 +125,6 @@ enum act_function_num {
 };
 
 static struct hv_data hv_afc;
-static struct hv_data *_phv = NULL;
 
 /* afc_condition_checklist[ATTACHED_DEV_TA_MUIC] */
 muic_afc_data_t ta_to_prepare = {
@@ -2241,11 +2240,11 @@ int muic_afc_set_voltage(int vol)
 
 void max77865_hv_muic_charger_init(void)
 {
-	//pr_info("%s:%s\n", MUIC_HV_DEV_NAME, __func__);
+	pr_info("%s:%s\n", MUIC_HV_DEV_NAME, __func__);
 
 	if(afc_init_data.phv) {
 		if (afc_init_data.phv->is_charger_ready) {
-			//pr_info("%s:%s charger is already ready.\n", MUIC_HV_DEV_NAME, __func__);
+			pr_info("%s:%s charger is already ready.\n", MUIC_HV_DEV_NAME, __func__);
 			return;
 		}
 		afc_init_data.phv->is_charger_ready = true;
@@ -2421,7 +2420,6 @@ void hv_initialize(muic_data_t *pmuic, struct hv_data **pphv)
 	hv_afc.pmuic = pmuic;
 
 	*pphv = &hv_afc;
-	_phv = &hv_afc;
 }
 
 void hv_clear_hvcontrol(struct hv_data *phv)
@@ -2577,20 +2575,4 @@ void hv_muic_chgdet_ready(struct hv_data *phv)
 	pr_info("%s:%s HVCTL2:[0x%02x]->[0x%02x]\n", MUIC_HV_DEV_NAME, __func__, before, after);
 
 	mdelay(80);
-}
-
-void set_afc_disable(bool true)
-{
-	if (!_phv) {
-		pr_err("%s: _phv is not ready.\n", __func__);
-		return;
-	}
-
-	if (true) {
-		_phv->afc_disable = true;
-		_phv->pmuic->pdata->afc_disable = true;
-	} else {
-		_phv->afc_disable = false;
-		_phv->pmuic->pdata->afc_disable = false;
-	}
 }

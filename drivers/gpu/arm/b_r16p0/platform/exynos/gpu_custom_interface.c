@@ -46,25 +46,23 @@
 extern struct kbase_device *pkbdev;
 extern bool gpu_always_on;
 extern bool is_suspend;
+extern void update_device_vol(void);
+extern int dvfs_device_vol_peak;
+extern int dvfs_device_vol;
+extern struct mutex dvfs_device_vol_lock;
 
 static struct exynos_context *platform = NULL;
 
 /* custom DVFS */
-static unsigned int user_gpu_dvfs_max_temp = 60; /* °C */
-static unsigned int gpu_dvfs_max_temp = 0;
-static unsigned int gpu_dvfs_peak_temp = 0;
-static int gpu_temp = 0;
-static unsigned int gpu_dvfs_sleep_time = 6;	/* ms */
-static unsigned int gpu_dvfs_limit = 0;
-static unsigned int gpu_dvfs_min_temp = 0;
-static struct task_struct *gpu_dvfs_thread = NULL;
-
+#define GPU_DVFS_DEFAULT_TEMP		(60)	/* °C */
 #define GPU_DVFS_RANGE_TEMP_MIN		(45)	/* °C */
 #define GPU_DVFS_TJMAX			(100)	/* °C */
-#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
-#define GPU_DVFS_SHUTDOWN_TEMP		(110)	/* °C */
+#define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(110)	/* °C */
+#define GPU_DVFS_SHUTDOWN_TEMP		(115)	/* °C */
 #define GPU_DVFS_MARGIN_TEMP		(10)	/* °C */
 #define GPU_DVFS_STEP_DOWN_TEMP		(5)	/* °C */
+#define DVFS_DEV_VOL_TRIG_MIN		(3300)	/* mV */
+#define DVFS_DEV_VOL_TRIG_MAX		(3700)	/* mV */
 #define GPU_DVFS_DEBUG			(0)
 
 #define FREQ_STEP_0	260000
@@ -75,8 +73,19 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 #define FREQ_STEP_5	764000
 #define FREQ_STEP_6	839000
 
+static unsigned int user_gpu_dvfs_max_temp = GPU_DVFS_DEFAULT_TEMP;
+static unsigned int gpu_dvfs_max_temp = 0;
+static unsigned int gpu_dvfs_peak_temp = 0;
+static int gpu_temp = 0;
+static unsigned int gpu_dvfs_sleep_time = 6; /* ms */
+static unsigned int gpu_dvfs_limit = 0;
+static unsigned int gpu_dvfs_min_temp = 0;
+static int dvfs_device_vol_trig = 3400; /* mV */
+static bool is_gpu_device_low_vol = false;
+
+static struct task_struct *gpu_dvfs_thread = NULL;
 static DEFINE_MUTEX(poweroff_lock);
-static inline void sanitize_gpu_dvfs(bool sanitize);
+inline void sanitize_gpu_dvfs(bool sanitize);
 
 /* for ondemand gov */
 unsigned int gpu_up_threshold = 95;
@@ -1883,7 +1892,7 @@ static ssize_t set_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attri
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
-		if ((volt < 450000) || (volt > 950000))
+		if ((volt < 450000) || (volt > 1000000))
 			goto err;
 		update_fvmap(id, rate, volt);
 		gpu_dvfs_update_asv_table(pkbdev);
@@ -2138,6 +2147,8 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%d °C\n",buf, (int)GPU_DVFS_SHUTDOWN_TEMP);
 	sprintf(buf, "%s[gpu_max_clock]\t%u KHz\n",buf, platform->gpu_max_clock);
 	sprintf(buf, "%s[gpu_dvfs_limit]\t%u KHz\n",buf, gpu_dvfs_limit);
+	sprintf(buf, "%s[dvfs_device_vol_trig]\t%d mV\n",buf, dvfs_device_vol_trig);
+	sprintf(buf, "%s[dvfs_device_vol_peak]\t%d mV\n",buf, dvfs_device_vol_peak);
 
 	return strlen(buf);
 }
@@ -2170,9 +2181,48 @@ err:
 	return -EINVAL;
 }
 
+static ssize_t show_kernel_sysfs_dvfs_device_vol_trig(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[dvfs_device_vol_trig]\t%d mV\n",buf, dvfs_device_vol_trig);
+	return strlen(buf);
+}
+
+static ssize_t set_kernel_sysfs_dvfs_device_vol_trig(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int tmp = 0;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
+	}
+#endif
+
+	if (sscanf(buf, "%d", &tmp)) {
+		if (tmp < DVFS_DEV_VOL_TRIG_MIN || tmp > DVFS_DEV_VOL_TRIG_MAX) {
+			pr_err("%s: GPU DVFS: out of range %d - %d\n", __func__, (int)DVFS_DEV_VOL_TRIG_MIN, (int)DVFS_DEV_VOL_TRIG_MAX);
+			goto err;
+		}
+		goto out;
+	}
+err:
+	pr_err("%s: GPU DVFS: invalid cmd\n", __func__);
+	return -EINVAL;
+out:
+	dvfs_device_vol_trig = tmp;
+	sanitize_gpu_dvfs(false);
+	return count;
+}
+
 static ssize_t show_kernel_sysfs_gpu_dvfs_peak_temp(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, gpu_dvfs_peak_temp);
+	return strlen(buf);
+}
+
+static ssize_t show_kernel_sysfs_dvfs_device_vol_peak(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[dvfs_device_vol_peak]\t%d mV\n",buf, dvfs_device_vol_peak);
 	return strlen(buf);
 }
 
@@ -2188,16 +2238,25 @@ static inline void set_gpu_dvfs_limit(unsigned int freq)
 	gpu_dvfs_limit = freq;
 }
 
-static inline void sanitize_gpu_dvfs(bool sanitize)
+inline void sanitize_gpu_dvfs(bool sanitize)
 {
 	if (!sanitize) {
 		gpu_dvfs_max_temp = user_gpu_dvfs_max_temp;
 		gpu_dvfs_peak_temp = 0;
+		dvfs_device_vol_peak = 4400;
+		is_gpu_device_low_vol = false;
 		set_gpu_dvfs_limit(platform->gpu_max_clock);
 	} else {
 		gpu_dvfs_max_temp -= GPU_DVFS_STEP_DOWN_TEMP;
 	}
 	gpu_dvfs_min_temp = (gpu_dvfs_max_temp - GPU_DVFS_MARGIN_TEMP);
+}
+
+static inline void gpu_device_low_vol(void)
+{
+	gpu_dvfs_max_temp = GPU_DVFS_DEFAULT_TEMP;
+	gpu_dvfs_min_temp = (gpu_dvfs_max_temp - GPU_DVFS_MARGIN_TEMP);
+	is_gpu_device_low_vol = true;
 }
 
 static inline int gpu_dvfs_check_thread(void *nothing)
@@ -2226,7 +2285,6 @@ static inline int gpu_dvfs_check_thread(void *nothing)
 	while (!kthread_should_stop()) {
 
 		gpu_temp = gpu_tmu_data->tmu_read(gpu_tmu_data);
-
 		if (gpu_temp == prev_temp) {
 			msleep(gpu_dvfs_sleep_time);
 			continue;
@@ -2238,6 +2296,21 @@ static inline int gpu_dvfs_check_thread(void *nothing)
 			pr_info("%s: GPU DVFS: peak_temp: %d C\n", __func__, gpu_dvfs_peak_temp);
 #endif
 		}
+
+		if (mutex_trylock(&dvfs_device_vol_lock)) {
+			update_device_vol();
+			mutex_unlock(&dvfs_device_vol_lock);
+		}
+
+		if (dvfs_device_vol < dvfs_device_vol_peak) {
+			dvfs_device_vol_peak = dvfs_device_vol;
+#if GPU_DVFS_DEBUG
+			pr_info("%s: GPU DVFS: dvfs_device_vol_peak: %d mV\n", __func__, dvfs_device_vol_peak);
+#endif
+		}
+
+		if ((dvfs_device_vol <= dvfs_device_vol_trig) && (!is_gpu_device_low_vol))
+			gpu_device_low_vol();
 
 		if (gpu_temp >= GPU_DVFS_SHUTDOWN_TEMP) {
 			pr_err("%s: GPU DVFS: GPU_DVFS_SHUTDOWN_TEMP %u C reached! - CURR_TEMP: %d C ! - cal gpu_dvfs_max_temp: %u C - gpu_dvfs_limit: %u KHz\n", 
@@ -2266,7 +2339,9 @@ static inline int gpu_dvfs_check_thread(void *nothing)
 		}
 
 		if (gpu_temp >= gpu_dvfs_max_temp) {
-			if (gpu_dvfs_limit > FREQ_STEP_3)
+			if (gpu_dvfs_limit >= FREQ_STEP_5)
+				freq = FREQ_STEP_4;
+			else if (gpu_dvfs_limit == FREQ_STEP_4)
 				freq = FREQ_STEP_3;
 			else if (gpu_dvfs_limit == FREQ_STEP_3)
 				freq = FREQ_STEP_2;
@@ -2325,8 +2400,14 @@ static struct kobj_attribute user_min_clock_attribute =
 static struct kobj_attribute gpu_dvfs_max_temp_attribute =
 	__ATTR(gpu_dvfs_max_temp, S_IRUGO|S_IWUSR, show_kernel_sysfs_gpu_dvfs_max_temp, set_kernel_sysfs_gpu_dvfs_max_temp);
 
+static struct kobj_attribute dvfs_device_vol_trig_attribute =
+	__ATTR(dvfs_device_vol_trig, S_IRUGO|S_IWUSR, show_kernel_sysfs_dvfs_device_vol_trig, set_kernel_sysfs_dvfs_device_vol_trig);
+
 static struct kobj_attribute gpu_dvfs_peak_temp_attribute =
 	__ATTR(gpu_dvfs_peak_temp, S_IRUGO, show_kernel_sysfs_gpu_dvfs_peak_temp, NULL);
+
+static struct kobj_attribute dvfs_device_vol_peak_attribute =
+	__ATTR(dvfs_device_vol_peak, S_IRUGO, show_kernel_sysfs_dvfs_device_vol_peak, NULL);
 
 static struct kobj_attribute boost_attribute =
 	__ATTR(boost, S_IRUGO|S_IWUSR, show_kernel_sysfs_boost, set_kernel_sysfs_boost);
@@ -2374,7 +2455,9 @@ static struct attribute *attrs[] = {
 	&user_max_clock_attribute.attr,
 	&user_min_clock_attribute.attr,
 	&gpu_dvfs_max_temp_attribute.attr,
+	&dvfs_device_vol_trig_attribute.attr,
 	&gpu_dvfs_peak_temp_attribute.attr,
+	&dvfs_device_vol_peak_attribute.attr,
 	&boost_attribute.attr,
 	&up_threshold_attribute.attr,
 	&gpu_governor_attribute.attr,
