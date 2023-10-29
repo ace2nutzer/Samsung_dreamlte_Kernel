@@ -23,6 +23,8 @@
 #include <linux/a2n.h>
 #endif
 
+extern int dvfs_bat_peak_vol;
+
 bool sleep_mode = false;
 
 /* Fix compiler warning */
@@ -378,6 +380,22 @@ char *sec_bat_charge_mode_str[] = {
 	"Charging-Off",
 	"Buck-Off",
 };
+
+inline int get_bat_vol(void)
+{
+	union power_supply_propval value = {0, };
+
+	if (!_battery)
+		return 4400;
+
+	psy_do_property(_battery->pdata->fuelgauge_name, get,
+			POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
+
+	if (value.intval <= 0)
+		return 4400;
+	else
+		return value.intval;
+}
 
 void sec_bat_set_misc_event(struct sec_battery_info *battery,
 	unsigned int misc_event_val, unsigned int misc_event_mask)
@@ -4081,7 +4099,7 @@ static void sec_bat_monitor_work(
 	dev_dbg(battery->dev, "%s: Start\n", __func__);
 	c_ts = ktime_to_timespec(ktime_get_boottime());
 
-	// reset some flags
+	/* reset some flags */
 	if (battery->cable_type == SEC_BATTERY_CABLE_NONE && battery->status == POWER_SUPPLY_STATUS_DISCHARGING) {
 		is_charger = false;
 		charging_curr = 0;
@@ -4752,6 +4770,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 	queue_delayed_work(battery->monitor_wqueue, &battery->monitor_work, 0);
 end_of_cable_work:
 	wake_unlock(&battery->cable_wake_lock);
+	dvfs_bat_peak_vol = 4400; /* mV */
 	dev_info(battery->dev, "%s: End\n", __func__);
 }
 
@@ -7309,9 +7328,11 @@ static int sec_bat_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 #ifdef CONFIG_SEC_FACTORY
+
 		psy_do_property(battery->pdata->fuelgauge_name, get,
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
 		battery->voltage_now = value.intval;
+
 		dev_err(battery->dev,
 			"%s: voltage now(%d)\n", __func__, battery->voltage_now);
 #endif

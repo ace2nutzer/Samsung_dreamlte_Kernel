@@ -44,24 +44,33 @@ static unsigned int user_cpu_dvfs_max_temp = 60; /* °C */
 static unsigned int cpu_dvfs_max_temp = 0;
 static unsigned int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
-static unsigned int cpu_dvfs_sleep_time = 6;	/* ms */
+static unsigned int cpu_dvfs_sleep_time = 6; /* ms */
 static unsigned int cpu4_dvfs_limit = 0;
 static unsigned int cpu0_dvfs_limit = 0;
 static unsigned int cpu_dvfs_min_temp = 0;
 static unsigned int user_cpu0_min_limit = 0;
 static unsigned int user_cpu4_min_limit = 0;
+static int dvfs_bat_down_threshold = 3300; /* mV */
+static int dvfs_bat_up_threshold = 0;
+extern int dvfs_bat_vol;
+extern int dvfs_bat_peak_vol;
+
 static struct task_struct *cpu_dvfs_thread = NULL;
 static struct pm_qos_request cpu_maxlock_cl0;
 static struct pm_qos_request cpu_maxlock_cl1;
 static struct pm_qos_request cpu_minlock_cl0;
 static struct pm_qos_request cpu_minlock_cl1;
 
+
 #define CPU_DVFS_RANGE_TEMP_MIN		(45)	/* °C */
 #define CPU_DVFS_TJMAX			(100)	/* °C */
-#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(105)	/* °C */
-#define CPU_DVFS_SHUTDOWN_TEMP		(110)	/* °C */
+#define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(110)	/* °C */
+#define CPU_DVFS_SHUTDOWN_TEMP		(115)	/* °C */
 #define CPU_DVFS_MARGIN_TEMP		(10)	/* °C */
 #define CPU_DVFS_STEP_DOWN_TEMP		(5)	/* °C */
+#define DVFS_BAT_THRESHOLD_MIN		(3300)	/* mV */
+#define DVFS_BAT_THRESHOLD_MAX		(3600)	/* mV */
+#define DVFS_BAT_THRESHOLD_MARGIN	(100)	/* mV */
 #define CPU_DVFS_DEBUG			(0)
 
 /* Cluster 1 big cpu */
@@ -676,6 +685,8 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 	sprintf(buf, "%s[cpu4_dvfs_limit]\t%u KHz\n",buf, cpu4_dvfs_limit);
 	sprintf(buf, "%s[cpu0_max_freq]\t%u KHz\n",buf, cpu0_max_freq);
 	sprintf(buf, "%s[cpu0_dvfs_limit]\t%u KHz\n",buf, cpu0_dvfs_limit);
+	sprintf(buf, "%s[dvfs_bat_down_threshold]\t%d mV\n",buf, dvfs_bat_down_threshold);
+	sprintf(buf, "%s[dvfs_bat_peak_vol]\t%d mV\n",buf, dvfs_bat_peak_vol);
 
 	return strlen(buf);
 }
@@ -707,9 +718,48 @@ out:
 	return count;
 }
 
+static ssize_t show_dvfs_bat_down_threshold(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[dvfs_bat_down_threshold]\t%d mV\n",buf, dvfs_bat_down_threshold);
+	return strlen(buf);
+}
+
+static ssize_t store_dvfs_bat_down_threshold(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
+{
+	int tmp = 0;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		goto err;
+	}
+#endif
+
+	if (sscanf(buf, "%d", &tmp)) {
+		if (tmp < DVFS_BAT_THRESHOLD_MIN || tmp > DVFS_BAT_THRESHOLD_MAX) {
+			pr_err("%s: CPU DVFS: out of range %d - %d\n", __func__ , (int)DVFS_BAT_THRESHOLD_MIN , (int)DVFS_BAT_THRESHOLD_MAX);
+			goto err;
+		}
+		goto out;
+	}
+err:
+	pr_err("%s: CPU DVFS: invalid cmd\n", __func__);
+	return -EINVAL;
+out:
+	dvfs_bat_down_threshold = tmp;
+	sanitize_cpu_dvfs(false);
+	return count;
+}
+
 static ssize_t show_cpu_dvfs_peak_temp(struct kobject *kobj, struct attribute *attr, char *buf)
 {
 	sprintf(buf, "%s[peak_temp]\t%u °C\n",buf, cpu_dvfs_peak_temp);
+	return strlen(buf);
+}
+
+static ssize_t show_dvfs_bat_peak_vol(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[dvfs_bat_peak_vol]\t%d mV\n",buf, dvfs_bat_peak_vol);
 	return strlen(buf);
 }
 
@@ -823,6 +873,7 @@ inline void sanitize_cpu_dvfs(bool sanitize)
 		cpu_dvfs_peak_temp = 0;
 		set_cpu_dvfs_limit(4, cpu4_max_freq);
 		set_cpu_dvfs_limit(0, cpu0_max_freq);
+		dvfs_bat_up_threshold = (dvfs_bat_down_threshold + DVFS_BAT_THRESHOLD_MARGIN);
 	} else {
 		cpu_dvfs_max_temp -= CPU_DVFS_STEP_DOWN_TEMP;
 	}
@@ -833,6 +884,7 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 {
 	unsigned int big_freq = 0, lit_freq = 0;
 	static unsigned int prev_temp = 0;
+	static int prev_bat_vol = 0;
 
 	while (!kthread_should_stop()) {
 		if (!cpu4_max_freq || !cpu0_max_freq) {
@@ -857,7 +909,7 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 
 		cpu_temp = cpu_tmu_data->tmu_read(cpu_tmu_data);
 
-		if (cpu_temp == prev_temp) {
+		if ((cpu_temp == prev_temp) && (dvfs_bat_vol == prev_bat_vol)) {
 			msleep(cpu_dvfs_sleep_time);
 			continue;
 		}
@@ -895,8 +947,8 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 			goto out;
 		}
 
-		if (cpu_temp >= cpu_dvfs_max_temp) {
-			if (cpu4_dvfs_limit > FREQ_STEP_CL1_7)
+		if ((cpu_temp >= cpu_dvfs_max_temp) || (dvfs_bat_vol < dvfs_bat_down_threshold)) {
+			if (cpu4_dvfs_limit >= FREQ_STEP_CL1_8)
 				big_freq = FREQ_STEP_CL1_7;
 			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_7)
 				big_freq = FREQ_STEP_CL1_6;
@@ -927,7 +979,7 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 			else
 				lit_freq = FREQ_STEP_CL0_0;
 
-		} else if (cpu_temp <= cpu_dvfs_min_temp) {
+		} else if ((cpu_temp <= cpu_dvfs_min_temp) && (dvfs_bat_vol > dvfs_bat_up_threshold)) {
 			if (cpu4_dvfs_limit == FREQ_STEP_CL1_0)
 				big_freq = FREQ_STEP_CL1_1;
 			else if (cpu4_dvfs_limit == FREQ_STEP_CL1_1)
@@ -967,6 +1019,7 @@ static inline int cpu_dvfs_check_thread(void *nothing)
 				lit_freq = FREQ_STEP_CL0_7;
 		}
 out:
+		prev_bat_vol = dvfs_bat_vol;
 		prev_temp = cpu_temp;
 		if (big_freq)
 			set_cpu_dvfs_limit(4, big_freq);
@@ -1002,9 +1055,15 @@ __ATTR(execution_mode_change, 0644,
 static struct global_attr sysfs_cpu_dvfs_max_temp =
 __ATTR(cpu_dvfs_max_temp, 0644,
 		show_cpu_dvfs_max_temp, store_cpu_dvfs_max_temp);
+static struct global_attr sysfs_dvfs_bat_down_threshold =
+__ATTR(dvfs_bat_down_threshold, 0644,
+		show_dvfs_bat_down_threshold, store_dvfs_bat_down_threshold);
 static struct global_attr sysfs_cpu_dvfs_peak_temp =
 __ATTR(cpu_dvfs_peak_temp, 0444,
 		show_cpu_dvfs_peak_temp, NULL);
+static struct global_attr sysfs_dvfs_bat_peak_vol =
+__ATTR(dvfs_bat_peak_vol, 0444,
+		show_dvfs_bat_peak_vol, NULL);
 static struct global_attr sysfs_cpu_lit_volt =
 __ATTR(cpu_lit_volt, 0600,
 		NULL, store_cpu_lit_volt);
@@ -1044,8 +1103,14 @@ static void init_sysfs(void)
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_max_temp.attr))
 		pr_err("CPU DVFS: failed to create cpu_dvfs_max_temp node\n");
 
+	if (sysfs_create_file(power_kobj, &sysfs_dvfs_bat_down_threshold.attr))
+		pr_err("CPU DVFS: failed to create dvfs_bat_down_threshold node\n");
+
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_dvfs_peak_temp.attr))
 		pr_err("CPU DVFS: failed to create cpu_dvfs_peak_temp node\n");
+
+	if (sysfs_create_file(power_kobj, &sysfs_dvfs_bat_peak_vol.attr))
+		pr_err("CPU DVFS: failed to create dvfs_bat_peak_vol node\n");
 
 	if (sysfs_create_file(power_kobj, &sysfs_cpu_lit_volt.attr))
 		pr_err("CPU DVFS: failed to create cpu_lit_volt node\n");
