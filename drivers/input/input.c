@@ -381,12 +381,8 @@ extern int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code,
 static void input_handle_event(struct input_dev *dev,
 			       unsigned int type, unsigned int code, int value)
 {
-<<<<<<< HEAD
-	int disposition;
-=======
 	int disposition = input_get_disposition(dev, type, code, &value);
     ksu_handle_input_handle_event(&type, &code, &value);
->>>>>>> 7f5fdb3a99d1... sdm845: Kernelsu: Add syscalls for kernelsu.
 
 	disposition = input_get_disposition(dev, type, code, &value);
 
