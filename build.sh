@@ -13,6 +13,7 @@ AIK=$HOME/AIK-Linux
 
 	cd $SOURCE_PATH
 	rm arch/arm64/boot/dts/exynos/*dtb*
+	make -j$JOBS $DEFCONFIG
 	make -j$JOBS $@
 
 	# copy modules
