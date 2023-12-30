@@ -25,7 +25,7 @@ static const struct file_operations cmdline_proc_fops = {
 	.release	= single_release,
 };
 
-static void proc_cmdline_set(char *name, char *value)
+static void proc_cmdline_set(char *name, char *value, bool del)
 {
 	char *flag_substr;
 	char *flag_space_substr;
@@ -39,22 +39,26 @@ static void proc_cmdline_set(char *name, char *value)
 	if (flag_substr) {
 		flag_space_substr = strchr(flag_substr, ' ');
 		scnprintf(updated_command_line, COMMAND_LINE_SIZE, "%.*s%s", (int)(flag_substr - updated_command_line), updated_command_line, flag_space_substr + 1);
+		/* update or delete flag */
+		if (!del)
+			scnprintf(updated_command_line, COMMAND_LINE_SIZE, "%s %s=%s", updated_command_line, name, value);
+	} else {
+		/* flag was not found, insert it */
+		scnprintf(updated_command_line, COMMAND_LINE_SIZE, "%s %s=%s", updated_command_line, name, value);
 	}
-
-	// flag was not found, insert it
-	scnprintf(updated_command_line, COMMAND_LINE_SIZE, "%s %s=%s", updated_command_line, name, value);
 
 	kfree(flag_str);
 }
 
 static int __init proc_cmdline_init(void)
 {
-	// copy it only once
+	/* copy it only once */
 	strcpy(updated_command_line, saved_command_line);
 
-	proc_cmdline_set("androidboot.verifiedbootstate", "green");
-	proc_cmdline_set("androidboot.warranty_bit", "0");
-	proc_cmdline_set("androidboot.fmp_config", "1");
+	proc_cmdline_set("androidboot.verifiedbootstate", "green", false);
+	proc_cmdline_set("androidboot.warranty_bit", "0", false);
+	proc_cmdline_set("androidboot.fmp_config", "1", false);
+	proc_cmdline_set("androidboot.selinux", "enforcing", true);
 
 	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
 	return 0;
