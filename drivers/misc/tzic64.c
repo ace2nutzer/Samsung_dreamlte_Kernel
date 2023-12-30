@@ -297,6 +297,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
 				exynos_smc_read_oemflag_new(param.name, &param.value) ;
 				LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
+				param.value = 0;
+				LOG(KERN_INFO "[oemflag]get_oemflag_value [faked] : %u\n", param.value);
 				goto return_new_to;
 			} else {
 				LOG(KERN_INFO "[oemflag]command error\n");
@@ -333,6 +335,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 					LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
 					exynos_smc_read_oemflag_new(param.name, &param.value) ;
 					LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
+					param.value = 0;
+					LOG(KERN_INFO "[oemflag]get_oemflag_value [faked] : %u\n", param.value);
 					goto return_new_to;
 				} else {
 					LOG(KERN_INFO "[oemflag]command error\n");
