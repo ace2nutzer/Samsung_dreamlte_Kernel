@@ -123,4 +123,3 @@ clean
 arch/arm64/boot/Image
 *.dtb
 rejects
-!wireguard.patch
