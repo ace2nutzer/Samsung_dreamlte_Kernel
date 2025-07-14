@@ -43,3 +43,5 @@ sudo apt-get install git
 ### NOTE ###
 You are only allowed to download, edit, build and use the generated zip-file ONLY FOR YOUR OWN USAGE.
 !! DO NOT RESTRIBUTE !!
+
+Required GNU Make version: 4.2.1 or older.

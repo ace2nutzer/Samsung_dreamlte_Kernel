@@ -2,19 +2,18 @@
 
 # by default compile kernel for S8 (g950x_defconfig)
 # if you want to build for S8+ korean version, use "g955x_kor_defconfig" etc..
-# if you have a quad-core CPU with 2-threads per-cpu, then use JOBS=8
 
 # SETUP
 SOURCE_PATH=$HOME/Samsung_dreamlte_Kernel
 DEFCONFIG=g950x_defconfig
-JOBS=2
+N=$(nproc)
 OUTPUT=$HOME/a2n_kernel_g950x_9.x
 AIK=$HOME/AIK-Linux
 
 	cd $SOURCE_PATH
 	rm arch/arm64/boot/dts/exynos/*dtb*
-	make -j$JOBS $DEFCONFIG
-	make -j$JOBS $@
+	make -j$N $DEFCONFIG
+	make -j$N $@
 
 	# copy modules
 	cp fs/cifs/cifs.ko $OUTPUT/system/lib/modules
