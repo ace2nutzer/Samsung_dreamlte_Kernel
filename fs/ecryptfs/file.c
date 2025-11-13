@@ -302,7 +302,7 @@ static int ecryptfs_set_fmpinfo(struct file *file, struct inode *inode, unsigned
 			mapping->alg = crypt_stat->cipher;
 		}
 		mapping->hash_tfm = crypt_stat->hash_tfm;
-		memset(mapping->key, 0, MAX_KEY_SIZE);
+		memset(mapping->key, 0, KEY_MAX_SIZE);
 		memcpy(mapping->key, crypt_stat->key, mapping->key_length);
 #ifdef CONFIG_CRYPTO_FIPS
 		mapping->cc_enable =
@@ -311,7 +311,7 @@ static int ecryptfs_set_fmpinfo(struct file *file, struct inode *inode, unsigned
 		mapping->private_enc_mode = FMP_FILE_ENC_MODE;
 	} else {
 		mapping->iv = NULL;
-		memset(mapping->key, 0, MAX_KEY_SIZE);
+		memset(mapping->key, 0, KEY_MAX_SIZE);
 		mapping->key_length = 0;
 		mapping->sensitive_data_index = 0;
 		mapping->alg = NULL;

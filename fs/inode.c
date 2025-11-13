@@ -169,7 +169,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	mapping->flags = 0;
 	atomic_set(&mapping->i_mmap_writable, 0);
 #ifdef CONFIG_RBIN
-	if (sb->s_flags & MS_RDONLY)
+	if ((sb->s_flags & MS_RDONLY) && !shmem_mapping(mapping))
 		mapping_set_gfp_mask(mapping, GFP_HIGHUSER_MOVABLE |
 					__GFP_RBIN);
 	else
@@ -1478,11 +1478,7 @@ static void iput_final(struct inode *inode)
 	else
 		drop = generic_drop_inode(inode);
 
-#if defined(CONFIG_FMP_ECRYPT_FS)
-	if (!drop && (sb->s_flags & MS_ACTIVE) && !inode->i_mapping->use_fmp) {
-#else
 	if (!drop && (sb->s_flags & MS_ACTIVE)) {
-#endif
 		inode->i_state |= I_REFERENCED;
 		inode_add_lru(inode);
 		spin_unlock(&inode->i_lock);
