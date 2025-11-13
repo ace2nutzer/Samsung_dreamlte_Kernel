@@ -509,6 +509,7 @@ static ssize_t show_cpufreq_max_limit(struct kobject *kobj,
 		first_domain()->min_freq >> (scale * SCALE_SIZE));
 }
 
+#if 0
 struct pm_qos_request cpu_online_max_qos_req;
 static void enable_domain_cpus(struct exynos_cpufreq_domain *domain)
 {
@@ -532,7 +533,6 @@ static void disable_domain_cpus(struct exynos_cpufreq_domain *domain)
 	pm_qos_update_request(&cpu_online_max_qos_req, cpumask_weight(&mask));
 }
 
-#if 0
 static void cpufreq_max_limit_update(unsigned int input_freq)
 {
 	struct list_head *domains = get_domain_list();
@@ -1271,11 +1271,11 @@ static int __init exynos_ufc_init(void)
 	const char *buf;
 	struct exynos_cpufreq_domain *domain;
 	int ret = 0;
-
+#if 0
 	pm_qos_add_request(&cpu_online_max_qos_req,
 			PM_QOS_CPU_ONLINE_MAX,
 			PM_QOS_CPU_ONLINE_MAX_DEFAULT_VALUE);
-
+#endif
 	pm_qos_add_request(&cpu_maxlock_cl0,
 			PM_QOS_CLUSTER0_FREQ_MAX,
 			PM_QOS_CLUSTER0_FREQ_MAX_DEFAULT_VALUE);

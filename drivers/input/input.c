@@ -521,10 +521,12 @@ DECLARE_STATE_FUNC(press)
 	}
 }
 
+#if defined(CONFIG_SOC_EXYNOS7420)
 static void input_booster_disable(struct t_input_booster *_this)
 {
 	schedule_work(&_this->input_booster_reset_booster_work);
 }
+#endif
 
 // ********** Detect Events ********** //
 static void input_booster(struct input_dev *dev)

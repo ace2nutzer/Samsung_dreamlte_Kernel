@@ -604,11 +604,6 @@ static int gpu_regulator_init(struct exynos_context *platform)
 	return 0;
 }
 
-static int *get_mif_table(int *size)
-{
-	return NULL;
-}
-
 int gpu_control_module_init(struct kbase_device *kbdev)
 {
 #ifdef CONFIG_OF

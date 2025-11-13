@@ -3724,6 +3724,7 @@ static char * parse_buffer(char *buffer, unsigned char type)
 
 #endif
 
+#ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 static int exynos_ss_combine_pmsg(char *buffer, size_t count, unsigned int level)
 {
 	char *logbuf = logger.buffer;
@@ -3860,6 +3861,7 @@ static int exynos_ss_combine_pmsg(char *buffer, size_t count, unsigned int level
 	}
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 int exynos_ss_hook_pmsg(char *buffer, size_t count)

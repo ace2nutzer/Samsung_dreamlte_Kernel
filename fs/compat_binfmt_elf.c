@@ -52,23 +52,6 @@
 #define elf_prpsinfo	compat_elf_prpsinfo
 
 /*
- * Compat version of cputime_to_compat_timeval, perhaps this
- * should be an inline in <linux/compat.h>.
- */
-static void cputime_to_compat_timeval(const cputime_t cputime,
-				      struct compat_timeval *value)
-{
-	struct timeval tv;
-	cputime_to_timeval(cputime, &tv);
-	value->tv_sec = tv.tv_sec;
-	value->tv_usec = tv.tv_usec;
-}
-
-#undef cputime_to_timeval
-#define cputime_to_timeval cputime_to_compat_timeval
-
-
-/*
  * To use this file, asm/elf.h must define compat_elf_check_arch.
  * The other following macros can be defined if the compat versions
  * differ from the native ones, or omitted when they match.

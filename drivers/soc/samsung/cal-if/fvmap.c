@@ -110,6 +110,7 @@ static int __init get_cp_volt(char *str)
 }
 early_param("cp", get_cp_volt);
 
+#if 0
 static int fvmap_set_raw_voltage_table(unsigned int id, unsigned int uV)
 {
 	struct fvmap_header *fvmap_header;
@@ -135,6 +136,7 @@ static int fvmap_set_raw_voltage_table(unsigned int id, unsigned int uV)
 
 	return 0;
 }
+#endif
 
 int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 {
@@ -163,6 +165,7 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 
 }
 
+#if 0
 static int fvmap_get_raw_voltage_table(unsigned int id)
 {
 	struct fvmap_header *fvmap_header;
@@ -189,6 +192,7 @@ static int fvmap_get_raw_voltage_table(unsigned int id)
 
 	return 0;
 }
+#endif
 
 void print_fvmap(void)
 {

@@ -2313,6 +2313,7 @@ static int shmem_update_firm_info(struct link_device *ld, struct io_device *iod,
 	return 0;
 }
 
+#ifdef CONFIG_CP_RAM_LOGGING
 static int shmem_force_dump(struct link_device *ld, struct io_device *iod)
 {
 	struct mem_link_device *mld = to_mem_link_device(ld);
@@ -2324,6 +2325,7 @@ static int shmem_force_dump(struct link_device *ld, struct io_device *iod)
 	mif_err("---\n");
 	return 0;
 }
+#endif
 
 static int shmem_start_upload(struct link_device *ld, struct io_device *iod)
 {

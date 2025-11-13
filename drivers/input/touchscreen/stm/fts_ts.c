@@ -123,7 +123,10 @@ static void fts_reset(struct fts_ts_info *info, unsigned int ms);
 static void fts_reset_work(struct work_struct *work);
 static void fts_read_info_work(struct work_struct *work);
 
+#if defined(CONFIG_TOUCHSCREEN_DUMP_MODE)
 static void dump_tsp_rawdata(struct work_struct *work);
+#endif
+
 struct delayed_work *p_debug_work;
 
 #if (!defined(CONFIG_PM)) && !defined(USE_OPEN_CLOSE)
@@ -3437,6 +3440,7 @@ void trustedui_mode_stm_on(void)
 EXPORT_SYMBOL(trustedui_mode_stm_on);
 #endif
 
+#if defined(CONFIG_TOUCHSCREEN_DUMP_MODE)
 static void dump_tsp_rawdata(struct work_struct *work)
 {
 	struct fts_ts_info *info = container_of(work, struct fts_ts_info,
@@ -3462,6 +3466,7 @@ static void dump_tsp_rawdata(struct work_struct *work)
 
 	info->rawdata_read_lock = false;
 }
+#endif
 
 void tsp_dump(void)
 {
