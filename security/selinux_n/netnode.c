@@ -304,6 +304,7 @@ static __init int sel_netnode_init(void)
 {
 	int iter;
 
+
 	if (!selinux_enabled)
 		return 0;
 

@@ -778,6 +778,7 @@ out:
 	kfree(n);
 	kfree(t);
 #endif
+
 	if (!selinux_enforcing)
 		return 0;
 	return -EPERM;
@@ -1544,6 +1545,7 @@ out:
 	kfree(t);
 	kfree(n);
 #endif
+
 	if (!selinux_enforcing)
 		return 0;
 	return -EACCES;
@@ -1836,6 +1838,7 @@ static inline int convert_context_handle_invalid_context(struct context *context
 	char *s;
 	u32 len;
 #endif
+
 	if (selinux_enforcing)
 		return -EINVAL;
 
@@ -2569,6 +2572,7 @@ int security_fs_use(struct super_block *sb)
 {
 	int rc = 0;
 	struct ocontext *c;
+
 	struct superblock_security_struct *sbsec = sb->s_security;
 	const char *fstype = sb->s_type->name;
 

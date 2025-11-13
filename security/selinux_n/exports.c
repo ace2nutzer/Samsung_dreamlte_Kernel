@@ -15,16 +15,9 @@
 #include <linux/selinux.h>
 
 #include "security.h"
-#include "avc.h"
 
 bool selinux_is_enabled(void)
 {
 	return selinux_enabled;
 }
 EXPORT_SYMBOL_GPL(selinux_is_enabled);
-
-bool selinux_is_enforcing(void)
-{
-	return selinux_enforcing;
-}
-EXPORT_SYMBOL_GPL(selinux_is_enforcing);

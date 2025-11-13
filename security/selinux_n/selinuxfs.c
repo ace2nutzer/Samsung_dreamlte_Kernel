@@ -41,12 +41,6 @@
 #include "objsec.h"
 #include "conditional.h"
 
-#if defined(CONFIG_TZ_ICCC)
-#include <linux/security/Iccc_Interface.h>
-#endif
-
-static bool fake_enforce = false;
-
 /* Policy capability filenames */
 static char *policycap_names[] = {
 	"network_peer_controls",
@@ -140,10 +134,7 @@ static ssize_t sel_read_enforce(struct file *filp, char __user *buf,
 	char tmpbuf[TMPBUFLEN];
 	ssize_t length;
 
-	if (fake_enforce)
-		length = scnprintf(tmpbuf, TMPBUFLEN, "%d", 1);
-	else
-		length = scnprintf(tmpbuf, TMPBUFLEN, "%d", selinux_enforcing);
+	length = scnprintf(tmpbuf, TMPBUFLEN, "%d", selinux_enforcing);
 
 	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
 }
@@ -179,14 +170,6 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 	if (sscanf(page, "%d", &new_value) != 1)
 		goto out;
 
-	if (new_value == 2)
-		fake_enforce = true;
-	else
-		fake_enforce = false;
-
-	/* force permissive */
-	new_value = 0;
-
 	if (new_value != selinux_enforcing) {
 		length = task_has_security(current, SECURITY__SETENFORCE);
 		if (length)
@@ -202,22 +185,7 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 		selnl_notify_setenforce(selinux_enforcing);
 		selinux_status_update_setenforce(selinux_enforcing);
 	}
-
 	length = count;
-
-#if defined(CONFIG_TZ_ICCC)
-	if (selinux_enabled && selinux_enforcing) {
-		if (0 != Iccc_SaveData_Kernel(SELINUX_STATUS,0x0)) {
-			printk(KERN_ERR "%s: Iccc_SaveData_Kernel failed, type = %x, value =%x\n", __func__,SELINUX_STATUS,0x0);
-		}
-	}
-	else {
-		if (0 != Iccc_SaveData_Kernel(SELINUX_STATUS,0x1)) {
-			printk(KERN_ERR "%s: Iccc_SaveData_Kernel failed, type = %x, value =%x\n", __func__,SELINUX_STATUS,0x1);
-		}
-	}
-#endif
-
 out:
 	free_page((unsigned long) page);
 	return length;
@@ -1882,6 +1850,7 @@ struct vfsmount *selinuxfs_mount;
 static int __init init_sel_fs(void)
 {
 	int err;
+
 	if (!selinux_enabled)
 		return 0;
 

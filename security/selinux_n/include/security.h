@@ -133,7 +133,6 @@ struct extended_perms {
 	struct extended_perms_data drivers; /* flag drivers that are used */
 };
 
-/* definitions of av_decision.flags */
 #define AVD_FLAGS_PERMISSIVE	0x0001
 
 void security_compute_av(u32 ssid, u32 tsid,
