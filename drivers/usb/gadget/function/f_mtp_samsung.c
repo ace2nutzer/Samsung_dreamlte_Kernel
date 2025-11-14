@@ -1985,7 +1985,7 @@ static void mtp_free_inst(struct usb_function_instance *fi)
 	kfree(fi_mtp);
 }
 
-struct usb_function_instance *alloc_inst_mtp_ptp(bool mtp_config)
+struct usb_function_instance *alloc_inst_mtp_ptp_samsung(bool mtp_config)
 {
 	struct mtp_instance *fi_mtp;
 	int ret = 0;
@@ -1993,7 +1993,6 @@ struct usb_function_instance *alloc_inst_mtp_ptp(bool mtp_config)
 	char *names[1];
 
 	fi_mtp = kzalloc(sizeof(*fi_mtp), GFP_KERNEL);
-
 	if (!fi_mtp)
 		return ERR_PTR(-ENOMEM);
 	fi_mtp->func_inst.set_inst_name = mtp_set_inst_name;
@@ -2021,11 +2020,11 @@ struct usb_function_instance *alloc_inst_mtp_ptp(bool mtp_config)
 
 	return  &fi_mtp->func_inst;
 }
-EXPORT_SYMBOL_GPL(alloc_inst_mtp_ptp);
+EXPORT_SYMBOL_GPL(alloc_inst_mtp_ptp_samsung);
 
 static struct usb_function_instance *mtp_alloc_inst(void)
 {
-		return alloc_inst_mtp_ptp(true);
+		return alloc_inst_mtp_ptp_samsung(true);
 }
 
 static int mtp_ctrlreq_configfs(struct usb_function *f,
@@ -2039,7 +2038,7 @@ static void mtp_free(struct usb_function *f)
 	/*NO-OP: no function specific resource allocation in mtp_alloc*/
 }
 
-struct usb_function *function_alloc_mtp_ptp(struct usb_function_instance *fi,
+struct usb_function *function_alloc_mtp_ptp_samsung(struct usb_function_instance *fi,
 					bool mtp_config)
 {
 	struct mtp_instance *fi_mtp = to_fi_mtp(fi);
@@ -2114,11 +2113,11 @@ struct usb_function *function_alloc_mtp_ptp(struct usb_function_instance *fi,
 	return &dev->function;
 #endif
 }
-EXPORT_SYMBOL_GPL(function_alloc_mtp_ptp);
+EXPORT_SYMBOL_GPL(function_alloc_mtp_ptp_samsung);
 
 static struct usb_function *mtp_alloc(struct usb_function_instance *fi)
 {
-	return function_alloc_mtp_ptp(fi, true);
+	return function_alloc_mtp_ptp_samsung(fi, true);
 }
 
 DECLARE_USB_FUNCTION_INIT(mtp, mtp_alloc_inst, mtp_alloc);
