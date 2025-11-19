@@ -198,8 +198,11 @@ int selinux_enforcing = 0;
 static int __init enforcing_setup(char *str)
 {
 	unsigned long enforcing;
+	// force permissive
+/*
 	if (!kstrtoul(str, 0, &enforcing))
 		selinux_enforcing = enforcing ? 1 : 0;
+*/
 	return 1;
 }
 __setup("enforcing=", enforcing_setup);
