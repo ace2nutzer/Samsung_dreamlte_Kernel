@@ -87,7 +87,7 @@ static void __iomem *reg_base;
 static unsigned long clk_rate;
 static unsigned int mct_int_type;
 static int mct_irqs[MCT_NR_IRQS];
-#ifdef CONFIG_EXYNOS_CORESIGHT
+#ifdef CONFIG_HARDLOCKUP_DETECTOR_OTHER_CPU
 extern struct atomic_notifier_head hardlockup_notifier_list;
 #endif
 struct mct_clock_event_device {
@@ -622,7 +622,7 @@ static void __init mct_init_dt(struct device_node *np, unsigned int int_type)
 	u32 nr_irqs, i;
 
 	mct_int_type = int_type;
-#ifdef CONFIG_EXYNOS_CORESIGHT
+#ifdef CONFIG_HARDLOCKUP_DETECTOR_OTHER_CPU
 	atomic_notifier_chain_register(&hardlockup_notifier_list, &nb_hardlockup_block);
 #endif
 	/* This driver uses only one global timer interrupt */

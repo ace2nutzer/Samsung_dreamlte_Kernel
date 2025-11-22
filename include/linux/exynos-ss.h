@@ -75,9 +75,9 @@ extern void exynos_ss_clockevent(unsigned long long clc, int64_t delta, void *ne
 extern void exynos_ss_printk(const char *fmt, ...);
 extern void exynos_ss_printkl(size_t msg, size_t val);
 #else
-#define exynos_ss_clockevent(a,b,c)    do { } while(0)
-#define exynos_ss_printk(...)          do { } while(0)
-#define exynos_ss_printkl(a,b)         do { } while(0)
+#define exynos_ss_clockevent(a,b,c)	do { } while(0)
+#define exynos_ss_printk(...)		do { } while(0)
+#define exynos_ss_printkl(a,b)		do { } while(0)
 #endif
 
 #ifdef CONFIG_EXYNOS_SNAPSHOT_IRQ_DISABLED
@@ -156,8 +156,6 @@ extern void exynos_ss_irq_exit(unsigned int irq, unsigned long long start_time);
 
 #ifdef CONFIG_EXYNOS_SNAPSHOT_HOOK_LOGGER
 extern int exynos_ss_hook_pmsg(char *buffer, size_t count);
-#else
-#define exynos_ss_hook_pmsg(a,b)	do { } while(0)
 #endif
 
 #ifdef CONFIG_EXYNOS_SNAPSHOT_SFRDUMP
@@ -194,7 +192,6 @@ extern void exynos_ss_get_softlockup_info(unsigned int cpu, void *info);
 #define exynos_ss_hrtimer(a,b,c,d)	do { } while(0)
 #define exynos_ss_i2c(a,b,c,d)		do { } while(0)
 #define exynos_ss_spi(a,b,c)		do { } while(0)
-#define exynos_ss_hook_pmsg(a,b)	do { } while(0)
 #define exynos_ss_printk(...)		do { } while(0)
 #define exynos_ss_printkl(a,b)		do { } while(0)
 #define exynos_ss_save_context(a)	do { } while(0)

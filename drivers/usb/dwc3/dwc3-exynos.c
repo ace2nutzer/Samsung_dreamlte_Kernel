@@ -127,7 +127,7 @@ static const char *dwc3_exynos8890_clk_names[] = {"aclk", "sclk",
 				"phyclock", "pipe_pclk", NULL};
 static const char *dwc2_exynos8890_clk_names[] = {"aclk", "sclk",
 				"phyclock", "phy_ref", NULL};
-#ifdef CONFIG_EXYNOS_CORESIGHT
+#ifdef CONFIG_HARDLOCKUP_DETECTOR_OTHER_CPU
 extern struct atomic_notifier_head hardlockup_notifier_list;
 #endif
 bool lockup_noti;
@@ -587,7 +587,7 @@ static int dwc3_exynos_probe(struct platform_device *pdev)
 	}
 
 	lockup_noti = false;
-#ifdef CONFIG_EXYNOS_CORESIGHT
+#ifdef CONFIG_HARDLOCKUP_DETECTOR_OTHER_CPU
 	atomic_notifier_chain_register(&hardlockup_notifier_list, &nb_hardlockup_block);
 #endif
 	dev_info(dev, "%s: -\n", __func__);

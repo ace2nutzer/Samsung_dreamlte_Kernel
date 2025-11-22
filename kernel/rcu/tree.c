@@ -3838,7 +3838,6 @@ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
 				dump_cpu_task(cpu);
 			}
 		}
-		dump_stack();
 		jiffies_stall = 3 * rcu_jiffies_till_stall_check() + 3;
 	}
 }
