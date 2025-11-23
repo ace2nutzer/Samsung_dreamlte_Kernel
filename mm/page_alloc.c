@@ -3351,12 +3351,15 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	if (unlikely(!zonelist->_zonerefs->zone))
 		return NULL;
 
-	if (IS_ENABLED(CONFIG_RBIN) && ac.migratetype == MIGRATE_MOVABLE &&
+#ifdef CONFIG_RBIN
+	if (IS_ENABLED(CONFIG_CMA) && ac.migratetype == MIGRATE_MOVABLE &&
 			((gfp_mask & __GFP_RBIN) == __GFP_RBIN))
 		alloc_flags |= ALLOC_RBIN;
-	else if (IS_ENABLED(CONFIG_CMA) && (ac.migratetype == MIGRATE_MOVABLE)
-			&& !!(gfp_mask & __GFP_CMA))
-		alloc_flags |= ALLOC_CMA;
+	else
+#endif
+		if (IS_ENABLED(CONFIG_CMA) && (ac.migratetype == MIGRATE_MOVABLE)
+				&& !!(gfp_mask & __GFP_CMA))
+			alloc_flags |= ALLOC_CMA;
 
 retry_cpuset:
 	cpuset_mems_cookie = read_mems_allowed_begin();
