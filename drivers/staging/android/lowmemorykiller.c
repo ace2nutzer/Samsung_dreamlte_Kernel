@@ -341,10 +341,6 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				global_page_state(NR_UNEVICTABLE) -
 				total_swapcache_pages();
 
-#ifdef CONFIG_CMA
-	unsigned long nr_cma_free = 0, nr_cma_file = 0;
-#endif
-
 #ifdef CONFIG_RBIN
 	unsigned long nr_rbin_free = 0, nr_rbin_pool = 0, nr_rbin_alloc = 0, nr_rbin_file = 0;
 
@@ -356,16 +352,6 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 
 		other_free -= nr_rbin_free;
 		other_file -= nr_rbin_file;
-	}
-#endif
-
-#ifdef CONFIG_CMA
-	if ((sc->gfp_mask & __GFP_CMA) != __GFP_CMA) {
-		nr_cma_free = global_page_state(NR_FREE_CMA_PAGES);
-		nr_cma_file = totalcma_pages - nr_cma_free;
-
-		other_free -= nr_cma_free;
-		other_file -= nr_cma_file;
 	}
 #endif
 
