@@ -51,7 +51,6 @@ struct list_lru {
 	struct list_lru_node	*node;
 #ifdef CONFIG_MEMCG_KMEM
 	struct list_head	list;
-	bool			memcg_aware;
 #endif
 };
 

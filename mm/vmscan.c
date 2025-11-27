@@ -257,13 +257,10 @@ EXPORT_SYMBOL(register_shrinker);
  */
 void unregister_shrinker(struct shrinker *shrinker)
 {
-	if (!shrinker->nr_deferred)
-		return;
 	down_write(&shrinker_rwsem);
 	list_del(&shrinker->list);
 	up_write(&shrinker_rwsem);
 	kfree(shrinker->nr_deferred);
-	shrinker->nr_deferred = NULL;
 }
 EXPORT_SYMBOL(unregister_shrinker);
 
@@ -1362,7 +1359,6 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode)
 
 		if (PageDirty(page)) {
 			struct address_space *mapping;
-			bool migrate_dirty;
 
 			/* ISOLATE_CLEAN means only clean pages */
 			if (mode & ISOLATE_CLEAN)
@@ -1371,19 +1367,10 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode)
 			/*
 			 * Only pages without mappings or that have a
 			 * ->migratepage callback are possible to migrate
-			 * without blocking. However, we can be racing with
-			 * truncation so it's necessary to lock the page
-			 * to stabilise the mapping as truncation holds
-			 * the page lock until after the page is removed
-			 * from the page cache.
+			 * without blocking
 			 */
-			if (!trylock_page(page))
-				return ret;
-
 			mapping = page_mapping(page);
-			migrate_dirty = !mapping || mapping->a_ops->migratepage;
-			unlock_page(page);
-			if (!migrate_dirty)
+			if (mapping && !mapping->a_ops->migratepage)
 				return ret;
 		}
 	}
@@ -2208,17 +2195,11 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
 	}
 
 	/*
-	 * If there is enough inactive page cache, i.e. if the size of the
-	 * inactive list is greater than that of the active list *and* the
-	 * inactive list actually has some pages to scan on this priority, we
-	 * do not reclaim anything from the anonymous working set right now.
-	 * Without the second condition we could end up never scanning an
-	 * lruvec even if it has plenty of old anonymous pages unless the
-	 * system is under heavy pressure.
+	 * There is enough inactive page cache, do not reclaim
+	 * anything from the anonymous working set right now.
 	 */
 	if (!IS_ENABLED(CONFIG_BALANCE_ANON_FILE_RECLAIM) &&
-			!inactive_file_is_low(lruvec) &&
-			get_lru_size(lruvec, LRU_INACTIVE_FILE) >> sc->priority) {
+			!inactive_file_is_low(lruvec)) {
 		scan_balance = SCAN_FILE;
 		goto out;
 	}
@@ -3950,13 +3931,7 @@ int zone_reclaim(struct zone *zone, gfp_t gfp_mask, unsigned int order)
  */
 int page_evictable(struct page *page)
 {
-	int ret;
-
-	/* Prevent address_space of inode and swap cache from being freed */
-	rcu_read_lock();
-	ret = !mapping_unevictable(page_mapping(page)) && !PageMlocked(page);
-	rcu_read_unlock();
-	return ret;
+	return !mapping_unevictable(page_mapping(page)) && !PageMlocked(page);
 }
 
 #ifdef CONFIG_SHMEM

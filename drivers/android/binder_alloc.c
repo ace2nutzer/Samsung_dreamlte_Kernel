@@ -30,6 +30,7 @@
 #include <linux/list_lru.h>
 #include <linux/uaccess.h>
 #include <linux/highmem.h>
+#include <linux/sched/mm.h>
 
 #include "binder_alloc.h"
 #include "binder_trace.h"
