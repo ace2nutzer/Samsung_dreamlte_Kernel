@@ -77,6 +77,7 @@ enum {
 #  define is_migrate_cma_page(_page) \
 	(get_pageblock_migratetype(_page) == MIGRATE_CMA)
 
+/* CONFIG_RBIN */
 #  define is_migrate_rbin(migratetype) unlikely((migratetype) == MIGRATE_RBIN)
 #  define is_migrate_rbin_nolikely(migratetype) ((migratetype) == MIGRATE_RBIN)
 #  define is_migrate_rbin_page(_page) \
