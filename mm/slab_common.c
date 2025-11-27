@@ -1271,7 +1271,7 @@ void kzfree(const void *p)
 	if (unlikely(ZERO_OR_NULL_PTR(mem)))
 		return;
 	ks = ksize(mem);
-	memzero_explicit(mem, ks);
+	memset(mem, 0, ks);
 	kfree(mem);
 }
 EXPORT_SYMBOL(kzfree);
