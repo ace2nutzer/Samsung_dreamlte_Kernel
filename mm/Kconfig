@@ -535,6 +535,7 @@ config ZSWAP
 	select CRYPTO_LZO
 	select CRYPTO_LZ4
 	select ZPOOL
+	select ZSWAP_MIGRATION_SUPPORT
 	default n
 	help
 	  A lightweight compressed cache for swap pages.  It takes
@@ -553,7 +554,7 @@ config ZSWAP
 config ZSWAP_MIGRATION_SUPPORT
 	bool "Support the migration of zsmalloc pages used by zswap"
 	depends on ZSWAP && ZSMALLOC && COMPACTION
-	default n
+	default y
 	help
 	  By supporting the migration of zsmalloc pages, the compaction can migrate
 	  more pages (originally, only anon and fs pages) so that

@@ -56,10 +56,6 @@
 #include <linux/pagemap.h>
 #include <linux/swap.h>
 
-#if !defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) && !defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
-#undef CONFIG_COMPACTION
-#endif
-
 #define ZSPAGE_MAGIC	0x58
 
 /*
@@ -2046,6 +2042,10 @@ bool zs_page_isolate(struct page *page, isolate_mode_t mode)
 	 * Page is locked so zspage couldn't be destroyed. For detail, look at
 	 * lock_zspage in free_zspage.
 	 */
+#if !defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) && !defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
+	return false;
+#endif
+
 	VM_BUG_ON_PAGE(!PageMovable(page), page);
 	VM_BUG_ON_PAGE(PageIsolated(page), page);
 
