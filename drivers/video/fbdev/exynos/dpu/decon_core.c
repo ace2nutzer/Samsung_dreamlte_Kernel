@@ -51,7 +51,6 @@
 extern void set_devfreq_mif_pm_qos(void);
 extern void set_devfreq_disp_pm_qos(void);
 extern void set_devfreq_int_pm_qos(void);
-extern void set_gpu_policy(void);
 #endif
 
 bool is_suspend = false;
@@ -934,7 +933,6 @@ static void suspend_resume_handler_thread(struct work_struct *suspend_resume_han
 	set_suspend_cpufreq();
 #endif
 	update_gov_tunables();
-	set_gpu_policy();
 }
 static DECLARE_WORK(suspend_resume_handler_work, suspend_resume_handler_thread);
 

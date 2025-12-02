@@ -119,8 +119,6 @@ static LIST_HEAD(kbase_dev_list);
 
 #define KERNEL_SIDE_DDK_VERSION_STRING "K:" MALI_RELEASE_NAME "(GPL)"
 
-bool gpu_always_on = false;
-
 static int kbase_api_handshake(struct kbase_context *kctx,
 			       struct kbase_ioctl_version_check *version)
 {
@@ -1574,11 +1572,6 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
 		return -EINVAL;
 	}
 
-	if (sysfs_streq(buf, "always_on"))
-		gpu_always_on = true;
-	else
-		gpu_always_on = false;
-
 	kbase_pm_set_policy(kbdev, new_policy);
 
 	return count;
@@ -1591,7 +1584,7 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
  * determining which policy is currently active, and changing the active
  * policy.
  */
-static DEVICE_ATTR(power_policy, S_IRUGO | S_IRUGO, show_policy, set_policy);
+static DEVICE_ATTR(power_policy, S_IRUGO | S_IWUSR, show_policy, set_policy);
 
 /*
  * show_core_mask - Show callback for the core_mask sysfs file.

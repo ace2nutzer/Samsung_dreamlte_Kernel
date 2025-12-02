@@ -44,7 +44,6 @@
 #endif
 
 extern struct kbase_device *pkbdev;
-extern bool gpu_always_on;
 extern bool is_suspend;
 extern void update_device_vol(void);
 extern int dvfs_device_vol_peak;
@@ -209,47 +208,6 @@ static ssize_t set_clock(struct device *dev, struct device_attribute *attr, cons
 	return count;
 }
 #endif
-
-void set_gpu_policy(void)
-{
-	const struct kbase_pm_policy *new_policy = NULL;
-	const struct kbase_pm_policy *const *policy_list;
-	int policy_count;
-	int i;
-	const char *policy;
-
-	if (!gpu_always_on)
-		return;
-
-	if (!pkbdev) {
-		pr_err("%s: pkbdev is NULL.\n", __func__);
-		return;
-	}
-
-	policy_count = kbase_pm_list_policies(&policy_list);
-
-	if (is_suspend) {
-		policy = "coarse_demand";
-		pr_info("%s: to: %s to save power while suspend.\n", __func__, policy);
-	} else {
-		policy = "always_on";
-		pr_info("%s: to: %s. This was set by userspace.\n", __func__, policy);
-	}
-
-	for (i = 0; i < policy_count; i++) {
-		if (sysfs_streq(policy_list[i]->name, policy)) {
-			new_policy = policy_list[i];
-			break;
-		}
-	}
-
-	if (!new_policy) {
-		pr_err("%s: to: %s failed!\n", __func__, policy);
-		return;
-	}
-
-	kbase_pm_set_policy(pkbdev, new_policy);
-}
 
 static ssize_t show_vol(struct device *dev, struct device_attribute *attr, char *buf)
 {
