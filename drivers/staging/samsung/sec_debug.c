@@ -618,9 +618,9 @@ static void sec_debug_init_base_buffer(unsigned long base, unsigned long size)
 		sec_debug_info->magic[1] = SEC_DEBUG_SHARED_MAGIC1;
 		sec_debug_info->magic[2] = SEC_DEBUG_SHARED_MAGIC2;
 		sec_debug_info->magic[3] = SEC_DEBUG_SHARED_MAGIC3;
-
+#ifdef CONFIG_KALLSYMS
 		sec_debug_set_kallsyms_info(sec_debug_info);
-
+#endif
 #ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 		sec_debug_init_extra_info(sec_debug_info, magic_status);
 #endif

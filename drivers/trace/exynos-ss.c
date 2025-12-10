@@ -1517,6 +1517,7 @@ static inline struct task_struct *get_next_thread(struct task_struct *tsk)
 
 void exynos_ss_dump_task_info(void)
 {
+#ifdef CONFIG_STACKTRACE
 	struct task_struct *frst_tsk;
 	struct task_struct *curr_tsk;
 	struct task_struct *frst_thr;
@@ -1552,6 +1553,7 @@ void exynos_ss_dump_task_info(void)
 			break;
 	}
 	pr_info(" ----------------------------------------------------------------------------------------------------------------------------\n");
+#endif
 }
 EXPORT_SYMBOL(exynos_ss_dump_task_info);
 
