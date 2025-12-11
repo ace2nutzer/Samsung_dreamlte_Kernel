@@ -67,10 +67,6 @@ static struct gb_qos_request gb_req = {
 */
 #define COMPUTE_JOB_WEIGHT (10000/50)
 
-#ifdef CONFIG_SENSORS_SEC_THERMISTOR
-extern int sec_therm_get_ap_temperature(void);
-#endif
-
 #ifdef CONFIG_MALI_VK_BOOST
 #include <linux/pm_qos.h>
 extern struct pm_qos_request exynos5_g3d_mif_min_qos;
@@ -644,6 +640,8 @@ static bool gpu_mem_profile_check_kctx(void *ctx)
 
 	kctx = (struct kbase_context *)ctx;
 	kbdev = gpu_get_device_structure();
+	if (!kbdev)
+		return found_element;
 
 	list_for_each_entry_safe(element, tmp, &kbdev->kctx_list, link) {
 		if (element->kctx == kctx) {
@@ -653,6 +651,7 @@ static bool gpu_mem_profile_check_kctx(void *ctx)
 			}
 		}
 	}
+
 #endif
 
 	return found_element;

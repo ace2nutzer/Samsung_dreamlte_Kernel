@@ -2033,7 +2033,7 @@ static ssize_t set_kernel_sysfs_governor(struct kobject *kobj, struct kobj_attri
 
 static ssize_t show_kernel_sysfs_gpu_model(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	/* COPY from mali_kbase_core_linux.c : 2594 line, last updated: 20161017, r2p0-03rel0 */
+	/* COPY from mali_kbase_core_linux.c */
 	static const struct gpu_product_id_name {
 		unsigned id;
 		char *name;
@@ -2049,7 +2049,15 @@ static ssize_t show_kernel_sysfs_gpu_model(struct kobject *kobj, struct kobj_att
 		{ .id = GPU_ID2_PRODUCT_TMIX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
 		  .name = "Mali-G71" },
 		{ .id = GPU_ID2_PRODUCT_THEX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
-		  .name = "Mali-THEx" },
+		  .name = "Mali-G72" },
+		{ .id = GPU_ID2_PRODUCT_TSIX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
+		  .name = "Mali-G51" },
+		{ .id = GPU_ID2_PRODUCT_TNOX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
+		  .name = "Mali-G76" },
+		{ .id = GPU_ID2_PRODUCT_TDVX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
+		  .name = "Mali-G31" },
+		{ .id = GPU_ID2_PRODUCT_TGOX >> GPU_ID_VERSION_PRODUCT_ID_SHIFT,
+		  .name = "Mali-G52" },
 	};
 	const char *product_name = "(Unknown Mali GPU)";
 	struct kbase_device *kbdev;
@@ -2082,7 +2090,11 @@ static ssize_t show_kernel_sysfs_gpu_model(struct kobject *kobj, struct kobj_att
 		}
 	}
 
-	return scnprintf(buf, PAGE_SIZE, "%s\n", product_name);
+	return scnprintf(buf, PAGE_SIZE, "%s %d cores r%dp%d 0x%04X\n",
+		product_name, kbdev->gpu_props.num_cores,
+		(gpu_id & GPU_ID_VERSION_MAJOR) >> GPU_ID_VERSION_MAJOR_SHIFT,
+		(gpu_id & GPU_ID_VERSION_MINOR) >> GPU_ID_VERSION_MINOR_SHIFT,
+		product_id);
 }
 
 #if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL)
