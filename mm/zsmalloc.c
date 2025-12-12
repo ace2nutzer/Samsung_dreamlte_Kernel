@@ -363,9 +363,6 @@ static unsigned long cache_alloc_handle(struct zs_pool *pool, gfp_t gfp)
 			gfp & ~(__GFP_HIGHMEM
 #if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
-#if defined(CONFIG_CMA)
-				| __GFP_CMA
-#endif
 #endif
 						));
 }
@@ -381,9 +378,6 @@ static struct zspage *cache_alloc_zspage(struct zs_pool *pool, gfp_t flags)
 			flags & ~(__GFP_HIGHMEM
 #if defined(CONFIG_ZSWAP_MIGRATION_SUPPORT) || defined(CONFIG_ZRAM_MIGRATION_SUPPORT)
 				| __GFP_MOVABLE
-#if defined(CONFIG_CMA)
-				| __GFP_CMA
-#endif
 #endif
 						));
 };
