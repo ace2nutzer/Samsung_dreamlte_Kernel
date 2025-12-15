@@ -40,3 +40,11 @@ struct exynos_ufc_info {
 
 extern void update_fvmap(int id, int rate, int volt);
 extern void print_fvmap(void);
+
+/* GPU stuff */
+#include "../gpu/arm/b_r16p0/platform/exynos/mali_kbase_platform.h"
+#include "../gpu/arm/b_r16p0/platform/exynos/gpu_dvfs_handler.h"
+extern struct exynos_context *platform;
+extern int dvfs_get_dev_vol(void);
+extern int gpu_dvfs_clock_lock(gpu_dvfs_lock_command lock_command, gpu_dvfs_lock_type lock_type, int clock);
+

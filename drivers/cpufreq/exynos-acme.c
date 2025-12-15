@@ -389,6 +389,7 @@ static unsigned int exynos_cpufreq_get(unsigned int cpu)
 	return get_freq(domain);
 }
 
+#if 0
 static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 {
 	struct exynos_cpufreq_domain *domain = find_domain(policy->cpu);
@@ -396,7 +397,7 @@ static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 
 	if (!domain)
 		return -EINVAL;
-#if 0
+
 	/* To handle reboot faster, it does not thrrotle frequency of domain0 */
 	if (system_state == SYSTEM_RESTART && domain->id != 0)
 		freq = domain->min_freq;
@@ -408,7 +409,7 @@ static int exynos_cpufreq_suspend(struct cpufreq_policy *policy)
 
 	/* To guarantee applying frequency, update_freq() is called explicitly */
 	update_freq(domain, freq);
-#endif
+
 	/*
 	 * Although cpufreq governor is stopped in cpufreq_suspend(),
 	 * afterwards, frequency change can be requested by
@@ -428,12 +429,13 @@ static int exynos_cpufreq_resume(struct cpufreq_policy *policy)
 		return -EINVAL;
 
 	enable_domain(domain);
-/*
+
 	pm_qos_update_request(&domain->min_qos_req, domain->min_freq);
 	pm_qos_update_request(&domain->max_qos_req, domain->max_freq);
-*/
+
 	return 0;
 }
+#endif
 
 static struct cpufreq_driver exynos_driver = {
 	.name		= "exynos_cpufreq",
@@ -442,8 +444,13 @@ static struct cpufreq_driver exynos_driver = {
 	.verify		= exynos_cpufreq_verify,
 	.target		= exynos_cpufreq_target,
 	.get		= exynos_cpufreq_get,
+#if 0
 	.suspend	= exynos_cpufreq_suspend,
 	.resume		= exynos_cpufreq_resume,
+#else
+	.suspend	= 0,
+	.resume		= 0,
+#endif
 	.attr		= cpufreq_generic_attr,
 };
 
@@ -527,10 +534,6 @@ module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_in
 void set_suspend_cpufreq(void)
 {
 	int cpu = 0;
-
-#ifdef CONFIG_HOTPLUG_CPU
-	should_hotplug_big_cpu();
-#endif
 
 	if (!enable_suspend_freqs)
 		return;
@@ -919,6 +922,7 @@ void sec_bootstat_get_cpuinfo(int *freq, int *online)
 }
 #endif
 
+#if 0
 void exynos_cpufreq_reset_boot_qos(void)
 {
 	struct exynos_cpufreq_domain *domain;
@@ -934,6 +938,7 @@ void exynos_cpufreq_reset_boot_qos(void)
 	}
 }
 EXPORT_SYMBOL(exynos_cpufreq_reset_boot_qos);
+#endif
 
 #ifdef CONFIG_SW_SELF_DISCHARGING
 static ssize_t show_cpufreq_self_discharging(struct kobject *kobj,
@@ -1092,6 +1097,7 @@ static __init int get_jig_status(char *arg)
 early_param("jig", get_jig_status);
 #endif
 
+#if 0
 static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
@@ -1130,6 +1136,7 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	}
 #endif
 }
+#endif
 
 static __init int init_pm_qos(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
@@ -1161,7 +1168,7 @@ static __init int init_pm_qos(struct exynos_cpufreq_domain *domain,
 	pm_qos_add_request(&domain->max_qos_req,
 			domain->pm_qos_max_class, domain->max_freq);
 
-	set_boot_qos(domain, dn);
+	//set_boot_qos(domain, dn);
 
 	return 0;
 }
@@ -1334,9 +1341,10 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 		domain->max_freq = val;
 	if (!of_property_read_u32(dn, "min-freq", &val))
 		domain->min_freq = val;
+	if (!of_property_read_u32(dn, "pm_qos-booting", &val))
+		domain->boot_freq = val;
 
-	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
-	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
+	domain->resume_freq = domain->boot_freq;
 
 	/* Initialize freq boost */
 	if (domain->boost_supported) {

@@ -53,6 +53,8 @@
 #include "hardware/fimc-is-hw-control.h"
 #endif
 
+#undef CONFIG_EXYNOS_THERMAL
+
 #define CLUSTER_MIN_MASK			0x0000FFFF
 #define CLUSTER_MIN_SHIFT			0
 #define CLUSTER_MAX_MASK			0xFFFF0000

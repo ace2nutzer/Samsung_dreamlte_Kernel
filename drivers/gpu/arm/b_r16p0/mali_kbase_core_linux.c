@@ -1550,8 +1550,8 @@ static ssize_t set_policy(struct device *dev, struct device_attribute *attr, con
 	struct kbase_device *kbdev;
 	const struct kbase_pm_policy *new_policy = NULL;
 	const struct kbase_pm_policy *const *policy_list;
-	int policy_count;
-	int i;
+	int policy_count = 0;
+	int i = 0;
 
 	kbdev = to_kbase_device(dev);
 

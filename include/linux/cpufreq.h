@@ -714,9 +714,10 @@ extern unsigned int cpu4_min_freq;
 extern unsigned int cpu4_max_freq;
 
 extern void sanitize_cpu_dvfs(bool sanitize);
+extern void sanitize_cpu_gpu_dvfs_vol(void);
 
 #ifdef CONFIG_HOTPLUG_CPU
-extern void should_hotplug_big_cpu(void);
+extern void hotplug_big_cpu(bool hotplug);
 #endif
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND

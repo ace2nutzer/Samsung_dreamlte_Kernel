@@ -146,9 +146,8 @@
 #define EXYNOS_TMU_NUM_PROBE_SHIFT		(16)
 #define EXYNOS_TMU_NUM_PROBE_MASK		(0x7)
 
-#define TOTAL_SENSORS			20
+#define TOTAL_SENSORS			8
 #define DEFAULT_BALANCE_OFFSET		20
-#define GPU_TEMP_OFFSET			5
 
 struct exynos_tmu_data *cpu_tmu_data = NULL;
 struct exynos_tmu_data *gpu_tmu_data = NULL;
@@ -175,6 +174,7 @@ static void exynos_report_trigger(struct exynos_tmu_data *p)
 	thermal_zone_device_update(tz);
 }
 
+#if defined(CONFIG_SOC_EXYNOS8890) || defined(CONFIG_THERMAL_EMULATION)
 /*
  * TMU treats temperature as a mapped temperature code.
  * The temperature is converted differently depending on the calibration type.
@@ -206,6 +206,7 @@ static int temp_to_code(struct exynos_tmu_data *data, u8 temp)
 
 	return temp_code;
 }
+#endif
 
 /*
  * TMU treats temperature with the index as a mapped temperature code.
@@ -344,6 +345,7 @@ static void exynos_tmu_control(struct platform_device *pdev, bool on)
 	mutex_unlock(&data->lock);
 }
 
+#ifdef CONFIG_SOC_EXYNOS8890
 static int exynos8890_tmu_initialize(struct platform_device *pdev)
 {
 	struct exynos_tmu_data *data = platform_get_drvdata(pdev);
@@ -478,6 +480,7 @@ static void exynos8890_tmu_control(struct platform_device *pdev, bool on)
 	writel(interrupt_en, data->base + EXYNOS_TMU_REG_INTEN0);
 	writel(con, data->base + EXYNOS_TMU_REG_CONTROL);
 }
+#endif
 
 static int exynos8895_tmu_initialize(struct platform_device *pdev)
 {
@@ -873,6 +876,7 @@ static u32 get_emul_con_reg(struct exynos_tmu_data *data, unsigned int val,
 	return val;
 }
 
+#ifdef CONFIG_SOC_EXYNOS8890
 static void exynos8890_tmu_set_emulation(struct exynos_tmu_data *data,
 					 int temp)
 {
@@ -885,6 +889,7 @@ static void exynos8890_tmu_set_emulation(struct exynos_tmu_data *data,
 	val = get_emul_con_reg(data, val, temp);
 	writel(val, data->base + emul_con);
 }
+#endif
 
 static void exynos8895_tmu_set_emulation(struct exynos_tmu_data *data,
 					 int temp)
@@ -930,11 +935,13 @@ static int exynos_tmu_set_emulation(void *drv_data, int temp)
 	{ return -EINVAL; }
 #endif /* CONFIG_THERMAL_EMULATION */
 
+#ifdef CONFIG_SOC_EXYNOS8890
 static int exynos8890_tmu_read(struct exynos_tmu_data *data)
 {
 	return readw(data->base + EXYNOS_TMU_REG_CURRENT_TEMP1_0) &
 		EXYNOS_TMU_TEMP_MASK;
 }
+#endif
 
 static int exynos8895_tmu_read(struct exynos_tmu_data *data)
 {
@@ -990,10 +997,6 @@ static int exynos8895_tmu_read(struct exynos_tmu_data *data)
 			break;
 	}
 
-	/* GPU temp fix */
-	if (data->id == 2)
-		result -= GPU_TEMP_OFFSET;
-
 	return result;
 }
 
@@ -1012,6 +1015,7 @@ static void exynos_tmu_work(struct work_struct *work)
 	enable_irq(data->irq);
 }
 
+#ifdef CONFIG_SOC_EXYNOS8890
 static void exynos8890_tmu_clear_irqs(struct exynos_tmu_data *data)
 {
 	unsigned int val_irq;
@@ -1019,6 +1023,7 @@ static void exynos8890_tmu_clear_irqs(struct exynos_tmu_data *data)
 	val_irq = readl(data->base + EXYNOS_TMU_REG_INTPEND0);
 	writel(val_irq, data->base + EXYNOS_TMU_REG_INTPEND0);
 }
+#endif
 
 static void exynos8895_tmu_clear_irqs(struct exynos_tmu_data *data)
 {
@@ -1087,7 +1092,9 @@ static struct notifier_block exynos_tmu_pm_notifier = {
 };
 
 static const struct of_device_id exynos_tmu_match[] = {
+#ifdef CONFIG_SOC_EXYNOS8890
 	{ .compatible = "samsung,exynos8890-tmu", },
+#endif
 	{ .compatible = "samsung,exynos8895-tmu", },
 	{ /* sentinel */ },
 };
@@ -1095,8 +1102,10 @@ MODULE_DEVICE_TABLE(of, exynos_tmu_match);
 
 static int exynos_of_get_soc_type(struct device_node *np)
 {
+#ifdef CONFIG_SOC_EXYNOS8890
 	if (of_device_is_compatible(np, "samsung,exynos8890-tmu"))
 		return SOC_ARCH_EXYNOS8890;
+#endif
 	if (of_device_is_compatible(np, "samsung,exynos8895-tmu"))
 		return SOC_ARCH_EXYNOS8895;
 
@@ -1201,6 +1210,7 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 
 	data->balance_offset = DEFAULT_BALANCE_OFFSET;
 
+#ifdef CONFIG_CPU_THERMAL
 	data->hotplug_enable = of_property_read_bool(pdev->dev.of_node, "hotplug_enable");
 	if (data->hotplug_enable) {
 		dev_info(&pdev->dev, "thermal zone use hotplug function \n");
@@ -1214,6 +1224,7 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 		if (!data->hotplug_out_threshold)
 			dev_err(&pdev->dev, "No input hotplug_out_threshold \n");
 	}
+#endif
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(struct exynos_tmu_platform_data), GFP_KERNEL);
 	if (!pdata)
@@ -1224,6 +1235,7 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 	data->soc = exynos_of_get_soc_type(pdev->dev.of_node);
 
 	switch (data->soc) {
+#ifdef CONFIG_SOC_EXYNOS8890
 	case SOC_ARCH_EXYNOS8890:
 		data->tmu_initialize = exynos8890_tmu_initialize;
 		data->tmu_control = exynos8890_tmu_control;
@@ -1231,6 +1243,7 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 		data->tmu_set_emulation = exynos8890_tmu_set_emulation;
 		data->tmu_clear_irqs = exynos8890_tmu_clear_irqs;
 		break;
+#endif
 	case SOC_ARCH_EXYNOS8895:
 		data->tmu_initialize = exynos8895_tmu_initialize;
 		data->tmu_control = exynos8895_tmu_control;
@@ -1283,16 +1296,14 @@ static int gpu_cooling_table_init(struct platform_device *pdev)
 	}
 	return ret;
 }
-#else
-static int gpu_cooling_table_init(struct platform_device *pdev) {return 0;}
 #endif
 
-#ifdef CONFIG_CPU_THERMAL
 #ifdef CONFIG_SEC_DEBUG_HW_PARAM
 static u64 last_time, curr_time;
 extern struct thermal_data_devices thermal_data_info[THERMAL_ZONE_MAX];
 #endif
 
+#ifdef CONFIG_CPU_THERMAL
 struct pm_qos_request thermal_cpu_hotplug_request;
 static int exynos_throttle_cpu_hotplug(void *p, int temp)
 {
@@ -1353,6 +1364,7 @@ static struct thermal_zone_of_device_ops exynos_sensor_ops = {
 	.set_emul_temp = exynos_tmu_set_emulation,
 };
 
+#ifdef CONFIG_CPU_THERMAL
 static int exynos_cpufreq_cooling_register(struct exynos_tmu_data *data)
 {
 	struct device_node *np, *child = NULL, *gchild, *ggchild;
@@ -1414,11 +1426,11 @@ static int exynos_cpufreq_cooling_register(struct exynos_tmu_data *data)
 		return -ENODEV;
 	}
 
-	cpu_tmu_data = data;
-
 	return ret;
 }
+#endif // CONFIG_CPU_THERMAL
 
+#ifdef CONFIG_GPU_THERMAL
 static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data)
 {
 	struct device_node *np, *child = NULL, *gchild, *ggchild;
@@ -1475,10 +1487,9 @@ static int exynos_gpufreq_cooling_register(struct exynos_tmu_data *data)
 		return -ENODEV;
 	}
 
-	gpu_tmu_data = data;
-
 	return ret;
 }
+#endif // CONFIG_GPU_THERMAL
 
 #ifdef CONFIG_ISP_THERMAL
 static int exynos_isp_cooling_register(struct exynos_tmu_data *data)
@@ -1519,8 +1530,6 @@ static int exynos_isp_cooling_register(struct exynos_tmu_data *data)
 
 	return ret;
 }
-#else
-static int exynos_isp_cooling_register(struct exynos_tmu_data *data) {return 0;}
 #endif
 
 #if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
@@ -1737,12 +1746,15 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 		goto err_sensor;
 
 	if (data->id == 0 || data->id == 1) {
+#ifdef CONFIG_CPU_THERMAL
 		ret = exynos_cpufreq_cooling_register(data);
 		if (ret) {
 			dev_err(&pdev->dev, "Failed cooling register \n");
 			goto err_sensor;
 		}
+#endif
 	} else if (data->id == 2) {
+#ifdef CONFIG_GPU_THERMAL
 		ret = gpu_cooling_table_init(pdev);
 		if (ret)
 			goto err_sensor;
@@ -1752,7 +1764,9 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 			dev_err(&pdev->dev, "Failed cooling register \n");
 			goto err_sensor;
 		}
+#endif
 	} else if (data->id == 3) {
+#ifdef CONFIG_ISP_THERMAL
 		ret = isp_cooling_table_init(pdev);
 		if (ret)
 			goto err_sensor;
@@ -1762,6 +1776,7 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 			dev_err(&pdev->dev, "Failed cooling register \n");
 			goto err_sensor;
 		}
+#endif
 	}
 
 	INIT_WORK(&data->irq_work, exynos_tmu_work);
@@ -1809,18 +1824,19 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 	if (ret)
 		dev_err(&pdev->dev, "cannot create exynos tmu attr group");
 
+#ifdef CONFIG_CPU_THERMAL
 	mutex_lock(&data->lock);
 	list_add_tail(&data->node, &dtm_dev_list);
 	mutex_unlock(&data->lock);
 
-#ifdef CONFIG_CPU_THERMAL
 	if (list_is_singular(&dtm_dev_list)) {
 		register_pm_notifier(&exynos_tmu_pm_notifier);
 		data->nb.notifier_call = exynos_tmu_cpus_notifier;
 		register_cpus_notifier(&data->nb);
-		exynos_cpufreq_reset_boot_qos();
 	}
 #endif
+
+	//exynos_cpufreq_reset_boot_qos();
 
 	if (!IS_ERR(data->tzd))
 		data->tzd->ops->set_mode(data->tzd, THERMAL_DEVICE_ENABLED);
@@ -1830,6 +1846,11 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 	if (ret)
 		dev_err(&pdev->dev, "cannot create thermal sensor attributes\n");
 #endif
+
+	if (data->id == 0)
+		cpu_tmu_data = data;
+	else if (data->id == 2)
+		gpu_tmu_data = data;
 
 	return 0;
 
@@ -1845,10 +1866,12 @@ static int exynos_tmu_remove(struct platform_device *pdev)
 	struct thermal_zone_device *tzd = data->tzd;
 	struct exynos_tmu_data *devnode;
 
+#ifdef CONFIG_CPU_THERMAL
 	if (list_is_singular(&dtm_dev_list)) {
 		unregister_pm_notifier(&exynos_tmu_pm_notifier);
 		unregister_cpus_notifier(&data->nb);
 	}
+#endif
 
 	thermal_zone_of_sensor_unregister(&pdev->dev, tzd);
 	exynos_tmu_control(pdev, false);
@@ -1868,7 +1891,7 @@ static int exynos_tmu_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM_SLEEP
+#if defined(CONFIG_PM_SLEEP)
 static int exynos_tmu_suspend(struct device *dev)
 {
 	exynos_tmu_control(to_platform_device(dev), false);
@@ -1888,6 +1911,7 @@ static int exynos_tmu_resume(struct device *dev)
 
 static SIMPLE_DEV_PM_OPS(exynos_tmu_pm,
 			 exynos_tmu_suspend, exynos_tmu_resume);
+
 #define EXYNOS_TMU_PM	(&exynos_tmu_pm)
 #else
 #define EXYNOS_TMU_PM	NULL

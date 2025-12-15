@@ -24,6 +24,17 @@ int gpu_create_sysfs_file(struct device *dev);
 void gpu_remove_sysfs_file(struct device *dev);
 #endif /* CONFIG_MALI_DEBUG_SYS */
 
+extern void kbasep_trace_format_msg(struct kbase_trace *trace_msg, char *buffer, int len);
+
 extern void update_fvmap(int id, int rate, int volt);
+extern struct kbase_device *pkbdev;
+extern bool is_suspend;
+extern unsigned int dvfs_sleep_time_us;
+
+/* DVFS device low voltage handler */
+extern int dvfs_dev_low_vol_peak;
+extern int dvfs_dev_low_vol_trig;
+extern unsigned int gpu_dvfs_limit_freq_vol;
+extern void sanitize_cpu_gpu_dvfs_vol(void);
 
 #endif /* _GPU_CUSTOM_INTERFACE_H_ */

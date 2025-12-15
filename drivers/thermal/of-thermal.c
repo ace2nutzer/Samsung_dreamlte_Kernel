@@ -106,6 +106,7 @@ static int of_thermal_get_temp(struct thermal_zone_device *tz,
 	return data->ops->get_temp(data->sensor_data, temp);
 }
 
+#ifdef CONFIG_CPU_THERMAL
 /**
  * of_thermal_throttle_hotplug - function to throttle hotplug cpu core.
  *
@@ -127,7 +128,7 @@ static int of_thermal_throttle_hotplug(struct thermal_zone_device *tz)
 
 	return ret;
 }
-
+#endif
 
 /**
  * of_thermal_get_ntrips - function to export number of available trip
@@ -441,7 +442,11 @@ thermal_zone_of_add_sensor(struct device_node *zone,
 	tzd->ops->get_temp = of_thermal_get_temp;
 	tzd->ops->get_trend = of_thermal_get_trend;
 	tzd->ops->set_emul_temp = of_thermal_set_emul_temp;
+#ifdef CONFIG_CPU_THERMAL
 	tzd->ops->throttle_hotplug = of_thermal_throttle_hotplug;
+#else
+	tzd->ops->throttle_hotplug = 0;
+#endif
 	mutex_unlock(&tzd->lock);
 
 	return tzd;

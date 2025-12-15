@@ -40,10 +40,10 @@
 #endif
 
 unsigned int cpu0_min_freq = 0;
-unsigned int cpu0_max_freq = 0;
+unsigned int cpu0_max_freq = 1690000;
 
 unsigned int cpu4_min_freq = 0;
-unsigned int cpu4_max_freq = 0;
+unsigned int cpu4_max_freq = 2314000;
 
 static LIST_HEAD(cpufreq_policy_list);
 
@@ -754,7 +754,9 @@ static ssize_t store_user_scaling_max_freq
 		cpu0_max_freq = temp;
 	else
 		cpu4_max_freq = temp;
+
 	sanitize_cpu_dvfs(false);
+	sanitize_cpu_gpu_dvfs_vol();
 	return count;
 err:
 	pr_err("[%s] invalid cmd\n",__func__);
@@ -1324,17 +1326,16 @@ static int cpufreq_online(unsigned int cpu)
 
 	if (new_policy) {
 		policy->user_policy.min = policy->min;
-		policy->user_policy.max = policy->max;
 		if (policy->cpu == 0) {
-			if (!cpu0_min_freq || !cpu0_max_freq) {
+			if (!cpu0_min_freq)
 				cpu0_min_freq = policy->min;
-				cpu0_max_freq = policy->max;
-			}
+			policy->user_policy.max = cpu0_max_freq;
+			policy->max = cpu0_max_freq;
 		} else {
-			if (!cpu4_min_freq || !cpu4_max_freq) {
+			if (!cpu4_min_freq)
 				cpu4_min_freq = policy->min;
-				cpu4_max_freq = policy->max;
-			}
+			policy->user_policy.max = cpu4_max_freq;
+			policy->max = cpu4_max_freq;
 		}
 
 		write_lock_irqsave(&cpufreq_driver_lock, flags);

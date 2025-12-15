@@ -438,7 +438,7 @@ static int gpu_context_init(struct kbase_device *kbdev)
 
 	platform = kmalloc(sizeof(struct exynos_context), GFP_KERNEL);
 
-	if (platform == NULL)
+	if (!platform)
 		return -1;
 
 	memset(platform, 0, sizeof(struct exynos_context));

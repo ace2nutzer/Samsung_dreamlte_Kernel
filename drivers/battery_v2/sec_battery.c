@@ -31,12 +31,6 @@
 
 bool sleep_mode = false;
 
-/* DVFS DEVICE VOLTAGE HANDLER */
-extern void sanitize_gpu_dvfs(bool sanitize);
-int dvfs_device_vol = 0; /* mV */
-int dvfs_device_vol_peak = 4400; /* mV */
-struct mutex dvfs_device_vol_lock;
-
 /* Charger Control */
 #ifdef CONFIG_CAMERA_DREAM2
 static bool is_s8_plus = true;
@@ -86,6 +80,7 @@ static int batt_temp = 0;
 bool water_detect = true;
 #endif
 static bool is_charger = false;
+
 
 /* battery care & battery idle mode */
 extern void enable_blue_led(bool);
@@ -386,7 +381,7 @@ char *sec_bat_charge_mode_str[] = {
 	"Buck-Off",
 };
 
-inline void update_device_vol(void)
+int dvfs_get_dev_vol(void)
 {
 	union power_supply_propval value = {0, };
 
@@ -395,9 +390,9 @@ inline void update_device_vol(void)
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
 
 	if (likely(value.intval > 0))
-		dvfs_device_vol = value.intval;
+		return value.intval;
 	else
-		dvfs_device_vol = dvfs_device_vol_peak;
+		return 4400;
 }
 
 void sec_bat_set_misc_event(struct sec_battery_info *battery,
@@ -4774,9 +4769,8 @@ static void sec_bat_cable_work(struct work_struct *work)
 	wake_lock(&battery->monitor_wake_lock);
 	queue_delayed_work(battery->monitor_wqueue, &battery->monitor_work, 0);
 end_of_cable_work:
+	sanitize_cpu_gpu_dvfs_vol();
 	wake_unlock(&battery->cable_wake_lock);
-	sanitize_cpu_dvfs(false);
-	sanitize_gpu_dvfs(false);
 	dev_info(battery->dev, "%s: End\n", __func__);
 }
 
@@ -10058,8 +10052,6 @@ static int sec_battery_probe(struct platform_device *pdev)
 	mutex_init(&battery->sbmlock);
 	sec_bat_init_sbm(battery);
 #endif
-	mutex_init(&dvfs_device_vol_lock);
-
 	dev_dbg(battery->dev, "%s: ADC init\n", __func__);
 
 #ifdef CONFIG_OF
@@ -10468,8 +10460,7 @@ err_irq:
 #if defined(CONFIG_BATTERY_SBM_DATA)
 	mutex_destroy(&battery->sbmlock);
 	sec_bat_exit_sbm(battery);
-#endif	
-	mutex_destroy(&dvfs_device_vol_lock);
+#endif
 	kfree(pdata);
 err_bat_free:
 	kfree(battery);
@@ -10518,7 +10509,6 @@ static int sec_battery_remove(struct platform_device *pdev)
 	mutex_destroy(&battery->sbmlock);
 	sec_bat_exit_sbm(battery);
 #endif
-	mutex_destroy(&dvfs_device_vol_lock);
 
 #ifdef CONFIG_OF
 	adc_exit(battery);

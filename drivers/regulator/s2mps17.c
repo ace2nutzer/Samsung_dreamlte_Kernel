@@ -856,6 +856,7 @@ static int s2mps17_pmic_probe(struct platform_device *pdev)
 	/* SELMIF : LDO4,5,8,11,12 */
 	s2mps17_write_reg(s2mps17->i2c, S2MPS17_PMIC_REG_SELMIF1, 0xD6);
 
+#if 0
 	/* Drop LDO29 OCP Level : Typ. 1A -> 0.9A */
 	s2mps17_read_reg(s2mps17->i2c, 0x71, &val);
 	pr_info("%s : LDO29 OCP Check 0x71[7:0] : 0x%x\n", __func__, val);
@@ -871,6 +872,7 @@ static int s2mps17_pmic_probe(struct platform_device *pdev)
 		s2mps17_update_reg(s2mps17->debug_i2c, 0xBC, val, 0xF8);
 		pr_info("%s : LDO29 OCP Check! 0x71[7:0] : 0x%x\n", __func__, val);
 	}
+#endif
 
 	/* PFM PMOS only function disable */
 	s2mps17_write_reg(s2mps17->debug_i2c, 0x23, 0xCC);
