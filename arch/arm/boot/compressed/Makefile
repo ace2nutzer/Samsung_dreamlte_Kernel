@@ -14,9 +14,9 @@ OBJS	+= debug.o
 endif
 FONTC	= $(srctree)/lib/fonts/font_acorn_8x8.c
 
-# string library code (-O3 is enforced to keep it much smaller)
+# string library code (-O2 is enforced to keep it much smaller)
 OBJS		+= string.o
-CFLAGS_string.o	:= -O3
+CFLAGS_string.o	:= -O2
 
 ifeq ($(CONFIG_ARM_VIRT_EXT),y)
 OBJS		+= hyp-stub.o

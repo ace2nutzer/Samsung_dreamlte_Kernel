@@ -3,7 +3,7 @@
 targets := vmlinux.srec vmlinux.bin zImage
 subdir- := compressed
 
-OBJCOPYFLAGS_vmlinux.srec := -O3rec
+OBJCOPYFLAGS_vmlinux.srec := -O2rec
 OBJCOPYFLAGS_vmlinux.bin  := -Obinary
 OBJCOPYFLAGS_zImage := -O binary -R .note -R .comment -R .stab -R .stabstr -S
 

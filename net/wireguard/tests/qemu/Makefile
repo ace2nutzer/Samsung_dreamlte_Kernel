@@ -70,7 +70,7 @@ $(eval $(call tar_download,NMAP,nmap,7.80,.tar.bz2,https://nmap.org/dist/))
 $(eval $(call tar_download,IPUTILS,iputils,s20161105,.tar.gz,https://github.com/iputils/iputils/archive/s20161105.tar.gz/#))
 $(eval $(call tar_download,WIREGUARD_TOOLS,wireguard-tools,1.0.20191226,.tar.xz,https://git.zx2c4.com/wireguard-tools/snapshot/))
 
-export CFLAGS ?= -O3 -pipe
+export CFLAGS ?= $(OPT_LVL) -pipe
 export LDFLAGS ?=
 export CPPFLAGS := -I$(BUILD_PATH)/include
 

@@ -49,7 +49,7 @@ __BUILD = $(CC) $(CFLAGS) -Wall -Werror -o $(OUTPUT)$@ $(patsubst %.bin,%.c,$@) 
 ###############################
 
 test-all.bin:
-	$(BUILD) -fstack-protector-all -O3 -D_FORTIFY_SOURCE=2 -ldw -lelf -lnuma -lelf -laudit -I/usr/include/slang -lslang $(shell $(PKG_CONFIG) --libs --cflags gtk+-2.0 2>/dev/null) $(FLAGS_PERL_EMBED) $(FLAGS_PYTHON_EMBED) -DPACKAGE='"perf"' -lbfd -ldl -lz -llzma
+	$(BUILD) -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -ldw -lelf -lnuma -lelf -laudit -I/usr/include/slang -lslang $(shell $(PKG_CONFIG) --libs --cflags gtk+-2.0 2>/dev/null) $(FLAGS_PERL_EMBED) $(FLAGS_PYTHON_EMBED) -DPACKAGE='"perf"' -lbfd -ldl -lz -llzma
 
 test-hello.bin:
 	$(BUILD)
@@ -61,7 +61,7 @@ test-stackprotector-all.bin:
 	$(BUILD) -fstack-protector-all
 
 test-fortify-source.bin:
-	$(BUILD) -O3 -D_FORTIFY_SOURCE=2
+	$(BUILD) -O2 -D_FORTIFY_SOURCE=2
 
 test-bionic.bin:
 	$(BUILD)

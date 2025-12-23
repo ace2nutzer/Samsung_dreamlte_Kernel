@@ -4,7 +4,7 @@ CC = gcc
 LEX = flex
 YACC = bison
 
-CFLAGS += -Wall -O3
+CFLAGS += -Wall -O2
 CFLAGS += -D__EXPORTED_HEADERS__ -I../../include/uapi -I../../include
 
 %.yacc.c: %.y

@@ -7,7 +7,7 @@ include ../lib.mk
 TARGETS := validate_cap test_execve
 TEST_PROGS := test_execve
 
-CFLAGS := -O3 -g -std=gnu99 -Wall -lcap-ng
+CFLAGS := -O2 -g -std=gnu99 -Wall -lcap-ng
 
 all: $(TARGETS)
 

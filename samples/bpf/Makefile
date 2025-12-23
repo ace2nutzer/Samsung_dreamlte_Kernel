@@ -73,7 +73,7 @@ LLC=$(srctree)/tools/bpf/llvm/bld/Debug+Asserts/bin/llc
 $(obj)/%.o: $(src)/%.c
 	clang $(NOSTDINC_FLAGS) $(LINUXINCLUDE) $(EXTRA_CFLAGS) \
 		-D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
-		-O3 -emit-llvm -c $< -o -| $(LLC) -march=bpf -filetype=obj -o $@
+		$(OPT_LVL) -emit-llvm -c $< -o -| $(LLC) -march=bpf -filetype=obj -o $@
 	clang $(NOSTDINC_FLAGS) $(LINUXINCLUDE) $(EXTRA_CFLAGS) \
 		-D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
-		-O3 -emit-llvm -c $< -o -| $(LLC) -march=bpf -filetype=asm -o $@.s
+		$(OPT_LVL) -emit-llvm -c $< -o -| $(LLC) -march=bpf -filetype=asm -o $@.s

@@ -134,9 +134,9 @@ ifndef DEBUG
 endif
 
 ifeq ($(DEBUG),0)
-  CFLAGS += -O3
+  CFLAGS += -O2
 else
-  CFLAGS += $(call cc-option,-O3,-O3)
+  CFLAGS += $(call cc-option,-O2,-O2)
 endif
 
 ifdef PARSER_DEBUG

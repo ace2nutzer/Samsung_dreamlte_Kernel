@@ -1,6 +1,6 @@
 TEST_PROGS := gettimeofday
 
-CFLAGS += -O3
+CFLAGS += -O2
 
 all: $(TEST_PROGS)
 

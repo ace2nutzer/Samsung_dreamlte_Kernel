@@ -113,8 +113,8 @@ export CROSS CC AR STRIP RANLIB CFLAGS LDFLAGS LIB_OBJS
 # check if compiler option is supported
 cc-supports = ${shell if $(CC) ${1} -S -o /dev/null -x c /dev/null > /dev/null 2>&1; then echo "$(1)"; fi;}
 
-# use '-O3' optimization if available, else use -O3
-OPTIMIZATION := $(call cc-supports,-O3,-O3)
+# use '-O2' optimization if available, else use -O2
+OPTIMIZATION := $(call cc-supports,-O2,-O2)
 
 WARNINGS := -Wall -Wchar-subscripts -Wpointer-arith -Wsign-compare
 WARNINGS += $(call cc-supports,-Wno-pointer-sign)

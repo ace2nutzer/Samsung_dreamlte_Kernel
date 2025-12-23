@@ -1,5 +1,5 @@
 INCLUDES := -I../include -I../../
-CFLAGS := $(CFLAGS) -g -O3 -Wall -D_GNU_SOURCE -pthread $(INCLUDES)
+CFLAGS := $(CFLAGS) -g -O2 -Wall -D_GNU_SOURCE -pthread $(INCLUDES)
 LDFLAGS := $(LDFLAGS) -pthread -lrt
 
 HEADERS := ../include/futextest.h

@@ -9,7 +9,7 @@
 # LD = gcc-cris -mlinux -march=v32 -nostdlib
 
 asflags-y += $(LINUXINCLUDE)
-ccflags-y += -O3 $(LINUXINCLUDE)
+ccflags-y += -O2 $(LINUXINCLUDE)
 
 ifdef CONFIG_ETRAX_AXISFLASHMAP
 

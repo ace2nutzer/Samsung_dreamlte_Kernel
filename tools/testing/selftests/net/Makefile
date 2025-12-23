@@ -1,6 +1,6 @@
 # Makefile for net selftests
 
-CFLAGS = -Wall -O3 -g
+CFLAGS = -Wall -O2 -g
 
 CFLAGS += -I../../../../usr/include/
 
