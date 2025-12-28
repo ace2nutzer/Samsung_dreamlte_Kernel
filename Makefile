@@ -307,11 +307,11 @@ HOSTCXX      = g++
 HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-march=native -mcpu=native -mtune=native \
 		$(OPT_LVL) -fomit-frame-pointer -std=gnu89 \
-		-fno-strict-aliasing -Werror-implicit-function-declaration \
+		-Werror-implicit-function-declaration \
 		-Werror=incompatible-pointer-types -DNDEBUG -pipe \
 		-Wno-dangling-pointer
 HOSTCXXFLAGS := -march=native -mcpu=native -mtune=native \
-		$(OPT_LVL) -fomit-frame-pointer -fno-strict-aliasing \
+		$(OPT_LVL) -fomit-frame-pointer \
 		-DNDEBUG -pipe
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
@@ -418,7 +418,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security \
 		   -std=gnu89 $(call cc-option,-fno-PIE) \
 		   -DNDEBUG -pipe \
-		   -march=armv8-a \
+		   -march=armv8-a+crc+crypto \
 		   -mcpu=exynos-m1 \
 		   -mtune=exynos-m1 \
 		   -mgeneral-regs-only
@@ -672,15 +672,6 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, frame-address)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
-
-# disable some warnings in gcc >= 8.0
-KBUILD_CFLAGS	+= $(call cc-disable-warning, overflow)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-memaccess)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, packed-not-aligned)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-truncation)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, sizeof-pointer-div)
-KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-overflow)
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
