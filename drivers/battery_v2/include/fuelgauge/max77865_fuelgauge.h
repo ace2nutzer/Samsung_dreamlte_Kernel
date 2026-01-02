@@ -128,8 +128,8 @@ struct battery_data_t {
 /* power off margin */
 /* soc should be 0.1% unit */
 #define POWER_OFF_SOC_HIGH_MARGIN	20
-#define POWER_OFF_VOLTAGE_HIGH_MARGIN	3500
-#define POWER_OFF_VOLTAGE_LOW_MARGIN	3400
+#define POWER_OFF_VOLTAGE_HIGH_MARGIN	3400
+#define POWER_OFF_VOLTAGE_LOW_MARGIN	3300
 
 struct cv_slope{
 	int fg_current;
