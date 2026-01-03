@@ -370,7 +370,6 @@ static ssize_t show_cpu_hotplug_enable(struct kobject *kobj,
 	return snprintf(buf, 10, "%d\n", cpu_hotplug.enabled);
 }
 
-#if 0
 static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf,
 		size_t count)
@@ -384,10 +383,9 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 
 	return count;
 }
-#endif
 
 static struct kobj_attribute cpu_hotplug_enabled =
-__ATTR(enabled, 0444, show_cpu_hotplug_enable, NULL);
+__ATTR(enabled, 0644, show_cpu_hotplug_enable, store_cpu_hotplug_enable);
 
 static struct attribute *cpu_hotplug_attrs[] = {
 	&min_online_cpu.attr,
