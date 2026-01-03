@@ -5942,7 +5942,7 @@ static int hmp_up_threshold_from_sysfs(int value)
 
 static int hmp_semiboost_up_threshold_from_sysfs(int value)
 {
-	if ((value > 1024) || (value < 0))
+	if ((value > 1024) || (value < 1))
 		return -EINVAL;
 
 	hmp_semiboost_up_threshold = value;
@@ -5974,7 +5974,7 @@ static int hmp_down_threshold_from_sysfs(int value)
 
 static int hmp_semiboost_down_threshold_from_sysfs(int value)
 {
-	if ((value > 1024) || (value < 0))
+	if ((value > 1024) || (value < 1))
 		return -EINVAL;
 
 	hmp_semiboost_down_threshold = value;
@@ -10336,7 +10336,7 @@ static unsigned int hmp_idle_pull(int this_cpu)
 		else
 			up_threshold = hmp_up_threshold;
 
-		if (hmp_boost() || curr->avg.hmp_load_avg > up_threshold)
+		if (hmp_boost() || curr->avg.hmp_load_avg >= up_threshold)
 			if (curr->avg.hmp_load_avg > ratio) {
 				if (p)
 					put_task_struct(p);
