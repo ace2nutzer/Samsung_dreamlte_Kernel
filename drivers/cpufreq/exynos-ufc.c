@@ -89,15 +89,16 @@ static int vol = 0;
 #define FREQ_STEP_CL1_17              (2808000)
 
 /* Cluster 0 little cpu */
-#define FREQ_STEP_CL0_0               (598000)
+#define FREQ_STEP_CL0_0               (715000)
 #define FREQ_STEP_CL0_1               (832000)
-#define FREQ_STEP_CL0_2               (1053000)
-#define FREQ_STEP_CL0_3               (1248000)
-#define FREQ_STEP_CL0_4               (1456000)
-#define FREQ_STEP_CL0_5               (1690000)
-#define FREQ_STEP_CL0_6               (1794000)
-#define FREQ_STEP_CL0_7               (1898000)
-#define FREQ_STEP_CL0_8               (2002000)
+#define FREQ_STEP_CL0_2               (949000)
+#define FREQ_STEP_CL0_3               (1053000)
+#define FREQ_STEP_CL0_4               (1248000)
+#define FREQ_STEP_CL0_5               (1456000)
+#define FREQ_STEP_CL0_6               (1690000)
+#define FREQ_STEP_CL0_7               (1794000)
+#define FREQ_STEP_CL0_8               (1898000)
+#define FREQ_STEP_CL0_9               (2002000)
 
 static int cpu_dvfs_max_temp_user = 70;
 unsigned int dvfs_sleep_time_us = 40 * 1000; /* 40 ms */
@@ -1037,6 +1038,8 @@ static int cpu_dvfs_kthread(void *nothing)
 				big_freq = FREQ_STEP_CL1_1;
 			else if (cpu4_dvfs_limit_freq == FREQ_STEP_CL1_1)
 				big_freq = FREQ_STEP_CL1_0;
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_9)
+				lit_freq = FREQ_STEP_CL0_8;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_8)
 				lit_freq = FREQ_STEP_CL0_7;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_7)
@@ -1104,8 +1107,10 @@ static int cpu_dvfs_kthread(void *nothing)
 				lit_freq = FREQ_STEP_CL0_6;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_6)
 				lit_freq = FREQ_STEP_CL0_7;
-			else
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_7)
 				lit_freq = FREQ_STEP_CL0_8;
+			else
+				lit_freq = FREQ_STEP_CL0_9;
 		}
 out:
 		prev_temp = cpu_temp;
