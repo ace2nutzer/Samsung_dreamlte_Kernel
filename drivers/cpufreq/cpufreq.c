@@ -684,6 +684,7 @@ show_one(cpuinfo_max_freq, cpuinfo.max_freq);
 show_one(cpuinfo_transition_latency, cpuinfo.transition_latency);
 show_one(scaling_min_freq, min);
 show_one(scaling_max_freq, max);
+show_one(user_scaling_min_freq, min);
 show_one(user_scaling_max_freq, max);
 
 static ssize_t show_scaling_cur_freq(struct cpufreq_policy *policy, char *buf)
@@ -754,6 +755,47 @@ static ssize_t store_user_scaling_max_freq
 		cpu0_max_freq = temp;
 	else
 		cpu4_max_freq = temp;
+
+	sanitize_cpu_dvfs(false);
+	sanitize_cpu_gpu_dvfs_vol();
+	return count;
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+	return -EINVAL;
+}
+
+static ssize_t store_user_scaling_min_freq
+(struct cpufreq_policy *policy, const char *buf, size_t count)
+{
+	int ret, temp;
+	struct cpufreq_policy new_policy;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &temp);
+		if ((temp != 2314000) && (temp != 1690000)) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			return -EINVAL;
+		}
+	}
+#endif
+
+	memcpy(&new_policy, policy, sizeof(*policy));
+
+	ret = sscanf(buf, "%u", &new_policy.min);
+	if (ret != 1)
+		goto err;
+
+	temp = new_policy.min;
+	ret = cpufreq_set_policy(policy, &new_policy);
+	if (ret)
+		goto err;
+
+	policy->user_policy.min = temp;
+	if (policy->cpu == 0)
+		cpu0_min_freq = temp;
+	else
+		cpu4_min_freq = temp;
 
 	sanitize_cpu_dvfs(false);
 	sanitize_cpu_gpu_dvfs_vol();
@@ -936,6 +978,7 @@ cpufreq_freq_attr_ro(related_cpus);
 cpufreq_freq_attr_ro(affected_cpus);
 cpufreq_freq_attr_ro(scaling_min_freq);
 cpufreq_freq_attr_ro(scaling_max_freq);
+cpufreq_freq_attr_rw(user_scaling_min_freq);
 cpufreq_freq_attr_rw(user_scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
@@ -946,6 +989,7 @@ static struct attribute *default_attrs[] = {
 	&cpuinfo_transition_latency.attr,
 	&scaling_min_freq.attr,
 	&scaling_max_freq.attr,
+	&user_scaling_min_freq.attr,
 	&user_scaling_max_freq.attr,
 	&affected_cpus.attr,
 	&related_cpus.attr,
