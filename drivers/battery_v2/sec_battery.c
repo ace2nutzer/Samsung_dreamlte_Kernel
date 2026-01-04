@@ -38,9 +38,9 @@ static bool is_note8 = false;
 static unsigned int ac_chg_curr = 1800;
 static unsigned int usbpd_chg_curr = 1800;
 static unsigned int usbcd_chg_curr = 1800;
-static unsigned int lpm_ac_chg_curr = 2300;
-static unsigned int lpm_usbpd_chg_curr = 2300;
-static unsigned int lpm_usbcd_chg_curr = 2300;
+static unsigned int lpm_ac_chg_curr = 2500;
+static unsigned int lpm_usbpd_chg_curr = 2500;
+static unsigned int lpm_usbcd_chg_curr = 2500;
 #endif
 #ifdef CONFIG_CAMERA_GREAT
 static bool is_s8_plus = false;
@@ -48,9 +48,9 @@ static bool is_note8 = true;
 static unsigned int ac_chg_curr = 1700;
 static unsigned int usbpd_chg_curr = 1700;
 static unsigned int usbcd_chg_curr = 1700;
-static unsigned int lpm_ac_chg_curr = 2200;
-static unsigned int lpm_usbpd_chg_curr = 2200;
-static unsigned int lpm_usbcd_chg_curr = 2200;
+static unsigned int lpm_ac_chg_curr = 2300;
+static unsigned int lpm_usbpd_chg_curr = 2300;
+static unsigned int lpm_usbcd_chg_curr = 2300;
 #endif
 #ifdef CONFIG_CAMERA_DREAM
 static bool is_s8_plus = false;
@@ -58,9 +58,9 @@ static bool is_note8 = false;
 static unsigned int ac_chg_curr = 1500;
 static unsigned int usbpd_chg_curr = 1500;
 static unsigned int usbcd_chg_curr = 1500;
-static unsigned int lpm_ac_chg_curr = 2000;
-static unsigned int lpm_usbpd_chg_curr = 2000;
-static unsigned int lpm_usbcd_chg_curr = 2000;
+static unsigned int lpm_ac_chg_curr = 2100;
+static unsigned int lpm_usbpd_chg_curr = 2100;
+static unsigned int lpm_usbcd_chg_curr = 2100;
 #endif
 static unsigned int wc_chg_curr = 1000;
 static unsigned int lpm_wc_chg_curr = 1500;
@@ -78,7 +78,6 @@ static int batt_temp = 0;
 bool water_detect = true;
 #endif
 static bool is_charger = false;
-
 
 /* battery care & battery idle mode */
 extern void enable_blue_led(bool enable);
@@ -640,10 +639,10 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 				battery->chg_limit = true;
 			}
 		}
-
+/*
 		pr_info("%s: cable_type(%d), chg_limit(%d) vbus_by_siop(%d)\n", __func__,
 			battery->cable_type, battery->chg_limit, battery->vbus_chg_by_siop);
-
+*/
 #else
 	if (!battery->chg_limit && is_hv_wire_type(battery->cable_type) && (battery->chg_temp > battery->pdata->chg_high_temp)) {
 		if (battery->pdata->chg_input_limit_current)
@@ -942,9 +941,9 @@ void sec_bat_set_decrease_iout(struct sec_battery_info *battery)
 
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
-	static bool afc_init = false;
 	union power_supply_propval value = {0, };
 	unsigned int chg_curr = 0;
+	static bool afc_init = false;
 
 	int input_current = USB_CURRENT_UNCONFIGURED,
 		charging_current = USB_CURRENT_UNCONFIGURED,
@@ -1081,9 +1080,7 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 	if (!(battery->current_event & SEC_BAT_CURRENT_EVENT_SKIP_HEATING_CONTROL)) {
 		input_current = sec_bat_check_mix_temp(battery, input_current);
 	}
-#endif
 
-#if !defined(CONFIG_SEC_FACTORY)
 	if (!(battery->current_event & SEC_BAT_CURRENT_EVENT_SKIP_HEATING_CONTROL)) {
 		if (is_wireless_type(battery->cable_type) && battery->pdata->wpc_temp_check) {
 			temp = sec_bat_check_wpc_temp(battery, input_current);
@@ -1201,15 +1198,17 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 			POWER_SUPPLY_PROP_CURRENT_FULL, value);
 		battery->topoff_current = topoff_current;
 	}
+
+#if defined(CONFIG_AFC_CHARGER_MODE)
 	if (!afc_init) {
 		afc_init = true;
-#if defined(CONFIG_AFC_CHARGER_MODE)
 		value.intval = 1;
 		psy_do_property(battery->pdata->charger_name, set,
 			POWER_SUPPLY_PROP_AFC_CHARGER_MODE,
 			value);
-#endif
 	}
+#endif
+
 	if (is_charger) {
 		if (batt_idle) {
 			sec_bat_set_charge(battery, SEC_BAT_CHG_MODE_CHARGING_OFF);
@@ -1238,11 +1237,32 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 	return 0;
 }
 
-/* Charger Control: get optimal input current for high voltage */
+/* Charger Control: calculate optimal input current for voltage >5V */
 static void calc_input_curr(void)
 {
 	unsigned int power;
 
+	if (lpcharge) {
+		/* AC */
+		power = (ac_chg_curr * 5);
+		ac_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
+		if (ac_in_curr_12v < 100)
+			ac_in_curr_12v = 100;
+		ac_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
+		if (ac_in_curr_9v < 100)
+			ac_in_curr_9v = 100;
+
+		/* USB-PD */
+		power = (usbpd_chg_curr * 5);
+		usbpd_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
+		if (usbpd_in_curr_12v < 100)
+			usbpd_in_curr_12v = 100;
+		usbpd_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
+		if (usbpd_in_curr_9v < 100)
+			usbpd_in_curr_9v = 100;
+	}
+
+	/* WC */
 	power = (wc_chg_curr * 5);
 	wc_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
 	if (wc_in_curr_12v < 100)
@@ -1377,77 +1397,26 @@ static ssize_t input_volt_show(struct kobject *kobj,
 }
 SEC_BAT_ATTR_RO(input_volt);
 
-#ifdef CONFIG_CAMERA_DREAM2
-static ssize_t s8_plus_mode_show(struct kobject *kobj,
+static ssize_t charger_variant_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
+	const char *variant;
 	unsigned int max_curr = _battery->pdata->max_charging_current;
 
-	if (!max_curr && is_s8_plus)
-		max_curr = 3500;
+	if (is_s8_plus)
+		variant = "S8+";
+	else if (is_note8)
+		variant = "Note8";
+	else
+		variant = "S8";
 
-	if (!max_curr && is_note8)
-		max_curr = 3300;
-
-	if (!max_curr && !is_s8_plus)
-		max_curr = 3000;
-
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
-
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,  "%s[Variant: %s]\n\n", buf, variant);
+	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
-SEC_BAT_ATTR_RO(s8_plus_mode);
-#endif
-
-#ifdef CONFIG_CAMERA_GREAT
-static ssize_t note8_mode_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	unsigned int max_curr = _battery->pdata->max_charging_current;
-
-	if (!max_curr && is_s8_plus)
-		max_curr = 3500;
-
-	if (!max_curr && is_note8)
-		max_curr = 3300;
-
-	if (!max_curr && !is_s8_plus)
-		max_curr = 3000;
-
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
-
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
-
-	return strlen(buf);
-}
-SEC_BAT_ATTR_RO(note8_mode);
-#endif
-
-#ifdef CONFIG_CAMERA_DREAM
-static ssize_t s8_mode_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	unsigned int max_curr = _battery->pdata->max_charging_current;
-
-	if (!max_curr && is_s8_plus)
-		max_curr = 3500;
-
-	if (!max_curr && is_note8)
-		max_curr = 3300;
-
-	if (!max_curr && !is_s8_plus)
-		max_curr = 3000;
-
-	sprintf(buf,  "%s[Max allowed current: %u mA]\n\n", buf, max_curr);
-
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer]\n", buf, CHARGER_CONTROL_VERSION);
-
-	return strlen(buf);
-}
-SEC_BAT_ATTR_RO(s8_mode);
-#endif
+SEC_BAT_ATTR_RO(charger_variant);
 
 static ssize_t batt_temp_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
@@ -1654,40 +1623,42 @@ SEC_BAT_ATTR_RO(batt_volt);
 
 void update_batt_max_temp(unsigned int temp)
 {
-		_battery->pdata->temp_highlimit_threshold_normal = temp + 1;
-		_battery->pdata->temp_highlimit_recovery_normal = temp;
+	temp *= 10;
 
-		_battery->pdata->temp_high_threshold_normal = temp + 1;
-		_battery->pdata->temp_high_recovery_normal = temp;
+	_battery->pdata->temp_highlimit_threshold_normal = temp + 1;
+	_battery->pdata->temp_highlimit_recovery_normal = temp;
 
-		_battery->pdata->temp_highlimit_threshold_lpm = temp + 1;
-		_battery->pdata->temp_highlimit_recovery_lpm = temp;
+	_battery->pdata->temp_high_threshold_normal = temp + 1;
+	_battery->pdata->temp_high_recovery_normal = temp;
 
-		_battery->pdata->temp_high_threshold_lpm = temp + 1;
-		_battery->pdata->temp_high_recovery_lpm = temp;
+	_battery->pdata->temp_highlimit_threshold_lpm = temp + 1;
+	_battery->pdata->temp_highlimit_recovery_lpm = temp;
 
-		_battery->pdata->wpc_high_threshold_normal = temp + 1;
-		_battery->pdata->wpc_high_recovery_normal = temp;
+	_battery->pdata->temp_high_threshold_lpm = temp + 1;
+	_battery->pdata->temp_high_recovery_lpm = temp;
 
-		_battery->pdata->wpc_high_temp = temp + 1;
-		_battery->pdata->wpc_high_temp_recovery = temp;
+	_battery->pdata->wpc_high_threshold_normal = temp + 1;
+	_battery->pdata->wpc_high_recovery_normal = temp;
 
-		_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
-		_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
+	_battery->pdata->wpc_high_temp = temp + 1;
+	_battery->pdata->wpc_high_temp_recovery = temp;
 
-		_battery->pdata->wpc_high_temp = temp + 1;
-		_battery->pdata->wpc_high_temp_recovery = temp;
+	_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
+	_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
 
-		_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
-		_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
+	_battery->pdata->wpc_high_temp = temp + 1;
+	_battery->pdata->wpc_high_temp_recovery = temp;
 
-		_battery->pdata->mix_high_temp = temp + 1;
-		_battery->pdata->mix_high_temp_recovery = temp;
+	_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
+	_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
 
-		_battery->pdata->swelling_high_temp_block = temp + 1;
-		_battery->pdata->swelling_high_temp_recov = temp;
+	_battery->pdata->mix_high_temp = temp + 1;
+	_battery->pdata->mix_high_temp_recovery = temp;
 
-		_battery->pdata->swelling_wc_high_temp_recov = temp;
+	_battery->pdata->swelling_high_temp_block = temp + 1;
+	_battery->pdata->swelling_high_temp_recov = temp;
+
+	_battery->pdata->swelling_wc_high_temp_recov = temp;
 }
 
 static ssize_t batt_max_temp_show(struct kobject *kobj,
@@ -1721,7 +1692,6 @@ static ssize_t batt_max_temp_store(struct kobject *kobj,
 		batt_max_temp = tmp;
 
 		/* update */
-		tmp = tmp * 10;
 		update_batt_max_temp(tmp);	
 		goto out;
 	}
@@ -1752,15 +1722,7 @@ static struct attribute *sec_bat_attrs[] = {
 	&charger_current_attr.attr,
 	&input_volt_attr.attr,
 	&batt_temp_attr.attr,
-#ifdef CONFIG_CAMERA_DREAM2
-	&s8_plus_mode_attr.attr,
-#endif
-#ifdef CONFIG_CAMERA_GREAT
-	&note8_mode_attr.attr,
-#endif
-#ifdef CONFIG_CAMERA_DREAM
-	&s8_mode_attr.attr,
-#endif
+	&charger_variant_attr.attr,
 #if defined(CONFIG_CCIC_WATER_DETECT)
 	&water_detection_attr.attr,
 #endif
@@ -3517,7 +3479,8 @@ static void sec_bat_get_battery_info(
 		then ignore FG SOC, and report (previous SOC +1)% */
 	battery->capacity = value.intval;
 
-	dev_info(battery->dev,
+	if (is_charger)
+		dev_info(battery->dev,
 			"%s:Vnow(%dmV),Vavg(%dmV),Inow(%dmA),Imax(%dmA),Ichg(%dmA),SOC(%d%%),Cycle(%d),"
 			"Tbat(%d),Tusb(%d),Tchg(%d),Twpc(%d)\n", __func__,
 			battery->voltage_now, battery->voltage_avg, battery->current_now,
@@ -4090,19 +4053,6 @@ static void sec_bat_monitor_work(
 
 	dev_dbg(battery->dev, "%s: Start\n", __func__);
 	c_ts = ktime_to_timespec(ktime_get_boottime());
-
-	/* reset some flags */
-	if (battery->cable_type == SEC_BATTERY_CABLE_NONE && battery->status == POWER_SUPPLY_STATUS_DISCHARGING) {
-		is_charger = false;
-		charging_curr = 0;
-		input_volt = 0;
-		battery->aicl_current = 0; /* reset aicl current */
-		battery_idle = false;
-		enable_blue_led(false);
-		batt_level = 0;
-	} else {
-		is_charger = true;
-	}
 
 	mutex_lock(&battery->wclock);
 	if (!battery->wc_enable) {
@@ -4759,6 +4709,18 @@ static void sec_bat_cable_work(struct work_struct *work)
 	wake_lock(&battery->monitor_wake_lock);
 	queue_delayed_work(battery->monitor_wqueue, &battery->monitor_work, 0);
 end_of_cable_work:
+	/* reset some flags */
+	if (battery->cable_type == SEC_BATTERY_CABLE_NONE && battery->status == POWER_SUPPLY_STATUS_DISCHARGING) {
+		is_charger = false;
+		charging_curr = 0;
+		input_volt = 0;
+		battery->aicl_current = 0; /* reset aicl current */
+		battery_idle = false;
+		enable_blue_led(false);
+		batt_level = 0;
+	} else {
+		is_charger = true;
+	}
 	sanitize_cpu_gpu_dvfs_vol();
 	wake_unlock(&battery->cable_wake_lock);
 	dev_info(battery->dev, "%s: End\n", __func__);
@@ -10404,7 +10366,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 		kobject_put(sec_bat_kobject);
 	}
 
-	/* Charger Control: calculate initial input current for high voltage */
+	/* Charger Control: calculate initial input current for voltage >5V */
 	calc_input_curr();
 
 	dev_info(battery->dev,

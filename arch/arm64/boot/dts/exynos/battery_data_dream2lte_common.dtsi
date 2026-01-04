@@ -224,13 +224,13 @@
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */
 		battery,full_condition_type = <9>;
-		battery,full_condition_soc = <100>;
+		battery,full_condition_soc = <95>;
 		battery,full_condition_vcell = <4250>;
 
 		battery,recharge_check_count = <1>;
 		battery,recharge_condition_type = <4>; /* SEC_BATTERY_RECHARGE_CONDITION_VCELL */
 		battery,recharge_condition_soc = <99>;
-		battery,recharge_condition_vcell = <4240>;
+		battery,recharge_condition_vcell = <4260>;
 
 		battery,charging_total_time = <14400>;
 		battery,hv_charging_total_time = <10800>;
@@ -281,7 +281,7 @@
 		battery,battery_full_capacity = <3500>;
 
 		/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
-		battery,age_data = <0 44000 4240 4250 100>;
+		battery,age_data = <0 44000 4260 4250 95>;
 
 		battery,health_condition = <
 			/* CYCLE ASOC */
