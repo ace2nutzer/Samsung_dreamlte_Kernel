@@ -27,6 +27,7 @@
 #include <linux/shm_ipc.h>
 #include <linux/modem_notifier.h>
 #include <linux/moduleparam.h>
+#include <linux/cpufreq.h>
 
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -89,8 +90,8 @@ static void update_mask_value(void __iomem *sfr,
 #define CALLIOPE_ENABLE_TIMEOUT_MS	(1000)
 #define BOOT_DONE_TIMEOUT_MS		(10000)
 
-static unsigned int audio_pm_qos_lit = 715000;
-static unsigned int audio_pm_qos_big = 741000;
+static unsigned int audio_pm_qos_lit = 0;
+static unsigned int audio_pm_qos_big = 0;
 static unsigned int current_lit_freq_id = 0;
 static unsigned int current_big_freq_id = 0;
 static bool boost_ongoing_lit = false;
@@ -3412,6 +3413,9 @@ int abox_request_lit_freq(struct device *dev, struct abox_data *data,
 			request->id && request->id != id; request++) {
 	}
 
+	if (!audio_pm_qos_lit)
+		audio_pm_qos_lit = cpu0_min_freq;
+
 	if (freq) {
 		freq = audio_pm_qos_lit;
 		boost_ongoing_lit = true;
@@ -3481,6 +3485,9 @@ int abox_request_big_freq(struct device *dev, struct abox_data *data,
 			request - data->big_requests < array_size &&
 			request->id && request->id != id; request++) {
 	}
+
+	if (!audio_pm_qos_big)
+		audio_pm_qos_big = cpu4_min_freq;
 
 	if (freq) {
 		freq = audio_pm_qos_big;

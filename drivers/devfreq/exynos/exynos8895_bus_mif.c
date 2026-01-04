@@ -40,7 +40,138 @@
 
 extern bool is_suspend;
 
+#define INT	0
+
 static struct exynos_devfreq_data *_data = NULL;
+
+static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_domain,
+					unsigned int freq)
+{
+	unsigned int i;
+
+	for (i =0; i < ect_domain->num_of_level; i++)
+		if (ect_domain->level[i].main_frequencies == freq) break;
+
+	return ect_domain->level[i].sub_frequencies;
+}
+
+static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
+		unsigned int min_freq, unsigned int max_freq)
+{
+	int i;
+	int ret;
+	int ch_num;
+	int size;
+	int use_level = 0;
+	int const_flag = 1;
+	unsigned int cmd[4];
+	struct ipc_config config;
+	void *min_block;
+	void *dvfs_block;
+	struct ect_dvfs_domain *dvfs_domain;
+	struct ect_minlock_domain *ect_domain;
+#ifdef CONFIG_EXYNOS_DVFS_MANAGER
+	struct exynos_dm_freq *const_table;
+#endif
+	dvfs_block = ect_get_block(BLOCK_DVFS);
+	if (dvfs_block == NULL)
+		return -ENODEV;
+
+	dvfs_domain = ect_dvfs_get_domain(dvfs_block, "dvfs_mif");
+	if (dvfs_domain == NULL)
+		return -ENODEV;
+
+	/* Although there is not any constraint, MIF table should be sent to FVP */
+	min_block = ect_get_block(BLOCK_MINLOCK);
+	if (min_block == NULL) {
+		dev_info(data->dev, "There is not a min block in ECT\n");
+		const_flag = 0;
+	}
+
+	ect_domain = ect_minlock_get_domain(min_block, "dvfs_mif");
+	if (ect_domain == NULL) {
+		dev_info(data->dev, "There is not a domain in min block\n");
+		const_flag = 0;
+	}
+
+#ifdef CONFIG_EXYNOS_DVFS_MANAGER
+	if(const_flag) {
+		data->constraint[INT] = kzalloc(sizeof(struct exynos_dm_constraint), GFP_KERNEL);
+		if (data->constraint[INT] == NULL) {
+			dev_err(data->dev, "failed to allocate constraint\n");
+			return -ENOMEM;
+		}
+
+		const_table = kzalloc(sizeof(struct exynos_dm_freq) * ect_domain->num_of_level, GFP_KERNEL);
+		if (const_table == NULL) {
+			dev_err(data->dev, "failed to allocate constraint\n");
+			kfree(data->constraint[INT]);
+			return -ENOMEM;
+		}
+
+		data->constraint[INT]->guidance = true;
+		data->constraint[INT]->constraint_type = CONSTRAINT_MIN;
+		data->constraint[INT]->constraint_dm_type = DM_INT;
+		data->constraint[INT]->table_length = ect_domain->num_of_level;
+		data->constraint[INT]->freq_table = const_table;
+	}
+#endif
+	ret = acpm_ipc_request_channel(data->dev->of_node, NULL, &ch_num, &size);
+	if (ret) {
+		dev_err(data->dev, "acpm request channel is failed, id:%u, size:%u\n", ch_num, size);
+		return -EINVAL;
+	}
+
+	config.cmd = cmd;
+	config.response = true;
+	config.indirection = false;
+
+	for (i = 0; i < dvfs_domain->num_of_level; i++) {
+		if (data->opp_list[i].freq > max_freq ||
+				data->opp_list[i].freq < min_freq)
+			continue;
+
+		config.cmd[0] = use_level;
+		config.cmd[1] = data->opp_list[i].freq;
+		config.cmd[2] = DATA_INIT;
+		config.cmd[3] = 0;
+#ifdef CONFIG_EXYNOS_DVFS_MANAGER
+		if (const_flag) {
+			const_table[use_level].master_freq = data->opp_list[i].freq;
+			const_table[use_level].constraint_freq
+				= ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
+
+			if (const_table[use_level].constraint_freq == 267000)
+				const_table[use_level].constraint_freq = 400000;
+
+			config.cmd[3] = const_table[use_level].constraint_freq;
+			pr_info("%s: mif freq: %u - int constraint_freq: %u\n", __func__, data->opp_list[i].freq, 
+					config.cmd[3]);
+		}
+#endif
+		ret = acpm_ipc_send_data(ch_num, &config);
+		if (ret) {
+			dev_err(data->dev, "make constraint table is failed");
+			return -EINVAL;
+		}
+		use_level++;
+	}
+	/* Send MIF initial freq and the number of constraint data to FVP */
+	if (const_flag) {
+		config.cmd[0] = use_level;
+		config.cmd[1] = (unsigned int)data->devfreq_profile.initial_freq;
+		config.cmd[2] = DATA_INIT;
+		config.cmd[3] = SET_CONST;
+
+		ret = acpm_ipc_send_data(ch_num, &config);
+		if (ret) {
+			dev_err(data->dev, "failed to send nr_constraint and init freq");
+			return -EINVAL;
+		}
+		pr_info("%s: MIF use_level: %d\n", __func__, use_level);
+	}
+	return 0;
+}
 
 static int exynos8895_devfreq_mif_cmu_dump(struct exynos_devfreq_data *data)
 {
@@ -189,14 +320,17 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 			dev_pm_opp_disable(data->dev, data->opp_list[i].freq);
 	}
 
-	data->boot_freq = data->max_freq;
-	data->devfreq_profile.initial_freq = data->max_freq;
+	if (data->max_freq < data->boot_freq) {
+		data->boot_freq = data->max_freq;
+		data->devfreq_profile.initial_freq = data->max_freq;
+	}
 
-	ret = cal_dfs_set_rate(data->dfs_id, data->boot_freq);
-	if (!ret)
-		bts_update_scen(BS_MIF_CHANGE, data->boot_freq);
-	else
-		dev_err(data->dev, "failed to set boot_freq %u Khz to CAL\n", data->boot_freq);
+	ret = exynos8895_mif_constraint_parse(data, data->min_freq, data->max_freq);
+	if (ret) {
+		dev_err(data->dev, "failed to parse constraint table\n");
+		return -EINVAL;
+	}
+
 	cur_freq = cal_dfs_get_rate(data->dfs_id);
 	dev_info(data->dev, "cur_freq: %u Khz - boot_freq: %u Khz - min_freq: %u Khz - max_freq: %u Khz\n",
 			cur_freq, data->boot_freq, data->min_freq, data->max_freq);

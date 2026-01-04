@@ -22,13 +22,14 @@
 #include "gpu_dvfs_handler.h"
 
 extern int set_hmp_boost(int enable);
+extern struct kbase_device *pkbdev;
 
 struct pm_qos_request exynos5_g3d_mif_min_qos;
 struct pm_qos_request exynos5_g3d_cpu_cluster0_min_qos;
 struct pm_qos_request exynos5_g3d_cpu_cluster1_min_qos;
 
-extern struct kbase_device *pkbdev;
 static bool gpu_pmqos_ongoing = false;
+static bool mif_boost_ongoing = false;
 
 #ifdef CONFIG_MALI_PM_QOS
 int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
@@ -67,25 +68,25 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			return -ENOENT;
 		}
 		KBASE_DEBUG_ASSERT(platform->step >= 0);
+		if (!mif_boost_ongoing)
+			pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->table[platform->step].mem_freq);
 		if ((platform->ctx_need_qos || platform->ctx_vk_need_qos || (pkbdev->pm.backend.metrics.is_full_compute_util)) && (!gpu_pmqos_ongoing)) {
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			set_hmp_boost(1);
 			set_hmp_aggressive_up_migration(true);
 			set_hmp_aggressive_yield(true);
-			mutex_lock(&platform->gpu_vk_boost_lock);
+			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			if (platform->cl_boost) {
-				gpu_dvfs_boost_lock(GPU_DVFS_BOOST_SET);
 				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->gpu_vk_boost_mif_min_clk_lock);
+				mif_boost_ongoing = true;
 				if (platform->cl_boost == 2) {
-					pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, platform->table[platform->step].cpu_little_min_freq);
-					pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, platform->table[platform->step].cpu_big_min_freq);
+					pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, PM_QOS_CLUSTER0_FREQ_MAX_DEFAULT_VALUE);
+					pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, PM_QOS_CLUSTER1_FREQ_MAX_DEFAULT_VALUE);
 				}
 			} else {
-				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->table[platform->step].mem_freq);
+				mif_boost_ongoing = false;
 			}
 			gpu_pmqos_ongoing = true;
-			mutex_unlock(&platform->gpu_vk_boost_lock);
-			mutex_unlock(&platform->gpu_sched_hmp_lock);
 		}
 		break;
 	case GPU_CONTROL_PM_QOS_RESET:
@@ -94,20 +95,18 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "%s: PM QOS ERROR : pm_qos deinit -> reset\n", __func__);
 			return -ENOENT;
 		}
-		if (!platform->ctx_need_qos && !platform->ctx_vk_need_qos && (!pkbdev->pm.backend.metrics.is_full_compute_util) && gpu_pmqos_ongoing) {
-			mutex_lock(&platform->gpu_sched_hmp_lock);
-			mutex_lock(&platform->gpu_vk_boost_lock);
-			gpu_dvfs_boost_lock(GPU_DVFS_BOOST_UNSET);
-			pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
+		if (gpu_pmqos_ongoing) {
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, 0);
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, 0);
+			pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
 			/* unset hmp boost */
+			mutex_lock(&platform->gpu_sched_hmp_lock);
 			set_hmp_boost(0);
 			set_hmp_aggressive_up_migration(false);
 			set_hmp_aggressive_yield(false);
-			gpu_pmqos_ongoing = false;
-			mutex_unlock(&platform->gpu_vk_boost_lock);
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
+			gpu_pmqos_ongoing = false;
+			mif_boost_ongoing = false;
 		}
 		break;
 	default:

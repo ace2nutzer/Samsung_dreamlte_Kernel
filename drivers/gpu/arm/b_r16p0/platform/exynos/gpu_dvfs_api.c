@@ -218,13 +218,26 @@ int gpu_dvfs_boost_lock(gpu_dvfs_boost_command boost_command)
 
 	switch (boost_command) {
 	case GPU_DVFS_BOOST_SET:
-		if (platform->boost_gpu_min_lock) {
+		if (platform->boost_gpu_min_lock)
 			gpu_dvfs_clock_lock(GPU_DVFS_MIN_LOCK, BOOST_LOCK, platform->boost_gpu_min_lock);
-		}
-		GPU_LOG(DVFS_INFO, DUMMY, 0u, 0u, "%s: boost mode is enabled (GPU %d)\n",
-				__func__, platform->boost_gpu_min_lock);
+#ifdef CONFIG_MALI_PM_QOS
+		if (platform->boost_egl_min_lock)
+			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_SET);
+#endif /* CONFIG_MALI_PM_QOS */
+		GPU_LOG(DVFS_INFO, DUMMY, 0u, 0u, "%s: boost mode is enabled (CPU: %d, GPU %d)\n",
+				__func__, platform->boost_egl_min_lock, platform->boost_gpu_min_lock);
 		break;
 	case GPU_DVFS_BOOST_UNSET:
+		if (platform->boost_gpu_min_lock)
+			gpu_dvfs_clock_lock(GPU_DVFS_MIN_UNLOCK, BOOST_LOCK, 0);
+#ifdef CONFIG_MALI_PM_QOS
+		if (platform->boost_egl_min_lock)
+			gpu_pm_qos_command(platform, GPU_CONTROL_PM_QOS_EGL_RESET);
+#endif /* CONFIG_MALI_PM_QOS */
+		GPU_LOG(DVFS_INFO, DUMMY, 0u, 0u, "%s: boost mode is disabled (CPU: %d, GPU %d)\n",
+				__func__, platform->boost_egl_min_lock, platform->boost_gpu_min_lock);
+		break;
+	case GPU_DVFS_BOOST_GPU_UNSET:
 		if (platform->boost_gpu_min_lock)
 			gpu_dvfs_clock_lock(GPU_DVFS_MIN_UNLOCK, BOOST_LOCK, 0);
 		GPU_LOG(DVFS_INFO, DUMMY, 0u, 0u, "%s: boost mode is disabled (GPU %d)\n",
@@ -486,12 +499,10 @@ int gpu_dvfs_get_level(int clock)
 	int i;
 
 	DVFS_ASSERT(platform);
-/*
-	if ((clock < platform->gpu_min_clock) ||
-	    (!platform->using_max_limit_clock && (clock > platform->gpu_max_clock)) ||
-	    (platform->using_max_limit_clock &&  (clock > platform->gpu_max_clock_limit)))
+
+	if ((clock < platform->gpu_min_clock) || (clock > platform->gpu_max_clock_limit))
 		return -1;
-*/
+
 	for (i = 0; i < platform->table_size; i++) {
 		if (platform->table[i].clock == clock)
 			return i;

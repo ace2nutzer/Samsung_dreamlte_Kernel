@@ -886,7 +886,7 @@
 		card-detect-delay = <200>;
 		data-timeout = <200>;
 		hto-timeout = <80>;
-		qos-int-level = <400000>;
+		qos-int-level = <667000>;
 		clock-frequency = <800000000>;
 		samsung,dw-mshc-sdr-timing = <3 0 2 0>;
 		samsung,dw-mshc-ddr-timing = <3 0 2 1>;
@@ -2228,14 +2228,14 @@
 				dual_video_uhd_swvdis_int_cam = <DVFS_INT_CAM_L1>;
 				dual_video_uhd_swvdis_cam = <DVFS_CAM_L2>;
 				dual_video_uhd_swvdis_mif = <DVFS_MIF_L5>;
-				dual_video_uhd_swvdis_int = <DVFS_INT_L1>;
+				dual_video_uhd_swvdis_int = <DVFS_INT_L0>;
 				dual_video_uhd_swvdis_i2c = <0>;
 				dual_video_uhd_swvdis_hpg = <6>;
 
 				dual_video_uhd_capture_swvdis_int_cam = <DVFS_INT_CAM_L1>;
 				dual_video_uhd_capture_swvdis_cam = <DVFS_CAM_L2>;
 				dual_video_uhd_capture_swvdis_mif = <DVFS_MIF_L4>;
-				dual_video_uhd_capture_swvdis_int = <DVFS_INT_L1>;
+				dual_video_uhd_capture_swvdis_int = <DVFS_INT_L0>;
 				dual_video_uhd_capture_swvdis_i2c = <0>;
 				dual_video_uhd_capture_swvdis_hpg = <6>;
 
@@ -2248,7 +2248,7 @@
 
 				dual_sync_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_capture_int = <DVFS_INT_L5>;
 				dual_sync_capture_i2c = <0>;
 				dual_sync_capture_hpg = <1>;
@@ -2262,7 +2262,7 @@
 
 				dual_sync_video_fhd_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_fhd_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_video_fhd_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_video_fhd_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_video_fhd_capture_int = <DVFS_INT_L5>;
 				dual_sync_video_fhd_capture_i2c = <0>;
 				dual_sync_video_fhd_capture_hpg = <1>;
@@ -2276,7 +2276,7 @@
 
 				dual_sync_video_uhd_capture_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_uhd_capture_cam = <DVFS_CAM_L2>;
-				dual_sync_video_uhd_capture_mif = <DVFS_MIF_L2>;
+				dual_sync_video_uhd_capture_mif = <DVFS_MIF_L0>;
 				dual_sync_video_uhd_capture_int = <DVFS_INT_L5>;
 				dual_sync_video_uhd_capture_i2c = <0>;
 				dual_sync_video_uhd_capture_hpg = <1>;
@@ -2284,14 +2284,14 @@
 				dual_sync_video_uhd_swvdis_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_uhd_swvdis_cam = <DVFS_CAM_L2>;
 				dual_sync_video_uhd_swvdis_mif = <DVFS_MIF_L4>;
-				dual_sync_video_uhd_swvdis_int = <DVFS_INT_L1>;
+				dual_sync_video_uhd_swvdis_int = <DVFS_INT_L0>;
 				dual_sync_video_uhd_swvdis_i2c = <0>;
 				dual_sync_video_uhd_swvdis_hpg = <6>;
 
 				dual_sync_video_uhd_capture_swvdis_int_cam = <DVFS_INT_CAM_L1>;
 				dual_sync_video_uhd_capture_swvdis_cam = <DVFS_CAM_L2>;
-				dual_sync_video_uhd_capture_swvdis_mif = <DVFS_MIF_L2>;
-				dual_sync_video_uhd_capture_swvdis_int = <DVFS_INT_L1>;
+				dual_sync_video_uhd_capture_swvdis_mif = <DVFS_MIF_L0>;
+				dual_sync_video_uhd_capture_swvdis_int = <DVFS_INT_L0>;
 				dual_sync_video_uhd_capture_swvdis_i2c = <0>;
 				dual_sync_video_uhd_capture_swvdis_hpg = <6>;
 
@@ -2353,8 +2353,8 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
-				video_high_speed_240fps_int = <DVFS_INT_L2>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
+				video_high_speed_240fps_int = <DVFS_INT_L0>;
 				video_high_speed_240fps_i2c = <0>;
 				video_high_speed_240fps_hpg = <1>;
 
@@ -2588,8 +2588,8 @@
 
 				video_high_speed_240fps_int_cam = <DVFS_INT_CAM_L0>;
 				video_high_speed_240fps_cam = <DVFS_CAM_L0>;
-				video_high_speed_240fps_mif = <DVFS_MIF_L2>;
-				video_high_speed_240fps_int = <DVFS_INT_L2>;
+				video_high_speed_240fps_mif = <DVFS_MIF_L0>;
+				video_high_speed_240fps_int = <DVFS_INT_L0>;
 				video_high_speed_240fps_i2c = <0>;
 
 				max_int_cam = <DVFS_INT_CAM_L0>;
@@ -3420,14 +3420,14 @@
 			qos {
 				cl0 {
 					qos,label="LIT";
-					qos,delay_time=<10>;
+					qos,delay_time=<9>;
 					qos,table_size=<9>;
 					qos,table=<1690000 1456000 1248000 1053000 949000 832000 715000 598000 455000>;
 				};
 
 				cl1 {
 					qos,label="BIG";
-					qos,delay_time=<10>;
+					qos,delay_time=<8>;
 					qos,table_size=<13>;
 					qos,table=<2314000 2158000 2002000 1937000 1807000 1703000 1469000 1261000
 						1170000 1066000 962000 858000 741000>;
@@ -3477,7 +3477,7 @@
 			net_boost,table= <
 				100 0 0 1053000 0 845000 0 0 1 0
 				150 0 0 1248000 0 1014000 0 0 1 0
-				200 1261000 0 1456000 0 1352000 0 0 1 0
+				200 12610000 0 1690000 0 1794000 0 0 1 0
 				>;
 		};
 		/* Example
@@ -3486,7 +3486,7 @@
 			net_boost,node="";
 			net_boost,sysnode="/sys/class/mmc_host/mmc0/trans_count";
 			net_boost,table_size = <1>;
-			net_boost,table= <64 0 0 1248000 0 1352000 667000 0 0 1>;
+			net_boost,table= <64 0 0 1274000 0 845000 400000 0 0>;
 		};
 		*/
 		boot_device@2 {
@@ -3495,8 +3495,8 @@
 			net_boost,sysnode="/sys/class/scsi_host/host0/transferred_cnt";
 			net_boost,table_size = <2>;
 			net_boost,table= <
-				112 0 0 1456000 0 1352000 667000 0 0 1
-				800 1066000 0 1456000 0 1352000 667000 0 0 1
+				112 0 0 1456000 0 1352000 0 0 0 0
+				800 1066000 0 1456000 0 1539000 0 0 0 1
 				>;
 		};
 		boot_device@3 {
@@ -3504,9 +3504,9 @@
 			net_boost,node="p2p-wlan0-0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				30 1170000 0 1248000 0 0 0 0 0 0
-				90 1703000 0 1456000 0 0 267000 0 0 0
-				300 1703000 0 1456000 0 546000 267000 1 1 1
+				30 1144000 0 1170000 0 0 0 0 0 0
+				90 1872000 0 1586000 0 0 255000 0 0 0
+				300 2080000 0 1586000 0 546000 255000 1 1 1
 				>;
 		};
 		boot_device@4 {
@@ -3516,9 +3516,9 @@
 			net_boost,table= <
 				1 0 0 0 0 0 0 0 0 0
 				100 1066000 0 0 0 1014000 0 0 0 0
-				200 1170000 0 0 0 1352000 0 0 0 1
-				300 1261000 0 0 0 1352000 0 0 0 1
-				400 1469000 0 0 0 1352000 0 0 0 1
+				200 1117000 0 0 0 1794000 0 0 0 0
+				300 1261000 0 0 0 1794000 0 0 0 0
+				400 1469000 0 0 0 1794000 0 0 0 0
 				>;
 		};
 
@@ -3527,8 +3527,8 @@
 			net_boost,node="rmnet_data0 rmnet_data1 rmnet_data2 rmnet_data3 rmnet_data4 rmnet_data5 rmnet_data6 rmnet_data7";
 			net_boost,table_size = <2>;
 			net_boost,table= <
-				10 0 0 1053000 0 845000 0 0 1 0 /* 10Mbps little core 1.1G */
-				100 0 0 1456000 0 845000 0 0 1 0 /* 100Mbps little core 1.5G */
+				10 0 0 1066000 0 845000 0 0 1 0 /* 10Mbps little core 1.1G */
+				100 0 0 1482000 0 845000 0 0 1 0 /* 100Mbps little core 1.5G */
 				>;
 		};
 
@@ -3555,10 +3555,10 @@
 			net_boost,node="wlan0";
 			net_boost,table_size = <4>;
 			net_boost,table= <
-				60 1703000 0 1456000 0 0 0 0 0 0
-				150 1703000 0 1456000 0 0 0 0 0 0
-				200 1703000 0 1456000 0 1352000 400000 1 1 1
-				300 1703000 0 1456000 0 1352000 667000 1 1 1
+				60 1664000 0 1586000 0 0 0 0 0 0
+				150 1664000 0 1586000 0 0 0 0 0 0
+				200 2288000 0 1586000 0 1352000 400000 1 1 1
+				300 2496000 0 1586000 0 2002000 533000 1 1 1
 				>;
 		};
 
@@ -3567,10 +3567,10 @@
 			net_boost,node="wlan0";
 			net_boost,table_size = <4>;
 			net_boost,table= <
-				100 1170000 0 1053000 0 0 0 0 0 0
-				150 1469000 0 1456000 0 0 0 0 0 0
-				200 1703000 0 1456000 0 845000 400000 1 1 1
-				300 1703000 0 1456000 0 1352000 667000 1 1 1
+				100 1144000 0 1066000 0 0 0 0 0 0
+				150 1456000 0 1378000 0 0 0 0 0 0
+				200 1664000 0 1586000 0 845000 400000 1 1 1
+				300 2288000 0 1586000 0 1352000 533000 1 1 1
 				>;
 		};
 
@@ -3579,9 +3579,9 @@
 			net_boost,node="swlan0";
 			net_boost,table_size = <3>;
 			net_boost,table= <
-				20 1469000 0 1248000 0 0 0 0 0 0
-				60 1703000 0 1456000 0 0 0 0 0 0
-				180 1703000 0 1456000 0 845000 400000 1 1 1
+				20 1456000 0 1170000 0 0 0 0 0 0
+				60 1664000 0 1586000 0 0 0 0 0 0
+				180 2288000 0 1586000 0 845000 400000 1 1 1
 				>;
 		};
 	};

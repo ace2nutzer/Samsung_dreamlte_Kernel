@@ -471,8 +471,8 @@ static void argos_freq_lock(int type, int level)
 	} else {
 		REMOVE_PM_QOS(&qos->int_qos_req);
 	}
-	//pr_info("%s name:%s, CPU_MIN=%d, CPU_MAX=%d, KFC_MIN=%d, KFC_MAX=%d, MIF=%d, INT=%d\n",
-	//	__func__, cname, cpu_min_freq, cpu_max_freq, kfc_min_freq, kfc_max_freq, mif_freq, int_freq);
+	pr_info("%s name:%s, CPU_MIN=%d, CPU_MAX=%d, KFC_MIN=%d, KFC_MAX=%d, MIF=%d, INT=%d\n",
+		__func__, cname, cpu_min_freq, cpu_max_freq, kfc_min_freq, kfc_max_freq, mif_freq, int_freq);
 }
 
 void argos_block_enable(char *req_name, bool set)

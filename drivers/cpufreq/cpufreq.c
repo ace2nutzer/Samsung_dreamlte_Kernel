@@ -39,12 +39,6 @@
 #include <linux/a2n.h>
 #endif
 
-unsigned int cpu0_min_freq = 0;
-unsigned int cpu0_max_freq = 1690000;
-
-unsigned int cpu4_min_freq = 0;
-unsigned int cpu4_max_freq = 2314000;
-
 static LIST_HEAD(cpufreq_policy_list);
 
 static inline bool policy_is_inactive(struct cpufreq_policy *policy)

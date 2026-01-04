@@ -39,6 +39,12 @@ LIST_HEAD(domains);
 static int self_discharging;
 #endif
 
+unsigned int cpu0_min_freq = 0;
+unsigned int cpu0_max_freq = 0;
+
+unsigned int cpu4_min_freq = 0;
+unsigned int cpu4_max_freq = 0;
+
 /*********************************************************************
  *                          HELPER FUNCTION                          *
  *********************************************************************/
@@ -538,30 +544,29 @@ void set_suspend_cpufreq(void)
 	if (!enable_suspend_freqs)
 		return;
 
-	if (is_suspend) {
-		if (cpu0_suspend_max_freq) {
-			if (!cpu0_suspend_min_freq)
-				cpu0_suspend_min_freq = cpu0_min_freq;
+	if (!cpu0_suspend_max_freq)
+		cpu0_suspend_max_freq = cpu0_max_freq;
+	if (!cpu0_suspend_min_freq)
+		cpu0_suspend_min_freq = cpu0_min_freq;
+	if (!cpu4_suspend_max_freq)
+		cpu4_suspend_max_freq = cpu4_max_freq;
+	if (!cpu4_suspend_min_freq)
+		cpu4_suspend_min_freq = cpu4_min_freq;
 
-			for_each_cpu(cpu, &hmp_slow_cpu_mask) {
-				if (cpu_online(cpu)) {
-					if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq))
-						pr_err("%s: failed to update policy0 for suspend!\n", __func__);
-					break;
-				}
+	if (is_suspend) {
+		for_each_cpu(cpu, &hmp_slow_cpu_mask) {
+			if (cpu_online(cpu)) {
+				if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq))
+					pr_err("%s: failed to update policy0 for suspend!\n", __func__);
+				break;
 			}
 		}
 
-		if (cpu4_suspend_max_freq) {
-			if (!cpu4_suspend_min_freq)
-				cpu4_suspend_min_freq = cpu4_min_freq;
-
-			for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-				if (cpu_online(cpu)) {
-					if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq))
-						pr_err("%s: failed to update policy4 for suspend!\n", __func__);
-					break;
-				}
+		for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+			if (cpu_online(cpu)) {
+				if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq))
+					pr_err("%s: failed to update policy4 for suspend!\n", __func__);
+				break;
 			}
 		}
 	} else {
@@ -932,9 +937,9 @@ void exynos_cpufreq_reset_boot_qos(void)
 			continue;
 
 		pm_qos_update_request_timeout(&domain->max_qos_req,
-				domain->boot_qos, 40 * USEC_PER_SEC);
+				domain->boot_qos, 30 * USEC_PER_SEC);
 		pm_qos_update_request_timeout(&domain->min_qos_req,
-				domain->boot_qos, 40 * USEC_PER_SEC);
+				domain->boot_qos, 30 * USEC_PER_SEC);
 	}
 }
 EXPORT_SYMBOL(exynos_cpufreq_reset_boot_qos);
@@ -1097,7 +1102,6 @@ static __init int get_jig_status(char *arg)
 early_param("jig", get_jig_status);
 #endif
 
-#if 0
 static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
@@ -1136,7 +1140,6 @@ static __init void set_boot_qos(struct exynos_cpufreq_domain *domain,
 	}
 #endif
 }
-#endif
 
 static __init int init_pm_qos(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
@@ -1168,7 +1171,7 @@ static __init int init_pm_qos(struct exynos_cpufreq_domain *domain,
 	pm_qos_add_request(&domain->max_qos_req,
 			domain->pm_qos_max_class, domain->max_freq);
 
-	//set_boot_qos(domain, dn);
+	set_boot_qos(domain, dn);
 
 	return 0;
 }
@@ -1253,8 +1256,8 @@ static int init_constraint_table_dt(struct exynos_cpufreq_domain *domain,
 			continue;
 
 		for (c_index = 0; c_index < size / 2; c_index++) {
-			/* find row same or nearby frequency */
-			if (freq <= table[c_index].master_freq)
+			/* find row same frequency */
+			if (freq == table[c_index].master_freq)
 				dm->c.freq_table[index].constraint_freq
 					= table[c_index].constraint_freq;
 
@@ -1262,6 +1265,7 @@ static int init_constraint_table_dt(struct exynos_cpufreq_domain *domain,
 				break;
 
 		}
+		pr_info("%s: cpu_freq: %u - constraint_freq: %u\n", __func__, freq, dm->c.freq_table[index].constraint_freq);
 	}
 
 	kfree(table);
@@ -1345,6 +1349,14 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 		domain->boot_freq = val;
 
 	domain->resume_freq = domain->boot_freq;
+
+	if (domain->id == 0) {
+		cpu0_max_freq = domain->boot_freq;
+		cpu0_min_freq = domain->min_freq;
+	} else if (domain->id == 1) {
+		cpu4_max_freq = domain->boot_freq;
+		cpu4_min_freq = domain->min_freq;
+	}
 
 	/* Initialize freq boost */
 	if (domain->boost_supported) {

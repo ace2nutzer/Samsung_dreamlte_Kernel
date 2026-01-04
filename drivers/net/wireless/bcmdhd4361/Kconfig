@@ -233,7 +233,7 @@ config BCMDHD_OOB_HOST_WAKE
 
 config SPLIT_ARGOS_SET
 	bool "Support argos table"
-	depends on BROADCOM_WIFI
+	depends on BROADCOM_WIFI && ARGOS
 	---help---
 	To support SPLIT_ARGOS_SET
 
