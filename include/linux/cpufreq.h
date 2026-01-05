@@ -717,7 +717,8 @@ extern void sanitize_cpu_dvfs(bool sanitize);
 extern void sanitize_cpu_gpu_dvfs_vol(void);
 
 #ifdef CONFIG_HOTPLUG_CPU
-extern void hotplug_big_cpu(bool hotplug);
+extern void big_cpu_online(bool online);
+extern bool is_big_cpu_online;
 #endif
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND

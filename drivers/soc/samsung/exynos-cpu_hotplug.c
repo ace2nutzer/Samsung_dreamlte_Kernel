@@ -19,6 +19,7 @@
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
+bool is_big_cpu_online = true;
 
 static int cpu_hotplug_in(const struct cpumask *mask)
 {
@@ -399,17 +400,17 @@ static const struct attribute_group cpu_hotplug_group = {
 };
 
 #ifdef CONFIG_HOTPLUG_CPU
-void hotplug_big_cpu(bool hotplug)
+void big_cpu_online(bool online)
 {
 	int cpu = 0;
 
-	if (hotplug)
+	if (!online)
 		control_cpu_hotplug(false);
 	else
 		control_cpu_hotplug(true);
 
 	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-		if (hotplug) {
+		if (!online) {
 			if (cpu_online(cpu))
 				device_offline(get_cpu_device(cpu));
 		} else {
@@ -417,6 +418,11 @@ void hotplug_big_cpu(bool hotplug)
 				device_online(get_cpu_device(cpu));
 		}
 	}
+
+	if (online)
+		is_big_cpu_online = true;
+	else
+		is_big_cpu_online = false;
 }
 #endif
 
