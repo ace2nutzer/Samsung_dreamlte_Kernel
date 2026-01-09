@@ -290,10 +290,6 @@ static void __arch_timer_setup(unsigned type,
 		}
 	}
 
-#ifdef CONFIG_SCHED_HMP_CUSTOM
-	clk->cpumask = &hmp_slow_cpu_mask;
-#endif
-
 	clk->set_state_shutdown(clk);
 
 	clockevents_config_and_register(clk, arch_timer_rate, 0xf, 0x7fffffff);

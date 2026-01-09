@@ -319,8 +319,11 @@ static void devfreq_monitor(struct work_struct *work)
 	err = update_devfreq(devfreq);
 	if (err && err != -EAGAIN)
 		dev_err(&devfreq->dev, "dvfs failed with (%d) error\n", err);
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 	mod_delayed_work_on(0, devfreq_wq, &devfreq->work,
+				msecs_to_jiffies(devfreq->profile->polling_ms));
+#elif defined(CONFIG_SCHED_HMP_CUSTOM)
+	mod_delayed_work(devfreq_wq, &devfreq->work,
 				msecs_to_jiffies(devfreq->profile->polling_ms));
 #else
 	queue_delayed_work(devfreq_wq, &devfreq->work,
@@ -340,6 +343,16 @@ static void devfreq_monitor(struct work_struct *work)
  */
 void devfreq_monitor_start(struct devfreq *devfreq)
 {
+#if defined(CONFIG_SCHED_HMP_CUSTOM)
+	struct workqueue_attrs *attrs;
+
+	attrs = alloc_workqueue_attrs(GFP_KERNEL);
+	if (attrs) {
+		cpumask_copy(attrs->cpumask, &hmp_slow_cpu_mask);
+		apply_workqueue_attrs(devfreq_wq, attrs);
+		free_workqueue_attrs(attrs);
+	}
+#endif
 	INIT_DELAYED_WORK(&devfreq->work, devfreq_monitor);
 	if (devfreq->profile->polling_ms)
 		queue_delayed_work(devfreq_wq, &devfreq->work,

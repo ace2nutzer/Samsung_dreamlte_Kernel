@@ -2177,7 +2177,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->se.avg.hmp_load_avg = 0;
 	p->se.avg.hmp_last_up_migration = 0;
 	p->se.avg.hmp_last_down_migration = 0;
+#if defined(CONFIG_SCHED_HMP)
 	trace_sched_task_runnable_ratio(p, p->se.avg.hmp_load_avg);
+#endif
 #endif
 	trace_sched_task_load_contrib(p, p->se.avg.load_avg);
 #endif

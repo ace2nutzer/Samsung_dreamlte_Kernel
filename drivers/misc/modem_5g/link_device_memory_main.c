@@ -1818,7 +1818,6 @@ static int mem_rx_setup(struct link_device *ld)
 	if (!zalloc_cpumask_var(&mld->tmask, GFP_KERNEL))
 		return -ENOMEM;
 
-#ifdef CONFIG_ARGOS
 	/* Below hard-coded mask values should be removed later on.
 	 * Like net-sysfs, argos module also should support sysfs knob,
 	 * so that user layer must be able to control these cpu mask. */
@@ -1828,6 +1827,7 @@ static int mem_rx_setup(struct link_device *ld)
 
 	cpumask_or(mld->imask, mld->imask, cpumask_of(3));
 
+#ifdef CONFIG_ARGOS
 	argos_irq_affinity_setup_label(217, "IPC", mld->imask, mld->dmask);
 #endif
 

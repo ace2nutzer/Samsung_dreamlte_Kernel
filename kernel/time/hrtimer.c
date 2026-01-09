@@ -201,7 +201,7 @@ struct hrtimer_cpu_base *get_target_base(struct hrtimer_cpu_base *base,
 }
 #endif
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 extern struct cpumask hmp_fast_cpu_mask;
 extern struct cpumask hmp_slow_cpu_mask;
 #endif
@@ -226,27 +226,19 @@ switch_hrtimer_base(struct hrtimer *timer, struct hrtimer_clock_base *base,
 	struct hrtimer_clock_base *new_base;
 	int basenum = base->index;
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 	int this_cpu = smp_processor_id();
-#ifdef CONFIG_NO_HZ_COMMON
 	int cpu = get_nohz_timer_target();
-#else
-	int cpu = 0;
-#endif
 #endif
 
 	this_cpu_base = this_cpu_ptr(&hrtimer_bases);
 	new_cpu_base = get_target_base(this_cpu_base, pinned);
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 	/* Switch the timer base to boot cluster on HMP */
 	if (timer->bounded_to_boot_cluster &&
-		cpumask_test_cpu(this_cpu, &hmp_fast_cpu_mask) && !pinned
-#ifdef CONFIG_NO_HZ_COMMON
-		&& this_cpu_base->migration_enabled) {
-#else
-		) {
-#endif
+		cpumask_test_cpu(this_cpu, &hmp_fast_cpu_mask) &&
+		!pinned && this_cpu_base->migration_enabled) {
 		int bound_cpu = 0;
 
 		if (unlikely(hrtimer_callback_running(timer)))
