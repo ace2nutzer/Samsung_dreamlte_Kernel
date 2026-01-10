@@ -20,7 +20,9 @@
 #include <linux/fb.h>
 #include <linux/reboot.h>
 #include <linux/thermal.h>
+#include <linux/syscalls.h>
 #include <linux/kthread.h>
+#include <linux/cpufreq.h>
 
 #if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL)
 #include "exynos_tmu.h"
@@ -46,11 +48,11 @@
 
 struct exynos_context *platform = NULL;
 
-/* custom GPU DVFS for Mali-G71 MP20 */
-#define GPU_DVFS_TJMAX			(EXYNOS_MAX_TEMP) /* shutdown temp */
+/* custom GPU DVFS driver for Mali-G71 MP20 */
+#define GPU_DVFS_TJMAX			(EXYNOS_MAX_TEMP - 5) /* shutdown temp */
 #define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(GPU_DVFS_TJMAX - 5)
 #define GPU_DVFS_RANGE_MAX_TEMP		(GPU_DVFS_AVOID_SHUTDOWN_TEMP - 5)
-#define GPU_DVFS_MARGIN_TEMP		(10)
+#define GPU_DVFS_MARGIN_TEMP		(15)
 #define GPU_DVFS_STEP_DOWN_TEMP		(5)
 #define GPU_DVFS_DEBUG			(0)
 
@@ -70,7 +72,6 @@ static int gpu_temp = 0;
 static unsigned int gpu_dvfs_limit_freq = 0;
 static int gpu_dvfs_min_temp = 0;
 static struct task_struct *gpu_dvfs_thread = NULL;
-static void sanitize_gpu_dvfs(bool sanitize);
 
 
 /* for ondemand gov */
@@ -2101,6 +2102,7 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 	sprintf(buf, "%s[peak_temp]\t%d °C\n",buf, gpu_dvfs_peak_temp);
 	sprintf(buf, "%s[max_temp_user]\t%d °C\n",buf, gpu_dvfs_max_temp_user);
 	sprintf(buf, "%s[max_temp_cal]\t%d °C\n",buf, gpu_dvfs_max_temp_cal);
+	sprintf(buf, "%s[gpu_dvfs_range_max_temp]\t%u °C\n",buf, GPU_DVFS_RANGE_MAX_TEMP);
 	sprintf(buf, "%s[dvfs_avoid_shutdown_temp]\t%u °C\n",buf, GPU_DVFS_AVOID_SHUTDOWN_TEMP);
 	sprintf(buf, "%s[dvfs_shutdown_temp]\t%u °C\n",buf, GPU_DVFS_TJMAX);
 	sprintf(buf, "%s[tjmax]\t\t%u °C\n",buf, GPU_DVFS_TJMAX);
@@ -2130,7 +2132,7 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp > GPU_DVFS_RANGE_MAX_TEMP) {
-			pr_err("%s: GPU DVFS: out of max range: %d\n", __func__, (int)GPU_DVFS_RANGE_MAX_TEMP);
+			pr_err("%s: GPU DVFS: out of max range: %d C\n", __func__, (int)GPU_DVFS_RANGE_MAX_TEMP);
 			goto err;
 		}
 		gpu_dvfs_max_temp_user = tmp;
@@ -2150,22 +2152,24 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_peak_temp(struct kobject *kobj, struct
 
 static void set_gpu_dvfs_limit(unsigned int freq)
 {
-	if (freq > platform->gpu_max_clock)
-		freq = platform->gpu_max_clock;
-
-	if (freq > gpu_dvfs_limit_freq_vol) {
-		gpu_dvfs_limit_freq = freq;
+	if (freq > platform->gpu_max_clock) {
+		gpu_dvfs_limit_freq = platform->gpu_max_clock;
 		return;
 	}
 
-	if (gpu_dvfs_limit_freq == freq)
+	if (freq > gpu_dvfs_limit_freq_vol) {
+		gpu_dvfs_limit_freq = gpu_dvfs_limit_freq_vol;
+		return;
+	}
+
+	if (freq == gpu_dvfs_limit_freq)
 		return;
 
 	gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, DVFS_LOCK, freq);
 	gpu_dvfs_limit_freq = freq;
 }
 
-static void sanitize_gpu_dvfs(bool sanitize)
+void sanitize_gpu_dvfs(bool sanitize)
 {
 	if (unlikely(!platform->gpu_max_clock)) {
 		pr_warn("%s: GPU DVFS: platform->gpu_max_clock is NULL! printing stack ...\n", __func__);
@@ -2183,6 +2187,7 @@ static void sanitize_gpu_dvfs(bool sanitize)
 	} else {
 		gpu_dvfs_max_temp_cal -= GPU_DVFS_STEP_DOWN_TEMP;
 	}
+
 	gpu_dvfs_min_temp = (gpu_dvfs_max_temp_cal - GPU_DVFS_MARGIN_TEMP);
 }
 
@@ -2211,6 +2216,7 @@ static int gpu_dvfs_kthread(void *nothing)
 	while (!kthread_should_stop()) {
 
 		gpu_temp = gpu_tmu_data->tmu_read(gpu_tmu_data);
+
 		if (gpu_temp == prev_temp) {
 			usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
 			continue;
@@ -2226,14 +2232,14 @@ static int gpu_dvfs_kthread(void *nothing)
 		if (gpu_temp >= GPU_DVFS_TJMAX) {
 			pr_err("%s: GPU DVFS: GPU_DVFS_TJMAX %u C reached! - CURR_TEMP: %d C ! - gpu_dvfs_max_temp_cal: %d C - gpu_dvfs_limit_freq: %u KHz\n", 
 					__func__ , GPU_DVFS_TJMAX, gpu_temp, gpu_dvfs_max_temp_cal, gpu_dvfs_limit_freq);
-			freq = FREQ_STEP_0;
-			set_gpu_dvfs_limit(freq);
-			pr_err("%s: GPU DVFS: Forcing Hardware protection shutdown ...\n", __func__);
-			orderly_poweroff(true);
+			pr_emerg("GPU DVFS: HARDWARE PROTECTION SHUTDOWN - GPU too hot.\n");
+			sys_sync();
+			kernel_power_off();
 			/*
 			 * Worst of the worst case trigger emergency restart
 			 */
-			pr_emerg("%s: CPU DVFS: Forced Hardware protection shutdown failed. Trying emergency restart ...\n", __func__);
+			pr_emerg("GPU DVFS: HARDWARE PROTECTION SHUTDOWN FAILED. Trying emergency restart.\n");
+			emergency_sync();
 			emergency_restart();
 		}
 
@@ -2242,10 +2248,8 @@ static int gpu_dvfs_kthread(void *nothing)
 					__func__ , GPU_DVFS_AVOID_SHUTDOWN_TEMP, gpu_temp, gpu_dvfs_max_temp_cal, (gpu_dvfs_max_temp_cal - GPU_DVFS_STEP_DOWN_TEMP), gpu_dvfs_limit_freq);
 			sanitize_gpu_dvfs(true);
 			freq = FREQ_STEP_4;
-			goto out;
-		}
 
-		if (gpu_temp >= gpu_dvfs_max_temp_cal) {
+		} else if (gpu_temp >= gpu_dvfs_max_temp_cal) {
 			if (gpu_dvfs_limit_freq == FREQ_STEP_7)
 				freq = FREQ_STEP_6;
 			else if (gpu_dvfs_limit_freq == FREQ_STEP_6)
@@ -2258,7 +2262,7 @@ static int gpu_dvfs_kthread(void *nothing)
 				freq = FREQ_STEP_2;
 			else if (gpu_dvfs_limit_freq == FREQ_STEP_2)
 				freq = FREQ_STEP_1;
-			else
+			else if (gpu_dvfs_limit_freq == FREQ_STEP_1)
 				freq = FREQ_STEP_0;
 	
 		} else if (gpu_temp <= gpu_dvfs_min_temp) {
@@ -2274,14 +2278,16 @@ static int gpu_dvfs_kthread(void *nothing)
 				freq = FREQ_STEP_5;
 			else if (gpu_dvfs_limit_freq == FREQ_STEP_5)
 				freq = FREQ_STEP_6;
-			else
+			else if (gpu_dvfs_limit_freq == FREQ_STEP_6)
 				freq = FREQ_STEP_7;
 		}
-out:
+
 		prev_temp = gpu_temp;
-		set_gpu_dvfs_limit(freq);
+		if (freq)
+			set_gpu_dvfs_limit(freq);
 		usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
 		continue;
+
 	}
 
 	return 0;
@@ -2628,18 +2634,21 @@ void gpu_remove_sysfs_file(struct device *dev)
 
 static int __init gpu_dvfs_init(void)
 {
+	struct sched_param gpu_param = { .sched_priority = 96 }; // RT priority 1 (low) to 99 (high)
+
 	if (!platform)
 		platform = (struct exynos_context *)pkbdev->platform_context;
 
 	/* GPU DVFS KTHREAD */
 	gpu_dvfs_thread = kthread_run(gpu_dvfs_kthread, NULL, "gpu_dvfs");
 	if (IS_ERR(gpu_dvfs_thread)) {
-		pr_err("%s: GPU DVFS: failed to create and start kthread.", __func__);
+		pr_err("%s: GPU DVFS: failed to create and start kthread.\n", __func__);
 		goto exit;
 	}
 
 	set_cpus_allowed_ptr(gpu_dvfs_thread, &hmp_slow_cpu_mask);
-	set_user_nice(gpu_dvfs_thread, MIN_NICE);
+	if (sched_setscheduler(gpu_dvfs_thread, SCHED_FIFO, &gpu_param) < 0)
+		pr_err("%s: GPU DVFS: Failed to set RT priority.\n", __func__);
 
 	return 0;
 

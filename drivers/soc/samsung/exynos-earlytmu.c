@@ -113,11 +113,6 @@ static int exynos_earlytmu_read(void)
 		break;
 	}
 
-	if (temp > EXYNOS_MAX_TEMP)
-		temp = EXYNOS_MAX_TEMP;
-	if (temp < EXYNOS_MIN_TEMP)
-		temp = EXYNOS_MIN_TEMP;
-
 	return temp;
 }
 

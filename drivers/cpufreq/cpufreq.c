@@ -683,12 +683,15 @@ show_one(user_scaling_max_freq, max);
 
 static ssize_t show_scaling_cur_freq(struct cpufreq_policy *policy, char *buf)
 {
-	ssize_t ret;
+	ssize_t ret = 0;
 
-	if (cpufreq_driver && cpufreq_driver->setpolicy && cpufreq_driver->get)
+	if ((!is_big_cpu_online) && (policy->cpu == 4))
+		ret = sprintf(buf, "%u\n", 0);
+	else if (cpufreq_driver && cpufreq_driver->setpolicy && cpufreq_driver->get)
 		ret = sprintf(buf, "%u\n", cpufreq_driver->get(policy->cpu));
 	else
 		ret = sprintf(buf, "%u\n", policy->cur);
+
 	return ret;
 }
 
@@ -807,7 +810,9 @@ static ssize_t show_cpuinfo_cur_freq(struct cpufreq_policy *policy,
 {
 	unsigned int cur_freq = __cpufreq_get(policy);
 
-	if (cur_freq)
+	if ((!is_big_cpu_online) && (policy->cpu == 4))
+		return sprintf(buf, "%u\n", 0);
+	else if (cur_freq)
 		return sprintf(buf, "%u\n", cur_freq);
 
 	return sprintf(buf, "<unknown>\n");

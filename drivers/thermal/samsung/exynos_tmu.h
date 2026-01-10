@@ -75,6 +75,7 @@ enum sensing_type {
 	MAX,
 	MIN,
 	BALANCE,
+	NORMAL,
 	END_OF_TYPE,
 };
 
@@ -83,6 +84,7 @@ static const char * const sensing_method[] = {
 	[MAX] = "max",
 	[MIN] = "min",
 	[BALANCE] = "balance",
+	[NORMAL] = "normal",
 };
 
 enum thermal_zone_name {

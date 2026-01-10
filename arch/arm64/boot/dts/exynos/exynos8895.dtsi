@@ -4573,7 +4573,7 @@
 		interrupts = <0 451 0>;
 		tmu_name = "MNGS";
 		id = <0>;
-		sensors = <61>;
+		sensors = <4>;
 		sensing_mode = "max";
 		hotplug_enable = <0>;
 		hotplug_in_threshold = <0>;
@@ -4599,7 +4599,7 @@
 		tmu_name = "GPU";
 		id = <2>;
 		sensors = <1>;
-		sensing_mode = "max";
+		sensing_mode = "normal";
 		/* gpu cooling related table */
 		/* flags, driver_data(index), frequency */
 		gpu_idx_num = <8>;
