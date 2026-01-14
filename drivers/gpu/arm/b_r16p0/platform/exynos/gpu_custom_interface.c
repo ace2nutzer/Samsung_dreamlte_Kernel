@@ -78,7 +78,7 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 unsigned int gpu_up_threshold = 75;
 bool gpu_boost = true;
 unsigned int gpu_down_threshold = 0;
-#define DOWN_THRESHOLD_MARGIN		(25)
+#define DOWN_THRESHOLD_MARGIN_MAX	(25)
 #define GPU_MIN_UP_THRESHOLD		(40)
 #define GPU_MAX_UP_THRESHOLD		(100)
 
@@ -1728,7 +1728,13 @@ out:
 
 void calc_gpu_down_threshold(void)
 {
-	gpu_down_threshold = ((gpu_up_threshold * FREQ_STEP_0 / FREQ_STEP_1) - DOWN_THRESHOLD_MARGIN);
+	unsigned int down_threshold;
+
+	down_threshold = ((gpu_up_threshold * FREQ_STEP_0 / FREQ_STEP_1) - DOWN_THRESHOLD_MARGIN_MAX);
+	if (down_threshold > DOWN_THRESHOLD_MARGIN_MAX)
+		down_threshold = DOWN_THRESHOLD_MARGIN_MAX;
+
+	gpu_down_threshold = down_threshold;
 	pr_info("[%s]: new value: %u\n",__func__, gpu_down_threshold);
 }
 

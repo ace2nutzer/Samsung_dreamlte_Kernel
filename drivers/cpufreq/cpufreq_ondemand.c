@@ -24,7 +24,7 @@
 
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(75)
-#define DOWN_THRESHOLD_MARGIN			(25)
+#define DOWN_THRESHOLD_MARGIN_MAX		(25)
 #define DEF_SAMPLING_DOWN_FACTOR		(25)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(75)
@@ -287,7 +287,13 @@ max_delay:
 
 static void update_down_threshold(struct od_dbs_tuners *od_tuners)
 {
-	od_tuners->down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL0_0 / DEF_FREQUENCY_STEP_CL0_1) - DOWN_THRESHOLD_MARGIN);
+	unsigned int down_threshold;
+
+	down_threshold = ((od_tuners->up_threshold * DEF_FREQUENCY_STEP_CL1_0 / DEF_FREQUENCY_STEP_CL1_1) - DOWN_THRESHOLD_MARGIN_MAX);
+	if (down_threshold > DOWN_THRESHOLD_MARGIN_MAX)
+		down_threshold = DOWN_THRESHOLD_MARGIN_MAX;
+
+	od_tuners->down_threshold = down_threshold;
 	pr_info("[%s] for CPU policy%d - new value: %u\n",__func__, od_tuners->policy_nr, od_tuners->down_threshold);
 }
 
