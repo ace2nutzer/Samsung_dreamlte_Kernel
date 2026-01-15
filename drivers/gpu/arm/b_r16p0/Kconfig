@@ -65,7 +65,7 @@ config MALI_DEVFREQ
 
 config MALI_DMA_FENCE
 	bool "DMA_BUF fence support for Mali"
-	depends on MALI_MIDGARD && DMA_SHARED_BUFFER
+	depends on MALI_MIDGARD && DMA_SHARED_BUFFER && SYNC_FILE
 	default n
 	help
 	  Support DMA_BUF fences for Mali.
