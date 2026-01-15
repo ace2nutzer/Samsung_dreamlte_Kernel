@@ -4888,7 +4888,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4907,7 +4907,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4926,7 +4926,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4945,7 +4945,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4964,7 +4964,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4983,7 +4983,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5002,7 +5002,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5021,7 +5021,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5040,7 +5040,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5059,7 +5059,7 @@
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <2000 0>;
+			input_booster,head_times = <500 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		}; // Input Booster -
