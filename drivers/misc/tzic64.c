@@ -23,10 +23,8 @@
 #include <linux/sched.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
-//#include <linux/android_pmem.h>
 #include <linux/io.h>
 #include <linux/types.h>
-//#include <asm/smc.h>
 
 #define TZIC_DEV "tzic"
 #define SMC_CMD_STORE_BINFO	 (-201)
@@ -123,6 +121,7 @@ static int exynos_smc_read_oemflag(uint32_t ctrl_word, uint32_t *val)
 	return 0;
 }
 
+#if 0
 static int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
 {
 	uint32_t	cmd = 0;
@@ -154,7 +153,7 @@ static int exynos_smc_read_oemflag_new(uint32_t getflag, uint32_t *val)
 	*val = reg1;
 	return 0;
 }
-
+#endif
 
 static DEFINE_MUTEX(tzic_mutex);
 static struct class *driver_class;
@@ -202,9 +201,6 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 	t_flag param = { 0, 0, 0 };
 #ifdef CONFIG_TZDEV
 	unsigned long p1, p2, p3;
-
-	//struct irs_ctx __user *ioargp = (struct irs_ctx __user *) arg;
-	//struct irs_ctx ctx = {0};
 
 	if ( _IOC_TYPE(cmd) != IOC_MAGIC  && _IOC_TYPE(cmd) != TZIC_IOC_MAGIC ) {
 		LOG(KERN_INFO "[oemflag]INVALID CMD = %d\n", cmd);
@@ -295,7 +291,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			}
 			if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 				LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-				exynos_smc_read_oemflag_new(param.name, &param.value) ;
+				//exynos_smc_read_oemflag_new(param.name, &param.value);
+				param.value = 0;
 				LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 				goto return_new_to;
 			} else {
@@ -331,7 +328,8 @@ static long tzic_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 				}
 				if ((OEMFLAG_MIN_FLAG < param.name) && (param.name < OEMFLAG_NUM_OF_FLAG)){
 					LOG(KERN_INFO "[oemflag]get_fuse_name : %u\n", param.name);
-					exynos_smc_read_oemflag_new(param.name, &param.value) ;
+					//exynos_smc_read_oemflag_new(param.name, &param.value);
+					param.value = 0;
 					LOG(KERN_INFO "[oemflag]get_oemflag_value : %u\n", param.value);
 					goto return_new_to;
 				} else {
