@@ -461,7 +461,7 @@ static struct cpufreq_driver exynos_driver = {
 };
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND
-/* suspend min/max cpufreq tunable */
+/* suspend min/max cpu/gpu-freq tunable */
 static bool enable_suspend_freqs = false;
 module_param(enable_suspend_freqs, bool, 0644);
 
@@ -474,6 +474,11 @@ static unsigned int cpu4_suspend_min_freq = 0;
 module_param(cpu4_suspend_min_freq, uint, 0644);
 
 static unsigned int cpu4_suspend_max_freq = 0;
+
+unsigned int gpu_suspend_min_freq = 0;
+module_param(gpu_suspend_min_freq, uint, 0644);
+
+unsigned int gpu_suspend_max_freq = 0;
 
 static int set_cpu0_suspend_max_freq(const char *buf, struct kernel_param *kp)
 {
@@ -537,6 +542,37 @@ out:
 }
 module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_int, &cpu4_suspend_max_freq, 0664);
 
+static int set_gpu_suspend_max_freq(const char *buf, struct kernel_param *kp)
+{
+	unsigned int tmp;
+
+#if IS_ENABLED(CONFIG_A2N)
+	if (!a2n_allow) {
+		sscanf(buf, "%u", &tmp);
+		if ((tmp != 0) && (tmp != 572000)) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			goto err;
+		}
+	}
+#endif
+
+	if (sscanf(buf, "%u", &tmp)) {
+		if (tmp > 839000) {
+			goto err;
+		}
+		gpu_suspend_max_freq = tmp;
+		goto out;
+	}
+
+err:
+	pr_err("[%s] invalid cmd\n",__func__);
+	return -EINVAL;
+
+out:
+	return 0;
+}
+module_param_call(gpu_suspend_max_freq, set_gpu_suspend_max_freq, param_get_int, &gpu_suspend_max_freq, 0664);
+
 void set_suspend_cpufreq(void)
 {
 	int cpu = 0;
@@ -544,31 +580,29 @@ void set_suspend_cpufreq(void)
 	if (!enable_suspend_freqs)
 		return;
 
-	if (!cpu0_suspend_max_freq)
-		cpu0_suspend_max_freq = cpu0_max_freq;
-	if (!cpu0_suspend_min_freq)
-		cpu0_suspend_min_freq = cpu0_min_freq;
-	if (!cpu4_suspend_max_freq)
-		cpu4_suspend_max_freq = cpu4_max_freq;
-	if (!cpu4_suspend_min_freq)
-		cpu4_suspend_min_freq = cpu4_min_freq;
-
 	if (is_suspend) {
-		for_each_cpu(cpu, &hmp_slow_cpu_mask) {
-			if (cpu_online(cpu)) {
-				if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq))
-					pr_err("%s: failed to update policy0 for suspend!\n", __func__);
-				break;
+		if (cpu0_suspend_min_freq && cpu0_suspend_max_freq) {
+			for_each_cpu(cpu, &hmp_slow_cpu_mask) {
+				if (cpu_online(cpu)) {
+					if (cpufreq_update_freq(cpu, cpu0_suspend_min_freq, cpu0_suspend_max_freq))
+						pr_err("%s: failed to update policy0 for suspend!\n", __func__);
+					break;
+				}
 			}
 		}
-
-		for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-			if (cpu_online(cpu)) {
-				if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq))
-					pr_err("%s: failed to update policy4 for suspend!\n", __func__);
-				break;
+		if (cpu4_suspend_min_freq && cpu4_suspend_max_freq) {
+			for_each_cpu(cpu, &hmp_fast_cpu_mask) {
+				if (cpu_online(cpu)) {
+					if (cpufreq_update_freq(cpu, cpu4_suspend_min_freq, cpu4_suspend_max_freq))
+						pr_err("%s: failed to update policy4 for suspend!\n", __func__);
+					break;
+				}
 			}
 		}
+		if (gpu_suspend_max_freq)
+			platform->gpu_max_clock = gpu_suspend_max_freq;
+		if (gpu_suspend_min_freq)
+			platform->gpu_min_clock = gpu_suspend_min_freq;
 	} else {
 		/* resumed */
 		for_each_cpu(cpu, &hmp_slow_cpu_mask) {
@@ -585,6 +619,8 @@ void set_suspend_cpufreq(void)
 				break;
 			}
 		}
+		platform->gpu_max_clock = gpu_max_freq;
+		platform->gpu_min_clock = gpu_min_freq;
 	}
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND
@@ -1353,9 +1389,13 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	if (domain->id == 0) {
 		cpu0_max_freq = domain->boot_freq;
 		cpu0_min_freq = domain->min_freq;
+		cpu0_suspend_max_freq = domain->boot_freq;
+		cpu0_suspend_min_freq = domain->min_freq;
 	} else if (domain->id == 1) {
 		cpu4_max_freq = domain->boot_freq;
 		cpu4_min_freq = domain->min_freq;
+		cpu4_suspend_max_freq = domain->boot_freq;
+		cpu4_suspend_min_freq = domain->min_freq;
 	}
 
 	/* Initialize freq boost */

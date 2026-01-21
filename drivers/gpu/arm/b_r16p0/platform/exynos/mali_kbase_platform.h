@@ -347,4 +347,10 @@ void gpu_update_config_data_int_array(struct device_node *np, const char *of_str
 
 int gpu_dvfs_update_asv_table(struct kbase_device *kbdev);
 
+extern unsigned int gpu_min_freq;
+extern unsigned int gpu_suspend_min_freq;
+
+extern unsigned int gpu_max_freq;
+extern unsigned int gpu_suspend_max_freq;
+
 #endif /* _GPU_PLATFORM_H_ */

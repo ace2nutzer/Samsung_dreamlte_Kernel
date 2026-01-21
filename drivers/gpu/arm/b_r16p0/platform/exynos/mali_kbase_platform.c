@@ -44,6 +44,10 @@ static gpu_dvfs_info gpu_dvfs_table_default[DVFS_TABLE_ROW_MAX];
 
 #include <linux/of_platform.h>
 
+unsigned int gpu_min_freq = 0;
+unsigned int gpu_max_freq = 0;
+
+
 struct kbase_device *pkbdev;
 static int gpu_debug_level;
 
@@ -287,8 +291,12 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 
 	gpu_update_config_data_int(np, "gpu_pmqos_cpu_cluster_num", &platform->gpu_pmqos_cpu_cluster_num);
 	gpu_update_config_data_int(np, "gpu_max_clock", &platform->gpu_max_clock);
+	gpu_max_freq = platform->gpu_max_clock;
+	gpu_suspend_max_freq = platform->gpu_max_clock;
 	gpu_update_config_data_int(np, "gpu_max_clock_limit", &platform->gpu_max_clock_limit);
 	gpu_update_config_data_int(np, "gpu_min_clock", &platform->gpu_min_clock);
+	gpu_min_freq = platform->gpu_min_clock;
+	gpu_suspend_min_freq = platform->gpu_min_clock;
 #ifdef CONFIG_MALI_ASV_CALIBRATION_SUPPORT
 	gpu_update_config_data_int(np, "gpu_asv_cali_lock_val", &platform->gpu_asv_cali_lock_val);
 #endif

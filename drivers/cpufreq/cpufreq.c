@@ -770,7 +770,7 @@ static ssize_t store_user_scaling_min_freq
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
-		if ((temp != 2314000) && (temp != 1690000)) {
+		if ((temp != 741000) && (temp != 715000)) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			return -EINVAL;
 		}

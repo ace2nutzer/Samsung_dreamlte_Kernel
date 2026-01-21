@@ -1663,8 +1663,11 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		return -EINVAL;
+		sscanf(buf, "%d", &val);
+		if (val != 572000) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			return -EINVAL;
+		}
 	}
 #endif
 
@@ -1680,6 +1683,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 				goto err;
 			}
 			platform->gpu_max_clock = val;
+			gpu_max_freq = val;
 			sanitize_gpu_dvfs(false);
 			sanitize_cpu_gpu_dvfs_vol();
 			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n", platform->gpu_min_clock, platform->gpu_max_clock);
@@ -1787,8 +1791,11 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		return -EINVAL;
+		sscanf(buf, "%d", &val);
+		if (val != 260000) {
+			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+			return -EINVAL;
+		}
 	}
 #endif
 
@@ -1804,6 +1811,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 				goto err;
 			}
 			platform->gpu_min_clock = val;
+			gpu_min_freq = val;
 			pr_info("gpufreq: new min and max freqs are %d - %d kHz\n", platform->gpu_min_clock, platform->gpu_max_clock);
 			return count;
 		}
