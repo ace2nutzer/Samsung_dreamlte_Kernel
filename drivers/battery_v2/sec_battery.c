@@ -608,8 +608,7 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 				muic_afc_set_voltage(SEC_INPUT_VOLTAGE_9V);
 			}
 		} else if (!battery->chg_limit && is_hv_wire_type(battery->cable_type) && (battery->chg_temp > battery->pdata->chg_high_temp)) {
-			if (battery->pdata->chg_input_limit_current)
-				*input_current = battery->pdata->chg_input_limit_current;
+			*input_current = battery->pdata->chg_input_limit_current;
 			*charging_current = battery->pdata->chg_charging_limit_current;
 			battery->chg_limit = true;
 		} else if (!battery->chg_limit && battery->max_charge_power >= (battery->pdata->pd_charging_charge_power - 500) && (battery->chg_temp > battery->pdata->chg_high_temp)) {
@@ -622,8 +621,7 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 				*charging_current = battery->pdata->charging_current[battery->cable_type].fast_charging_current;
 				battery->chg_limit = false;
 			} else {
-				if (battery->pdata->chg_input_limit_current)
-					*input_current = battery->pdata->chg_input_limit_current;
+				*input_current = battery->pdata->chg_input_limit_current;
 				*charging_current = battery->pdata->chg_charging_limit_current;
 				battery->chg_limit = true;
 			}
@@ -633,8 +631,7 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 				*charging_current = battery->pdata->charging_current[battery->cable_type].fast_charging_current;
 				battery->chg_limit = false;
 			} else {
-				if (battery->pdata->chg_input_limit_current)
-					*input_current = battery->pdata->chg_input_limit_current;
+				*input_current = battery->pdata->chg_input_limit_current;
 				*charging_current = battery->pdata->chg_charging_limit_current;
 				battery->chg_limit = true;
 			}
@@ -645,8 +642,7 @@ static void sec_bat_check_afc_temp(struct sec_battery_info *battery, int *input_
 */
 #else
 	if (!battery->chg_limit && is_hv_wire_type(battery->cable_type) && (battery->chg_temp > battery->pdata->chg_high_temp)) {
-		if (battery->pdata->chg_input_limit_current)
-			*input_current = battery->pdata->chg_input_limit_current;
+		*input_current = battery->pdata->chg_input_limit_current;
 		*charging_current = battery->pdata->chg_charging_limit_current;
 		battery->chg_limit = true;
 	} else if (battery->chg_limit && is_hv_wire_type(battery->cable_type) && (battery->chg_temp < battery->pdata->chg_high_temp_recovery)) {
@@ -942,8 +938,8 @@ void sec_bat_set_decrease_iout(struct sec_battery_info *battery)
 static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 {
 	union power_supply_propval value = {0, };
-	unsigned int chg_curr = 0;
 	static bool afc_init = false;
+	unsigned int real_chg_curr;
 
 	int input_current = USB_CURRENT_UNCONFIGURED,
 		charging_current = USB_CURRENT_UNCONFIGURED,
@@ -1070,8 +1066,6 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		charging_current = ac_chg_curr;
 	}
 
-	chg_curr = charging_current;
-
 	if (battery->aicl_current)
 		input_current = battery->aicl_current;
 
@@ -1111,9 +1105,6 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 			topoff_current =
 				battery->pdata->full_check_current_2nd;
 		}
-
-		if (!charging_current)
-			charging_current = chg_curr;
 
 		/* check swelling state */
 		if (is_wireless_type(battery->cable_type)) {
@@ -1176,6 +1167,7 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 		value.intval = charging_current;
 		psy_do_property(battery->pdata->charger_name, set,
 			POWER_SUPPLY_PROP_CURRENT_NOW, value);
+
 		battery->charging_current = charging_current;
 
 		pr_info("%s: power(%d), input(%d), charge(%d)\n", __func__,
@@ -1183,11 +1175,10 @@ static int sec_bat_set_charging_current(struct sec_battery_info *battery)
 	}
 
 	input_volt = battery->input_voltage;
-
-	if (battery->aicl_current)
-		charging_curr = (battery->charge_power * 2 + SEC_INPUT_VOLTAGE_5V) / SEC_INPUT_VOLTAGE_5V / 2;
-	else
-		charging_curr = charging_current;
+	charging_curr = battery->charging_current;
+	real_chg_curr = (((battery->charge_power * 2) + SEC_INPUT_VOLTAGE_5V) / SEC_INPUT_VOLTAGE_5V / 2);
+	if (charging_curr > real_chg_curr)
+		charging_curr = real_chg_curr;
 
 	battery->pdata->standard_curr = charging_curr;
 
@@ -1244,33 +1235,33 @@ static void calc_input_curr(void)
 
 	if (lpcharge) {
 		/* AC */
-		power = (ac_chg_curr * 5);
-		ac_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
+		power = (ac_chg_curr * 5 * 2);
+		ac_in_curr_12v = ((power + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2);
 		if (ac_in_curr_12v < 100)
 			ac_in_curr_12v = 100;
-		ac_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
+		ac_in_curr_9v = ((power + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2);
 		if (ac_in_curr_9v < 100)
 			ac_in_curr_9v = 100;
 
 		/* USB-PD */
-		power = (usbpd_chg_curr * 5);
-		usbpd_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
+		power = (usbpd_chg_curr * 5 * 2);
+		usbpd_in_curr_12v = ((power + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2);
 		if (usbpd_in_curr_12v < 100)
 			usbpd_in_curr_12v = 100;
-		usbpd_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
+		usbpd_in_curr_9v = ((power + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2);
 		if (usbpd_in_curr_9v < 100)
 			usbpd_in_curr_9v = 100;
 	}
 
 	/* WC */
-	power = (wc_chg_curr * 5);
-	wc_in_curr_12v = (power * 2 + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2;
+	power = (wc_chg_curr * 5 * 2);
+	wc_in_curr_12v = ((power + SEC_INPUT_VOLTAGE_12V) / SEC_INPUT_VOLTAGE_12V / 2);
 	if (wc_in_curr_12v < 100)
 		wc_in_curr_12v = 100;
-	wc_in_curr_10v = (power * 2 + SEC_INPUT_VOLTAGE_10V) / SEC_INPUT_VOLTAGE_10V / 2;
+	wc_in_curr_10v = ((power + SEC_INPUT_VOLTAGE_10V) / SEC_INPUT_VOLTAGE_10V / 2);
 	if (wc_in_curr_10v < 100)
 		wc_in_curr_10v = 100;
-	wc_in_curr_9v = (power * 2 + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2;
+	wc_in_curr_9v = ((power + SEC_INPUT_VOLTAGE_9V) / SEC_INPUT_VOLTAGE_9V / 2);
 	if (wc_in_curr_9v < 100)
 		wc_in_curr_9v = 100;
 }
@@ -4635,10 +4626,9 @@ static void sec_bat_cable_work(struct work_struct *work)
 				goto end_of_cable_work;
 
 		}
-
-#if defined(CONFIG_CALC_TIME_TO_FULL)
 		if (lpcharge) {
 			pr_info("[%s] a2n: charger control in LPM mode\n",__func__);
+#if defined(CONFIG_CALC_TIME_TO_FULL)
 			cancel_delayed_work(&battery->timetofull_work);
 			if (battery->current_event & SEC_BAT_CURRENT_EVENT_AFC) {
 				int work_delay = 0;
@@ -4651,6 +4641,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 
 				queue_delayed_work(battery->monitor_wqueue,
 					&battery->timetofull_work, msecs_to_jiffies(work_delay));
+#endif
 			}
 
 			/* Set charging current for LPM */
@@ -4661,7 +4652,6 @@ static void sec_bat_cable_work(struct work_struct *work)
 			wc_chg_curr = lpm_wc_chg_curr;
 			calc_input_curr();
 		}
-#endif
 	}
 
 	/* set online(cable type) */

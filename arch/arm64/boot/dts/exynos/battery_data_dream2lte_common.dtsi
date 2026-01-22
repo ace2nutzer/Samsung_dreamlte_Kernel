@@ -100,7 +100,7 @@
 		battery,temp_adc_type = <1>; /* SEC_BATTERY_ADC_TYPE_AP */
 
 		battery,temp_check_type = <2>; /* SEC_BATTERY_TEMP_CHECK_TEMP */
-		battery,chg_temp_check = <1>;
+		battery,chg_temp_check = <0>;
 		battery,wpc_temp_check = <1>;
 
 		battery,thermal_source = <2>; /* SEC_BATTERY_THERMAL_SOURCE_ADC */
@@ -190,7 +190,7 @@
 
 		battery,chg_high_temp = <910>;
 		battery,chg_high_temp_recovery = <900>;
-		battery,chg_input_limit_current = <0>;
+		battery,chg_input_limit_current = <1000>;
 		battery,chg_charging_limit_current = <1800>;
 
 		/* TEMP_CONTROL_SOURCE_BAT_THM = WPC_THM */
@@ -295,7 +295,7 @@
 
 		battery,enable_sysovlo_irq;
 
-		battery,standard_curr = <0>;
+		battery,standard_curr = <1800>;
 		battery,expired_time = <0>;
 		battery,recharging_expired_time = <0>;
 
@@ -471,8 +471,8 @@
  *  34	CABLE_MAX,
 */
 	cable-info {
-		   default_input_current = <0>;
-		   default_charging_current = <0>;
+		   default_input_current = <1000>;
+		   default_charging_current = <1800>;
 		   full_check_current_1st = <355>;
 		   full_check_current_2nd = <350>;
 

@@ -199,7 +199,7 @@ ssize_t max77865_chg_store_attrs(struct device *dev,
 
 #define REDUCE_CURRENT_STEP			100
 #define MINIMUM_INPUT_CURRENT			100
-#define SLOW_CHARGING_CURRENT_STANDARD          500
+#define SLOW_CHARGING_CURRENT_STANDARD          400
 
 #define WC_CURRENT_STEP				100
 #define WC_CURRENT_START			100
