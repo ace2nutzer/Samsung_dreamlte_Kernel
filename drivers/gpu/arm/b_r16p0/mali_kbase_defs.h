@@ -102,10 +102,10 @@
  * actually being reset to give other contexts time for their jobs to be soft-stopped and removed from the hardware
  * before resetting.
  */
-#define ZAP_TIMEOUT             1000
+#define ZAP_TIMEOUT             2000
 
 /** Number of milliseconds before we time out on a GPU soft/hard reset */
-#define RESET_TIMEOUT           500
+#define RESET_TIMEOUT           2000
 
 /**
  * Prevent soft-stops from occuring in scheduling situations
@@ -118,7 +118,7 @@
  *
  * @note if not in use, define this value to 0 instead of \#undef'ing it
  */
-#define KBASE_DISABLE_SCHEDULING_SOFT_STOPS 0
+#define KBASE_DISABLE_SCHEDULING_SOFT_STOPS 1
 
 /**
  * Prevent hard-stops from occuring in scheduling situations
@@ -129,7 +129,7 @@
  *
  * @note if not in use, define this value to 0 instead of \#undef'ing it
  */
-#define KBASE_DISABLE_SCHEDULING_HARD_STOPS 0
+#define KBASE_DISABLE_SCHEDULING_HARD_STOPS 1
 
 /**
  * The maximum number of Job Slots to support in the Hardware.
