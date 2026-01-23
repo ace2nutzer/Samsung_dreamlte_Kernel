@@ -41,9 +41,11 @@
 extern bool is_suspend;
 
 #define INT	0
+#define USE_INT 0
 
 static struct exynos_devfreq_data *_data = NULL;
 
+#if USE_INT
 static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_domain,
 					unsigned int freq)
 {
@@ -54,6 +56,7 @@ static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_doma
 
 	return ect_domain->level[i].sub_frequencies;
 }
+#endif
 
 static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
 		unsigned int min_freq, unsigned int max_freq)
@@ -138,12 +141,12 @@ static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
 #ifdef CONFIG_EXYNOS_DVFS_MANAGER
 		if (const_flag) {
 			const_table[use_level].master_freq = data->opp_list[i].freq;
+#if USE_INT
 			const_table[use_level].constraint_freq
 				= ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
-
-			if (const_table[use_level].constraint_freq == 267000)
-				const_table[use_level].constraint_freq = 400000;
-
+#else
+			const_table[use_level].constraint_freq = 0;
+#endif
 			config.cmd[3] = const_table[use_level].constraint_freq;
 			pr_info("%s: mif freq: %u - int constraint_freq: %u\n", __func__, data->opp_list[i].freq, 
 					config.cmd[3]);

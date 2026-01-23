@@ -674,6 +674,7 @@ void update_gov_tunables(void)
 			policy = dbs_info->cdbs.shared->policy;
 			dbs_data = policy->governor_data;
 			od_tuners = dbs_data->tuners;
+			od_tuners->policy_nr = cpu;
 			if (is_suspend) {
 				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
 				od_tuners->boost = od_tuners->boost_suspend;
@@ -694,6 +695,7 @@ void update_gov_tunables(void)
 			policy = dbs_info->cdbs.shared->policy;
 			dbs_data = policy->governor_data;
 			od_tuners = dbs_data->tuners;
+			od_tuners->policy_nr = cpu;
 			if (is_suspend) {
 				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
 				od_tuners->boost = od_tuners->boost_suspend;

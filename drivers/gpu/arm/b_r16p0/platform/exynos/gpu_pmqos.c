@@ -24,9 +24,9 @@
 extern int set_hmp_boost(int enable);
 extern struct kbase_device *pkbdev;
 
-struct pm_qos_request exynos5_g3d_mif_min_qos;
-struct pm_qos_request exynos5_g3d_cpu_cluster0_min_qos;
-struct pm_qos_request exynos5_g3d_cpu_cluster1_min_qos;
+static struct pm_qos_request exynos5_g3d_mif_min_qos;
+static struct pm_qos_request exynos5_g3d_cpu_cluster0_min_qos;
+static struct pm_qos_request exynos5_g3d_cpu_cluster1_min_qos;
 
 static bool gpu_pmqos_ongoing = false;
 static bool mif_boost_ongoing = false;

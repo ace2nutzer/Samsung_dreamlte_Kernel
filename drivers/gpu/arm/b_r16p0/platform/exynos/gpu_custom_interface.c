@@ -1664,7 +1664,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%d", &val);
-		if (val != 572000) {
+		if (val > 572000) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			return -EINVAL;
 		}
@@ -1792,7 +1792,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%d", &val);
-		if (val != 260000) {
+		if (val > 572000) {
 			pr_err("[%s] a2n: unprivileged access !\n",__func__);
 			return -EINVAL;
 		}
