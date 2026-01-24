@@ -1805,7 +1805,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 	}
 
 	if (sscanf(buf, "%d", &val)) {
-		if (val == 260000 || val == 338000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
+		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			if (val > platform->gpu_max_clock) {
 				pr_warn("[%s] min_freq can't be higher than max_freq!\n",__func__);
 				goto err;

@@ -48,6 +48,8 @@ unsigned int cpu4_min_freq_qos = 0;
 unsigned int cpu4_max_freq = 0;
 unsigned int cpu4_max_freq_oc = 0;
 
+static struct pm_qos_request cpu_dvfs_minlock_cl1;
+
 /*********************************************************************
  *                          HELPER FUNCTION                          *
  *********************************************************************/
@@ -606,6 +608,8 @@ void set_suspend_cpufreq(void)
 			platform->gpu_max_clock = gpu_suspend_max_freq;
 		if (gpu_suspend_min_freq)
 			platform->gpu_min_clock = gpu_suspend_min_freq;
+
+		pm_qos_update_request(&cpu_dvfs_minlock_cl1, cpu4_min_freq);
 	} else {
 		/* resumed */
 		for_each_cpu(cpu, &hmp_slow_cpu_mask) {
@@ -624,6 +628,8 @@ void set_suspend_cpufreq(void)
 		}
 		platform->gpu_max_clock = gpu_max_freq;
 		platform->gpu_min_clock = gpu_min_freq;
+
+		pm_qos_update_request(&cpu_dvfs_minlock_cl1, cpu4_min_freq_qos);
 	}
 }
 #endif // CONFIG_CPU_FREQ_SUSPEND
@@ -1653,6 +1659,10 @@ static int __init exynos_cpufreq_init(void)
 		update_freq(domain, domain->old);
 		cpufreq_update_policy(cpumask_first(&domain->cpus));
 	}
+
+	pm_qos_add_request(&cpu_dvfs_minlock_cl1,
+			PM_QOS_CLUSTER1_FREQ_MIN,
+			cpu4_min_freq_qos);
 
 	pr_info("Initialized Exynos cpufreq driver\n");
 
