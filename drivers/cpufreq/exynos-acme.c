@@ -41,9 +41,12 @@ static int self_discharging;
 
 unsigned int cpu0_min_freq = 0;
 unsigned int cpu0_max_freq = 0;
+unsigned int cpu0_max_freq_oc = 0;
 
 unsigned int cpu4_min_freq = 0;
+unsigned int cpu4_min_freq_qos = 0;
 unsigned int cpu4_max_freq = 0;
+unsigned int cpu4_max_freq_oc = 0;
 
 /*********************************************************************
  *                          HELPER FUNCTION                          *
@@ -1383,17 +1386,22 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 		domain->min_freq = val;
 	if (!of_property_read_u32(dn, "pm_qos-booting", &val))
 		domain->boot_freq = val;
+	if (!of_property_read_u32(dn, "user-default-qos", &val))
+		domain->user_default_qos = val;
 
 	domain->resume_freq = domain->boot_freq;
 
 	if (domain->id == 0) {
+		cpu0_max_freq_oc = domain->max_freq;
 		cpu0_max_freq = domain->boot_freq;
 		cpu0_min_freq = domain->min_freq;
 		cpu0_suspend_max_freq = domain->boot_freq;
 		cpu0_suspend_min_freq = domain->min_freq;
 	} else if (domain->id == 1) {
+		cpu4_max_freq_oc = domain->max_freq;
 		cpu4_max_freq = domain->boot_freq;
 		cpu4_min_freq = domain->min_freq;
+		cpu4_min_freq_qos = domain->user_default_qos;
 		cpu4_suspend_max_freq = domain->boot_freq;
 		cpu4_suspend_min_freq = domain->min_freq;
 	}

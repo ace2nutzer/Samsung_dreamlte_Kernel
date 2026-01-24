@@ -711,8 +711,8 @@ int cpufreq_update_freq(int cpu, unsigned int min, unsigned int max)
 	}
 
 	if (policy->min != min || policy->max != max) {
-		pr_info("cpufreq: new min and max freqs are %u - %u kHz\n",
-				min, max);
+		pr_info("cpufreq: new min and max freqs for policy%u are %u - %u kHz\n",
+				policy->cpu, min, max);
 		policy->min = min;
 		policy->max = max;
 	}
@@ -1370,19 +1370,19 @@ static int cpufreq_online(unsigned int cpu)
 	cpumask_and(policy->cpus, policy->cpus, cpu_online_mask);
 
 	if (new_policy) {
-		policy->user_policy.min = policy->min;
-		if (policy->cpu == 0) {
-			if (!cpu0_min_freq)
-				cpu0_min_freq = policy->min;
-			policy->user_policy.max = cpu0_max_freq;
+		if (policy->cpu < 4) {
+			policy->cpuinfo.min_freq = cpu0_min_freq;
+			policy->cpuinfo.max_freq = cpu0_max_freq_oc;
+			policy->min = cpu0_min_freq;
 			policy->max = cpu0_max_freq;
 		} else {
-			if (!cpu4_min_freq)
-				cpu4_min_freq = policy->min;
-			policy->user_policy.max = cpu4_max_freq;
+			policy->cpuinfo.min_freq = cpu4_min_freq;
+			policy->cpuinfo.max_freq = cpu4_max_freq_oc;
+			policy->min = cpu4_min_freq;
 			policy->max = cpu4_max_freq;
 		}
-
+		policy->user_policy.min = policy->min;
+		policy->user_policy.max = policy->max;
 		write_lock_irqsave(&cpufreq_driver_lock, flags);
 		for_each_cpu(j, policy->related_cpus)
 			per_cpu(cpufreq_cpu_data, j) = policy;
@@ -2344,8 +2344,8 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	policy->max = new_policy->max;
 	trace_cpu_frequency_limits(policy->max, policy->min, policy->cpu);
 
-	pr_info("new min and max freqs are %u - %u kHz\n",
-		 policy->min, policy->max);
+	pr_info("new min and max freqs for policy%u are %u - %u kHz\n",
+		policy->cpu, policy->min, policy->max);
 
 	if (cpufreq_driver->setpolicy) {
 		policy->policy = new_policy->policy;

@@ -709,9 +709,12 @@ void acct_update_power(struct task_struct *p, cputime_t cputime);
 
 extern unsigned int cpu0_min_freq;
 extern unsigned int cpu0_max_freq;
+extern unsigned int cpu0_max_freq_oc;
 
 extern unsigned int cpu4_min_freq;
+extern unsigned int cpu4_min_freq_qos;
 extern unsigned int cpu4_max_freq;
+extern unsigned int cpu4_max_freq_oc;
 
 extern void sanitize_cpu_dvfs(bool sanitize);
 extern void sanitize_gpu_dvfs(bool sanitize);
