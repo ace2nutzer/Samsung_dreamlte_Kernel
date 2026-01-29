@@ -5824,12 +5824,10 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan)
 				bcm_object_trace_opr(skb, BCM_OBJDBG_REMOVE,
 					__FUNCTION__, __LINE__);
 
-#ifdef CONFIG_ARGOS
 #if (defined(ARGOS_RPS_CPU_CTL) && defined(ARGOS_CPU_SCHEDULER)) || \
 	defined(ARGOS_NOTIFY_CB)
 		argos_register_notifier_deinit();
 #endif /* (ARGOS_RPS_CPU_CTL && ARGOS_CPU_SCHEDULER) || ARGOS_NOTIFY_CB */
-#endif
 #if defined(BCMPCIE) && defined(DHDTCPACK_SUPPRESS)
 		dhd_tcpack_suppress_set(&dhd->pub, TCPACK_SUP_OFF);
 #endif /* BCMPCIE && DHDTCPACK_SUPPRESS */
@@ -7774,12 +7772,11 @@ dhd_stop(struct net_device *net)
 			skb_queue_purge(&dhd->tx_pend_queue);
 #endif /* DHD_LB_TXP */
 		}
-#ifdef CONFIG_ARGOS
+
 #if (defined(ARGOS_RPS_CPU_CTL) && defined(ARGOS_CPU_SCHEDULER)) || \
 	defined(ARGOS_NOTIFY_CB)
 		argos_register_notifier_deinit();
 #endif /* (ARGOS_RPS_CPU_CTL && ARGOS_CPU_SCHEDULER) || ARGOS_NOTIFY_CB */
-#endif
 #ifdef DHDTCPACK_SUPPRESS
 		dhd_tcpack_suppress_set(&dhd->pub, TCPACK_SUP_OFF);
 #endif /* DHDTCPACK_SUPPRESS */
@@ -8162,12 +8159,11 @@ dhd_open(struct net_device *net)
 			}
 #endif /* CONFIG_IPV6 && IPV6_NDO_SUPPORT */
 		}
-#ifdef CONFIG_ARGOS
+
 #if (defined(ARGOS_CPU_SCHEDULER) && defined(ARGOS_RPS_CPU_CTL)) || \
 	defined(ARGOS_NOTIFY_CB)
 		argos_register_notifier_init(net);
 #endif /* (ARGOS_CPU_SCHEDULER && ARGOS_RPS_CPU_CTL) || ARGOS_NOTIFY_CB  */
-#endif
 #if defined(BCMPCIE) && defined(DHDTCPACK_SUPPRESS)
 #if defined(SET_RPS_CPUS) || defined(ARGOS_RPS_CPU_CTL)
 		dhd_tcpack_suppress_set(&dhd->pub, TCPACK_SUP_OFF);
@@ -13119,12 +13115,10 @@ void dhd_detach(dhd_pub_t *dhdp)
 			if (ifp->net->reg_state == NETREG_UNINITIALIZED) {
 				free_netdev(ifp->net);
 			} else {
-#ifdef CONFIG_ARGOS
 #if (defined(ARGOS_CPU_SCHEDULER) && defined(ARGOS_RPS_CPU_CTL)) || \
 	defined(ARGOS_NOTIFY_CB)
 				argos_register_notifier_deinit();
 #endif /*  (ARGOS_CPU_SCHEDULER && ARGOS_RPS_CPU_CTL) || ARGOS_NOTIFY_CB */
-#endif
 #ifdef SET_RPS_CPUS
 				custom_rps_map_clear(ifp->net->_rx);
 #endif /* SET_RPS_CPUS */
@@ -19379,12 +19373,10 @@ void custom_rps_map_clear(struct netdev_rx_queue *queue)
 #if (defined(ARGOS_CPU_SCHEDULER) && defined(ARGOS_RPS_CPU_CTL)) || \
 	defined(ARGOS_NOTIFY_CB)
 
-#ifdef CONFIG_ARGOS
 static int argos_status_notifier_wifi_cb(struct notifier_block *notifier,
 	unsigned long speed, void *v);
 static int argos_status_notifier_p2p_cb(struct notifier_block *notifier,
 	unsigned long speed, void *v);
-#endif
 #if defined(CONFIG_SPLIT_ARGOS_SET) && defined(DYNAMIC_MUMIMO_CONTROL)
 static int argos_status_notifier_config_mumimo_cb(struct notifier_block *notifier,
 	unsigned long speed, void *v);
@@ -19524,7 +19516,6 @@ argos_config_mumimo_reset(void)
 }
 #endif /* DYNAMIC_MUMIMO_CONTROL */
 
-#ifdef CONFIG_ARGOS
 int
 argos_register_notifier_init(struct net_device *net)
 {
@@ -19631,7 +19622,6 @@ argos_register_notifier_deinit(void)
 
 	return 0;
 }
-#endif
 
 int
 argos_status_notifier_cb(struct notifier_block *notifier,
@@ -19745,7 +19735,6 @@ argos_status_notifier_config_mumimo_cb(struct notifier_block *notifier,
 }
 #endif /* CONFIG_SPLIT_ARGOS_SET && DYNAMIC_MUMIMO_CONTROL */
 
-#ifdef CONFIG_ARGOS
 int
 argos_status_notifier_p2p_cb(struct notifier_block *notifier,
 	unsigned long speed, void *v)
@@ -19755,7 +19744,6 @@ argos_status_notifier_p2p_cb(struct notifier_block *notifier,
 
 	return NOTIFY_OK;
 }
-#endif
 #endif /* (ARGOS_CPU_SCHEDULER && ARGOS_RPS_CPU_CTL) || ARGOS_NOTIFY_CB */
 
 #ifdef DHD_DEBUG_PAGEALLOC
