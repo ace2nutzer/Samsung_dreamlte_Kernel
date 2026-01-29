@@ -25,7 +25,7 @@
 /* On-demand governor macros */
 #define DEF_FREQUENCY_UP_THRESHOLD		(75)
 #define DOWN_THRESHOLD_MARGIN_MAX		(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(25)
+#define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
 #define MICRO_FREQUENCY_UP_THRESHOLD		(75)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
@@ -602,8 +602,7 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 		pr_info("%s: Idle micro accounting is not supported.\n", __func__);
 
 		/* For correct statistics, we need 10 ticks for each measure */
-		dbs_data->min_sampling_rate = MIN_SAMPLING_RATE_RATIO *
-			jiffies_to_usecs(10);
+		dbs_data->min_sampling_rate = jiffies_to_usecs(10);
 	}
 
 	tuners->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
