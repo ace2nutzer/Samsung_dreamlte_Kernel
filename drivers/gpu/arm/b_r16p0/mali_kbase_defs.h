@@ -102,10 +102,10 @@
  * actually being reset to give other contexts time for their jobs to be soft-stopped and removed from the hardware
  * before resetting.
  */
-#define ZAP_TIMEOUT             2000
+#define ZAP_TIMEOUT             150
 
 /** Number of milliseconds before we time out on a GPU soft/hard reset */
-#define RESET_TIMEOUT           2000
+#define RESET_TIMEOUT           1000
 
 /**
  * Prevent soft-stops from occuring in scheduling situations

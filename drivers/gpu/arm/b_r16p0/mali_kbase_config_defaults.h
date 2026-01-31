@@ -163,17 +163,17 @@ enum {
  * -# Power off one or more shader cores
  * -# Power off the entire GPU
  */
-#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (10000000) /* 10ms */
+#define DEFAULT_PM_GPU_POWEROFF_TICK_NS (100000000) /* 100 ms */
 
 /**
  * Power Manager number of ticks before shader cores are powered off
  */
-#define DEFAULT_PM_POWEROFF_TICK_SHADER (5) /* 400-800us */
+#define DEFAULT_PM_POWEROFF_TICK_SHADER (10)
 
 /**
  * Default scheduling tick granuality
  */
-#define DEFAULT_JS_SCHEDULING_PERIOD_NS    (50000000u) /* 50ms */
+#define DEFAULT_JS_SCHEDULING_PERIOD_NS    (100000000u) /* 100ms */
 
 /**
  * Default minimum number of scheduling ticks before jobs are soft-stopped.
@@ -181,23 +181,23 @@ enum {
  * This defines the time-slice for a job (which may be different from that of a
  * context)
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS       (10) /* 100ms-200ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS       (1) /* 100ms-200ms */
 
 /**
  * Default minimum number of scheduling ticks before CL jobs are soft-stopped.
  */
-#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (10) /* 100ms-200ms */
+#define DEFAULT_JS_SOFT_STOP_TICKS_CL    (1) /* 100ms-200ms */
 
 /**
  * Default minimum number of scheduling ticks before jobs are hard-stopped
  */
-#define DEFAULT_JS_HARD_STOP_TICKS_SS    (200) /* 400ms */
-#define DEFAULT_JS_HARD_STOP_TICKS_SS_8408  (200) /* 400s */
+#define DEFAULT_JS_HARD_STOP_TICKS_SS    (50) /* 5s */
+#define DEFAULT_JS_HARD_STOP_TICKS_SS_8408  (300) /* 30s */
 
 /**
  * Default minimum number of scheduling ticks before CL jobs are hard-stopped.
  */
-#define DEFAULT_JS_HARD_STOP_TICKS_CL    (250) /* 500ms */
+#define DEFAULT_JS_HARD_STOP_TICKS_CL    (50) /* 5s */
 
 /**
  * Default minimum number of scheduling ticks before jobs are hard-stopped
@@ -209,20 +209,20 @@ enum {
  * Default timeout for some software jobs, after which the software event wait
  * jobs will be cancelled.
  */
-#define DEFAULT_JS_SOFT_JOB_TIMEOUT (5000) /* 5s */
+#define DEFAULT_JS_SOFT_JOB_TIMEOUT (300) /* ms */
 
 /**
  * Default minimum number of scheduling ticks before the GPU is reset to clear a
  * "stuck" job
  */
-#define DEFAULT_JS_RESET_TICKS_SS           (250) /* 500ms */
-#define DEFAULT_JS_RESET_TICKS_SS_8408     (600) /* 1200ms */
+#define DEFAULT_JS_RESET_TICKS_SS           (55) /* 5.5s */
+#define DEFAULT_JS_RESET_TICKS_SS_8408     (450) /* 45s */
 
 /**
  * Default minimum number of scheduling ticks before the GPU is reset to clear a
  * "stuck" CL job.
  */
-#define DEFAULT_JS_RESET_TICKS_CL        (500) /* 1s */
+#define DEFAULT_JS_RESET_TICKS_CL        (55) /* 5.5s */
 
 /**
  * Default minimum number of scheduling ticks before the GPU is reset to clear a
@@ -234,7 +234,7 @@ enum {
  * Default number of milliseconds given for other jobs on the GPU to be
  * soft-stopped when the GPU needs to be reset.
  */
-#define DEFAULT_RESET_TIMEOUT_MS (5000) /* 5s */
+#define DEFAULT_RESET_TIMEOUT_MS (1000) /* 1s */
 
 /**
  * Default timeslice that a context is scheduled in for, in nanoseconds.
@@ -245,7 +245,7 @@ enum {
  * @note the resolution is nanoseconds (ns) here, because that's the format
  * often used by the OS.
  */
-#define DEFAULT_JS_CTX_TIMESLICE_NS (25000000) /* 25ms */
+#define DEFAULT_JS_CTX_TIMESLICE_NS (50000000) /* 50ms */
 
 /**
  * Perform GPU power down using only platform specific code, skipping DDK power
@@ -259,7 +259,7 @@ enum {
  * Note that as this prevents kbase from powering down shader cores, this limits
  * the available power policies to coarse_demand and always_on.
  */
-#define PLATFORM_POWER_DOWN_ONLY (1)
+#define PLATFORM_POWER_DOWN_ONLY (0)
 
 /**
  * Maximum frequency (in kHz) that the GPU can be clocked. For some platforms
