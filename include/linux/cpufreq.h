@@ -732,4 +732,6 @@ extern void update_gov_tunables(void);
 
 extern bool is_suspend;
 
+extern struct pm_qos_request cpu_dvfs_minlock_cl1;
+
 #endif /* _LINUX_CPUFREQ_H */

@@ -48,7 +48,7 @@ unsigned int cpu4_min_freq_qos = 0;
 unsigned int cpu4_max_freq = 0;
 unsigned int cpu4_max_freq_oc = 0;
 
-static struct pm_qos_request cpu_dvfs_minlock_cl1;
+struct pm_qos_request cpu_dvfs_minlock_cl1;
 
 /*********************************************************************
  *                          HELPER FUNCTION                          *

@@ -202,6 +202,7 @@ static ssize_t store_user_cpu4_min_freq_limit(struct kobject *kobj,
 	}
 
 	cpu4_min_freq_qos = val;
+	pm_qos_update_request(&cpu_dvfs_minlock_cl1, cpu4_min_freq_qos);
 	return count;
 err:
 	pr_err("%s: invalid cmd\n", __func__);
