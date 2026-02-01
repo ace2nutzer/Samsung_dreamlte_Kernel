@@ -36,16 +36,18 @@
 #define IGNORE_NICE_LOAD			(0)
 
 /* Cluster 0 little cpu */
-#define DEF_FREQUENCY_STEP_CL0_0               (715000)
-#define DEF_FREQUENCY_STEP_CL0_1               (832000)
-#define DEF_FREQUENCY_STEP_CL0_2               (949000)
-#define DEF_FREQUENCY_STEP_CL0_3               (1053000)
-#define DEF_FREQUENCY_STEP_CL0_4               (1248000)
-#define DEF_FREQUENCY_STEP_CL0_5               (1456000)
-#define DEF_FREQUENCY_STEP_CL0_6               (1690000)
-#define DEF_FREQUENCY_STEP_CL0_7               (1794000)
-#define DEF_FREQUENCY_STEP_CL0_8               (1898000)
-#define DEF_FREQUENCY_STEP_CL0_9               (2002000)
+#define DEF_FREQUENCY_STEP_CL0_0               (455000)
+#define DEF_FREQUENCY_STEP_CL0_1               (598000)
+#define DEF_FREQUENCY_STEP_CL0_2               (715000)
+#define DEF_FREQUENCY_STEP_CL0_3               (832000)
+#define DEF_FREQUENCY_STEP_CL0_4               (949000)
+#define DEF_FREQUENCY_STEP_CL0_5               (1053000)
+#define DEF_FREQUENCY_STEP_CL0_6               (1248000)
+#define DEF_FREQUENCY_STEP_CL0_7               (1456000)
+#define DEF_FREQUENCY_STEP_CL0_8               (1690000)
+#define DEF_FREQUENCY_STEP_CL0_9               (1794000)
+#define DEF_FREQUENCY_STEP_CL0_10              (1898000)
+#define DEF_FREQUENCY_STEP_CL0_11              (2002000)
 
 /* Cluster 1 big cpu */
 #define DEF_FREQUENCY_STEP_CL1_0               (741000)
@@ -112,8 +114,12 @@ static void od_check_cpu(int cpu, unsigned int load)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_7;
 				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_7)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_8;
-				else
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
 					requested_freq = DEF_FREQUENCY_STEP_CL0_9;
+				else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
+					requested_freq = DEF_FREQUENCY_STEP_CL0_10;
+				else
+					requested_freq = DEF_FREQUENCY_STEP_CL0_11;
 			/* Big cpu 4 */
 			} else {
 				if (policy->cur == DEF_FREQUENCY_STEP_CL1_0)
@@ -183,7 +189,11 @@ static void od_check_cpu(int cpu, unsigned int load)
 	if (load < od_tuners->down_threshold) {
 		/* Little cpu 0 */
 		if (cpu == 0) {
-			if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
+			if (policy->cur == DEF_FREQUENCY_STEP_CL0_11)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_10;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_10)
+				requested_freq = DEF_FREQUENCY_STEP_CL0_9;
+			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_9)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_8;
 			else if (policy->cur == DEF_FREQUENCY_STEP_CL0_8)
 				requested_freq = DEF_FREQUENCY_STEP_CL0_7;

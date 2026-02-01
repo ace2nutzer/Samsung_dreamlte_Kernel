@@ -90,19 +90,21 @@ static int vol = 0;
 #define FREQ_STEP_CL1_17              (2808000)
 
 /* Cluster 0 little cpu */
-#define FREQ_STEP_CL0_0               (715000)
-#define FREQ_STEP_CL0_1               (832000)
-#define FREQ_STEP_CL0_2               (949000)
-#define FREQ_STEP_CL0_3               (1053000)
-#define FREQ_STEP_CL0_4               (1248000)
-#define FREQ_STEP_CL0_5               (1456000)
-#define FREQ_STEP_CL0_6               (1690000)
-#define FREQ_STEP_CL0_7               (1794000)
-#define FREQ_STEP_CL0_8               (1898000)
-#define FREQ_STEP_CL0_9               (2002000)
+#define FREQ_STEP_CL0_0               (455000)
+#define FREQ_STEP_CL0_1               (598000)
+#define FREQ_STEP_CL0_2               (715000)
+#define FREQ_STEP_CL0_3               (832000)
+#define FREQ_STEP_CL0_4               (949000)
+#define FREQ_STEP_CL0_5               (1053000)
+#define FREQ_STEP_CL0_6               (1248000)
+#define FREQ_STEP_CL0_7               (1456000)
+#define FREQ_STEP_CL0_8               (1690000)
+#define FREQ_STEP_CL0_9               (1794000)
+#define FREQ_STEP_CL0_10              (1898000)
+#define FREQ_STEP_CL0_11              (2002000)
 
 static int cpu_dvfs_max_temp_user = 70;
-unsigned int dvfs_sleep_time_us = 6 * 1000; /* 6 ms */
+unsigned int dvfs_sleep_time_us = 10 * 1000; /* 10 ms */
 static int cpu_dvfs_max_temp_cal = 0;
 static int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
@@ -330,9 +332,7 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 		/* Clear all constraint by cpufreq_min_limit */
 		if (input < 0) {
 			pm_qos_update_request(&domain->user_min_qos_req, 0);
-#if defined(CONFIG_HMP_VARIABLE_SCALE)
 			control_boost(0);
-#endif
 			continue;
 		}
 
@@ -367,9 +367,9 @@ static ssize_t store_cpufreq_min_limit(struct kobject *kobj,
 
 		freq = min(freq, domain->max_freq);
 		pm_qos_update_request(&domain->user_min_qos_req, freq);
-#if defined(CONFIG_HMP_VARIABLE_SCALE)
+
 		control_boost(1);
-#endif
+
 		set_max = true;
 	}
 #endif
@@ -1000,7 +1000,7 @@ static int cpu_dvfs_kthread(void *nothing)
 					__func__ , CPU_DVFS_AVOID_SHUTDOWN_TEMP, cpu_temp, cpu_dvfs_max_temp_cal, (cpu_dvfs_max_temp_cal - CPU_DVFS_STEP_DOWN_TEMP), cpu4_dvfs_limit_freq);
 			sanitize_cpu_dvfs(true);
 			big_freq = FREQ_STEP_CL1_12;
-			lit_freq = FREQ_STEP_CL0_6;
+			lit_freq = FREQ_STEP_CL0_8;
 
 		} else if (cpu_temp >= cpu_dvfs_max_temp_cal) {
 			if (cpu4_dvfs_limit_freq >= FREQ_STEP_CL1_13)
@@ -1029,6 +1029,10 @@ static int cpu_dvfs_kthread(void *nothing)
 				big_freq = FREQ_STEP_CL1_1;
 			else if (cpu4_dvfs_limit_freq == FREQ_STEP_CL1_1)
 				big_freq = FREQ_STEP_CL1_0;
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_11)
+				lit_freq = FREQ_STEP_CL0_10;
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_10)
+				lit_freq = FREQ_STEP_CL0_9;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_9)
 				lit_freq = FREQ_STEP_CL0_8;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_8)
@@ -1102,6 +1106,10 @@ static int cpu_dvfs_kthread(void *nothing)
 				lit_freq = FREQ_STEP_CL0_8;
 			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_8)
 				lit_freq = FREQ_STEP_CL0_9;
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_9)
+				lit_freq = FREQ_STEP_CL0_10;
+			else if (cpu0_dvfs_limit_freq == FREQ_STEP_CL0_10)
+				lit_freq = FREQ_STEP_CL0_11;
 		}
 
 		prev_temp = cpu_temp;
@@ -1240,7 +1248,7 @@ static int vol_dvfs_kthread(void *nothing)
 			if ((cpu4_dvfs_limit_freq_vol >= FREQ_STEP_CL1_13) || (gpu_dvfs_limit_freq_vol >= FREQ_STEP_5)) {
 				big_freq = FREQ_STEP_CL1_12;
 				gpu_freq = FREQ_STEP_4;
-				lit_freq = FREQ_STEP_CL0_6;
+				lit_freq = FREQ_STEP_CL0_8;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz - CPU-LIT: %u KHz\n" ,__func__,
 					big_freq, gpu_freq, lit_freq);
@@ -1314,6 +1322,16 @@ static int vol_dvfs_kthread(void *nothing)
 					"trying to offline BIG-CPU.\n",__func__);
 				big_cpu_online(false);
 #endif
+			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_8) {
+				lit_freq = FREQ_STEP_CL0_7;
+				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
+					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
+					lit_freq);
+			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_7) {
+				lit_freq = FREQ_STEP_CL0_6;
+				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
+					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
+					lit_freq);
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_6) {
 				lit_freq = FREQ_STEP_CL0_5;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
