@@ -172,6 +172,8 @@ struct od_dbs_tuners {
 	bool boost_resume;
 	unsigned int up_threshold_suspend;
 	unsigned int up_threshold_resume;
+	unsigned int sampling_rate_suspend;
+	unsigned int sampling_rate_resume;
 	char policy_nr;
 };
 

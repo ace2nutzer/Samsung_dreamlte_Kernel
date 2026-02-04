@@ -75,7 +75,7 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 
 
 /* for ondemand gov */
-unsigned int gpu_up_threshold = 85;
+unsigned int gpu_up_threshold = 75;
 bool gpu_boost = true;
 unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN		(25)
@@ -1705,13 +1705,6 @@ static ssize_t set_kernel_sysfs_boost(struct kobject *kobj, struct kobj_attribut
 {
 	unsigned int val;
 
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
-#endif
-
 	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
 		gpu_boost = true;
 		goto out;
@@ -1747,13 +1740,6 @@ static ssize_t set_kernel_sysfs_up_threshold(struct kobject *kobj, struct kobj_a
 {
 	unsigned int input;
 	int ret;
-
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
-#endif
 
 	ret = sscanf(buf, "%u", &input);
 	if (ret != 1 || input > GPU_MAX_UP_THRESHOLD ||

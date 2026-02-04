@@ -18,16 +18,13 @@
 #include <linux/tick.h>
 #include "cpufreq_governor.h"
 
-#if IS_ENABLED(CONFIG_A2N)
-#include <linux/a2n.h>
-#endif
 
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(90)
+#define DEF_FREQUENCY_UP_THRESHOLD		(75)
 #define DOWN_THRESHOLD_MARGIN			(25)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#define DEF_SAMPLING_DOWN_FACTOR		(10)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(90)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
@@ -360,6 +357,7 @@ static void update_sampling_rate(struct dbs_data *dbs_data,
 static ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 		size_t count)
 {
+	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	unsigned int input;
 	int ret;
 
@@ -368,6 +366,9 @@ static ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 		goto err;
 
 	update_sampling_rate(dbs_data, input);
+#ifdef CONFIG_CPU_FREQ_SUSPEND
+	od_tuners->sampling_rate_resume = input;
+#endif
 	return count;
 
 err:
@@ -404,13 +405,6 @@ static ssize_t store_up_threshold(struct dbs_data *dbs_data, const char *buf,
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	unsigned int input;
 	int ret;
-
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
-#endif
 
 	ret = sscanf(buf, "%u", &input);
 	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
@@ -494,13 +488,6 @@ static ssize_t store_boost(struct dbs_data *dbs_data, const char *buf,
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	unsigned int input;
 	int ret;
-
-#if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
-#endif
 
 	ret = sscanf(buf, "%u", &input);
 	if (ret != 1)
@@ -618,8 +605,10 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 #ifdef CONFIG_CPU_FREQ_SUSPEND
 	tuners->boost_suspend = 0;
 	tuners->up_threshold_suspend = 95;
+	tuners->sampling_rate_suspend = 40000;
 	tuners->boost_resume = tuners->boost;
 	tuners->up_threshold_resume = tuners->up_threshold;
+	tuners->sampling_rate_resume = dbs_data->min_sampling_rate;
 #endif
 
 	dbs_data->tuners = tuners;
@@ -682,10 +671,12 @@ void update_gov_tunables(void)
 			if (is_suspend) {
 				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
 				od_tuners->boost = od_tuners->boost_suspend;
+				od_tuners->sampling_rate = od_tuners->sampling_rate_suspend;
 			} else {
 				/* resumed */
 				od_tuners->up_threshold = od_tuners->up_threshold_resume;
 				od_tuners->boost = od_tuners->boost_resume;
+				od_tuners->sampling_rate = od_tuners->sampling_rate_resume;
 			}
 			/* update down_threshold */
 			update_down_threshold(od_tuners);
@@ -703,10 +694,12 @@ void update_gov_tunables(void)
 			if (is_suspend) {
 				od_tuners->up_threshold = od_tuners->up_threshold_suspend;
 				od_tuners->boost = od_tuners->boost_suspend;
+				od_tuners->sampling_rate = od_tuners->sampling_rate_suspend;
 			} else {
 				/* resumed */
 				od_tuners->up_threshold = od_tuners->up_threshold_resume;
 				od_tuners->boost = od_tuners->boost_resume;
+				od_tuners->sampling_rate = od_tuners->sampling_rate_resume;
 			}
 			/* update down_threshold */
 			update_down_threshold(od_tuners);
