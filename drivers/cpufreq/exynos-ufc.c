@@ -111,11 +111,9 @@ static int cpu_temp = 0;
 static unsigned int cpu4_dvfs_limit_freq = 0;
 static unsigned int cpu0_dvfs_limit_freq = 0;
 static int cpu_dvfs_min_temp = 0;
-static unsigned int user_cpu0_min_freq_limit = 0;
 static struct task_struct *cpu_dvfs_thread = NULL;
 static struct pm_qos_request cpu_maxlock_cl0;
 static struct pm_qos_request cpu_maxlock_cl1;
-static struct pm_qos_request cpu_minlock_cl0;
 
 /*
  * Log2 of the number of scale size. The frequencies are scaled up or
@@ -160,7 +158,7 @@ static ssize_t show_cpufreq_table(struct kobject *kobj,
 static ssize_t show_user_cpu0_min_freq_limit(struct kobject *kobj,
 				struct attribute *attr, char *buf)
 {
-	return sprintf(buf, "%u Khz\n", user_cpu0_min_freq_limit);
+	return sprintf(buf, "%u Khz\n", cpu0_min_freq_qos);
 }
 
 static ssize_t store_user_cpu0_min_freq_limit(struct kobject *kobj,
@@ -176,8 +174,8 @@ static ssize_t store_user_cpu0_min_freq_limit(struct kobject *kobj,
 		}
 	}
 
-	user_cpu0_min_freq_limit = val;
-	pm_qos_update_request(&cpu_minlock_cl0, val);
+	cpu0_min_freq_qos = val;
+	pm_qos_update_request(&cpu_dvfs_minlock_cl0, cpu0_min_freq_qos);
 	return count;
 err:
 	pr_err("%s: invalid cmd\n", __func__);
@@ -1627,10 +1625,6 @@ static int __init exynos_ufc_init(void)
 	pm_qos_add_request(&cpu_maxlock_cl1,
 			PM_QOS_CLUSTER1_FREQ_MAX,
 			PM_QOS_CLUSTER1_FREQ_MAX_DEFAULT_VALUE);
-
-	pm_qos_add_request(&cpu_minlock_cl0,
-			PM_QOS_CLUSTER0_FREQ_MIN,
-			PM_QOS_CLUSTER0_FREQ_MIN_DEFAULT_VALUE);
 
 	while ((dn = of_find_node_by_type(dn, "cpufreq-userctrl"))) {
 		struct cpumask shared_mask;
