@@ -212,7 +212,8 @@ ENTRY(stext)
 #ifdef CONFIG_RELOCATABLE_KERNEL
 	mov	x22, x1				// x1=PHYS_OFFSET
 	mov	x19, x2				// x2=real TEXT_OFFSET
-	adr	x21, __boot_kernel_offset
+	adrp	x21, __boot_kernel_offset
+	add	x21, x21, :lo12:__boot_kernel_offset
 	stp	x1, x2, [x21]
 #endif
 	bl	preserve_boot_args
