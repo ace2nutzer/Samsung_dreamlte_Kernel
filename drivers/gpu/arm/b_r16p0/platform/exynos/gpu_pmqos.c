@@ -95,10 +95,10 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			GPU_LOG(DVFS_ERROR, DUMMY, 0u, 0u, "%s: PM QOS ERROR : pm_qos deinit -> reset\n", __func__);
 			return -ENOENT;
 		}
+		pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
 		if (gpu_pmqos_ongoing) {
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, 0);
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, 0);
-			pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
 			/* unset hmp boost */
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			set_hmp_boost(0);
@@ -106,7 +106,6 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			set_hmp_aggressive_yield(false);
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pmqos_ongoing = false;
-			mif_boost_ongoing = false;
 		}
 		break;
 	default:
