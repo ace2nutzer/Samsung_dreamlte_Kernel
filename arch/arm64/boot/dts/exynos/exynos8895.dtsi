@@ -798,12 +798,12 @@
 		gpu_dvfs_table = <
 		                    839000    43   75   1  2093000  0  0
 		                    764000    42   75   1  2093000  0  0
-		                    683000    38   75   1  2002000  0  0
-		                    572000    47   75   1  1794000  0  0
-		                    455000    38   75   1  1540000  0  0
-		                    385000    33   75   1  1352000  0  0
-		                    338000    33   75   1  1014000  0  0
-		                    260000    33   75   1        0  0  0 >;
+		                    683000    38   75   1  2093000  0  0
+		                    572000    47   75   1  2093000  0  0
+		                    455000    38   75   1  1794000  0  0
+		                    385000    33   75   1  1540000  0  0
+		                    338000    33   75   1  1352000  0  0
+		                    260000    33   75   1  1014000  0  0 >;
 		gpu_sustainable_info = <0 0 0 0 0>; /* Not used */
 		gpu_pmqos_cpu_cluster_num = <2>;
 		gpu_pmu_status_reg_offset = <0x40E4>;
@@ -4884,14 +4884,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4903,14 +4903,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4922,14 +4922,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4941,14 +4941,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4960,14 +4960,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4979,14 +4979,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -4998,14 +4998,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5017,14 +5017,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5036,14 +5036,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		};
@@ -5055,14 +5055,14 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <2808000 0>;
-			input_booster,hmp_boost = <1 0>;
-			input_booster,kfc_freqs = <2002000 0>;
-			input_booster,mif_freqs = <2093000 0>;
+			input_booster,cpu_freqs = <962000 0>;
+			input_booster,hmp_boost = <1 1>;
+			input_booster,kfc_freqs = <0 0>;
+			input_booster,mif_freqs = <1352000 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
-			input_booster,head_times = <500 0>;
+			input_booster,head_times = <100 0>;
 			input_booster,tail_times = <0 0>;
 			input_booster,phase_times = <0 0>;
 		}; // Input Booster -
