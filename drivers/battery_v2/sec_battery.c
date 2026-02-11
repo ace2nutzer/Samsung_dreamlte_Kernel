@@ -1388,26 +1388,50 @@ static ssize_t input_volt_show(struct kobject *kobj,
 }
 SEC_BAT_ATTR_RO(input_volt);
 
-static ssize_t charger_variant_show(struct kobject *kobj,
+#ifdef CONFIG_CAMERA_DREAM2
+static ssize_t s8_plus_mode_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
 {
-	const char *variant;
 	unsigned int max_curr = _battery->pdata->max_charging_current;
 
-	if (is_s8_plus)
-		variant = "S8+";
-	else if (is_note8)
-		variant = "Note8";
-	else
-		variant = "S8";
-
-	sprintf(buf,  "%s[Variant: %s]\n\n", buf, variant);
+	sprintf(buf,  "%s[Variant: S8+]\n\n", buf);
 	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
 	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
-SEC_BAT_ATTR_RO(charger_variant);
+SEC_BAT_ATTR_RO(s8_plus_mode);
+#endif
+
+#ifdef CONFIG_CAMERA_GREAT
+static ssize_t note8_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	unsigned int max_curr = _battery->pdata->max_charging_current;
+
+	sprintf(buf,  "%s[Variant: Note8]\n\n", buf);
+	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(note8_mode);
+#endif
+
+#ifdef CONFIG_CAMERA_DREAM
+static ssize_t s8_mode_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	unsigned int max_curr = _battery->pdata->max_charging_current;
+
+	sprintf(buf,  "%s[Variant: S8]\n\n", buf);
+	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
+
+	return strlen(buf);
+}
+SEC_BAT_ATTR_RO(s8_mode);
+#endif
 
 static ssize_t batt_temp_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
@@ -1713,7 +1737,15 @@ static struct attribute *sec_bat_attrs[] = {
 	&charger_current_attr.attr,
 	&input_volt_attr.attr,
 	&batt_temp_attr.attr,
-	&charger_variant_attr.attr,
+#ifdef CONFIG_CAMERA_DREAM2
+	&s8_plus_mode_attr.attr,
+#endif
+#ifdef CONFIG_CAMERA_GREAT
+	&note8_mode_attr.attr,
+#endif
+#ifdef CONFIG_CAMERA_DREAM
+	&s8_mode_attr.attr,
+#endif
 #if defined(CONFIG_CCIC_WATER_DETECT)
 	&water_detection_attr.attr,
 #endif
