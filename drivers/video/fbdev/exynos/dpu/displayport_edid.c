@@ -25,7 +25,7 @@
 #define EDID_NATIVE_FORMAT	0x83
 #define EDID_BASIC_AUDIO	(1 << 6)
 #define EDID_COLOR_DEPTH	0x14
-int forced_resolution = -1;
+int forced_resolution = 16;
 static int audio_test_ch = -1;
 static int audio_test_sf;
 static int audio_test_br;
