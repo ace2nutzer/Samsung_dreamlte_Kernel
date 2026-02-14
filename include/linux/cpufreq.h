@@ -724,6 +724,7 @@ extern void sanitize_cpu_gpu_dvfs_vol(void);
 #ifdef CONFIG_HOTPLUG_CPU
 extern void big_cpu_online(bool online);
 extern bool is_big_cpu_online;
+extern bool big_cpu_offline_suspend;
 #endif
 
 #ifdef CONFIG_CPU_FREQ_SUSPEND

@@ -20,6 +20,7 @@
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 bool is_big_cpu_online = true;
+bool big_cpu_offline_suspend = false;
 static bool user_big_cpu_online = true;
 
 static int cpu_hotplug_in(const struct cpumask *mask)
@@ -390,10 +391,34 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 static struct kobj_attribute cpu_hotplug_enabled =
 __ATTR(enabled, 0644, show_cpu_hotplug_enable, store_cpu_hotplug_enable);
 
+static ssize_t show_big_cpu_offline_suspend(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	sprintf(buf, "%s[enable]\t[%s]\n", buf, big_cpu_offline_suspend ? "*" : " ");
+	return strlen(buf);
+}
+
+static ssize_t store_big_cpu_offline_suspend(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf,
+		size_t count)
+{
+	int input;
+
+	if (!sscanf(buf, "%d", &input))
+		return -EINVAL;
+
+	big_cpu_offline_suspend = !!input;
+	return count;
+}
+
+static struct kobj_attribute user_big_cpu_offline_suspend =
+__ATTR(big_cpu_offline_suspend, 0644, show_big_cpu_offline_suspend, store_big_cpu_offline_suspend);
+
 static struct attribute *cpu_hotplug_attrs[] = {
 	&min_online_cpu.attr,
 	&max_online_cpu.attr,
 	&cpu_hotplug_enabled.attr,
+	&user_big_cpu_offline_suspend.attr,
 	NULL,
 };
 

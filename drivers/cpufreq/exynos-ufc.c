@@ -1167,9 +1167,7 @@ static void set_gpu_dvfs_limit_vol(unsigned int freq)
 	pr_info("%s: VOL DVFS: vol: %d mV - gpu_dvfs_limit_freq_vol: %u KHz\n", __func__, vol, gpu_dvfs_limit_freq_vol);
 }
 
-static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing);
-static DECLARE_DELAYED_WORK(sanitize_cpu_gpu_dvfs_vol_work, sanitize_cpu_gpu_dvfs_vol_thread);
-void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
+static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 {
 	if (unlikely(!platform->gpu_max_clock)) {
 		pr_warn("%s: VOL DVFS: platform->gpu_max_clock is NULL! printing stack ...\n", __func__);
@@ -1196,6 +1194,7 @@ void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 	gpu_dvfs_limit_freq_vol = platform->gpu_max_clock;
 	pr_info("%s: VOL DVFS: vol: %d mV - gpu_dvfs_limit_freq_vol: %u KHz\n", __func__, vol, gpu_dvfs_limit_freq_vol);
 }
+static DECLARE_DELAYED_WORK(sanitize_cpu_gpu_dvfs_vol_work, sanitize_cpu_gpu_dvfs_vol_thread);
 
 void sanitize_cpu_gpu_dvfs_vol(void)
 {

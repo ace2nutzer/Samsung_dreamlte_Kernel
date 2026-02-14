@@ -584,6 +584,11 @@ void set_suspend_cpufreq(void)
 {
 	int cpu = 0;
 
+	if (is_suspend && big_cpu_offline_suspend && is_big_cpu_online)
+		big_cpu_online(false);
+	else if (!is_suspend && big_cpu_offline_suspend && !is_big_cpu_online)
+		big_cpu_online(true);
+
 	if (!enable_suspend_freqs)
 		return;
 
