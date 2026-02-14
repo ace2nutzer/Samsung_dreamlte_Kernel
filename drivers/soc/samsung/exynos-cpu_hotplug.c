@@ -20,6 +20,7 @@
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 bool is_big_cpu_online = true;
+static bool user_big_cpu_online = true;
 
 static int cpu_hotplug_in(const struct cpumask *mask)
 {
@@ -381,6 +382,7 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		return -EINVAL;
 
 	control_cpu_hotplug(!!input);
+	user_big_cpu_online = !!input;
 
 	return count;
 }
@@ -403,6 +405,9 @@ static const struct attribute_group cpu_hotplug_group = {
 void big_cpu_online(bool online)
 {
 	int cpu = 0;
+
+	if (!user_big_cpu_online)
+		return;
 
 	if (!online)
 		control_cpu_hotplug(false);
