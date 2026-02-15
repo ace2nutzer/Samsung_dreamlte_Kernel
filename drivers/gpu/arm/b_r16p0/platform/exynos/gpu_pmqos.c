@@ -80,6 +80,7 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->gpu_vk_boost_mif_min_clk_lock);
 				mif_boost_ongoing = true;
 				if (platform->cl_boost == 2) {
+					gpu_dvfs_clock_lock(GPU_DVFS_MIN_LOCK, DVFS_LOCK, platform->gpu_max_clock);
 					pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, PM_QOS_CLUSTER0_FREQ_MAX_DEFAULT_VALUE);
 					pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, PM_QOS_CLUSTER1_FREQ_MAX_DEFAULT_VALUE);
 				}
@@ -97,6 +98,7 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 		}
 		pm_qos_update_request(&exynos5_g3d_mif_min_qos, 0);
 		if (gpu_pmqos_ongoing) {
+			gpu_dvfs_clock_lock(GPU_DVFS_MIN_LOCK, DVFS_LOCK, 0);
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster0_min_qos, 0);
 			pm_qos_update_request(&exynos5_g3d_cpu_cluster1_min_qos, 0);
 			/* unset hmp boost */
