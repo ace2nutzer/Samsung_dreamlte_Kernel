@@ -1193,6 +1193,9 @@ static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 	gpu_dvfs_clock_lock(GPU_DVFS_MAX_LOCK, DVFS_LOCK, platform->gpu_max_clock);
 	gpu_dvfs_limit_freq_vol = platform->gpu_max_clock;
 	pr_info("%s: VOL DVFS: vol: %d mV - gpu_dvfs_limit_freq_vol: %u KHz\n", __func__, vol, gpu_dvfs_limit_freq_vol);
+
+	/* from gpu_pmqos */
+	platform->gpu_vk_boost_mif_min_clk_lock = 2093000;
 }
 static DECLARE_DELAYED_WORK(sanitize_cpu_gpu_dvfs_vol_work, sanitize_cpu_gpu_dvfs_vol_thread);
 
@@ -1246,6 +1249,7 @@ static int vol_dvfs_kthread(void *nothing)
 				big_freq = FREQ_STEP_CL1_12;
 				gpu_freq = FREQ_STEP_4;
 				lit_freq = FREQ_STEP_CL0_8;
+				platform->gpu_vk_boost_mif_min_clk_lock = 1794000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz - CPU-LIT: %u KHz\n" ,__func__,
 					big_freq, gpu_freq, lit_freq);
@@ -1282,24 +1286,28 @@ static int vol_dvfs_kthread(void *nothing)
 			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_6) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_4)) {
 				big_freq = FREQ_STEP_CL1_5;
 				gpu_freq = FREQ_STEP_3;
+				platform->gpu_vk_boost_mif_min_clk_lock = 1540000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
 					big_freq, gpu_freq);
 			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_5) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_3)) {
 				big_freq = FREQ_STEP_CL1_4;
 				gpu_freq = FREQ_STEP_2;
+				platform->gpu_vk_boost_mif_min_clk_lock = 1352000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
 					big_freq, gpu_freq);
 			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_4) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_2)) {
 				big_freq = FREQ_STEP_CL1_3;
 				gpu_freq = FREQ_STEP_1;
+				platform->gpu_vk_boost_mif_min_clk_lock = 1014000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
 					big_freq, gpu_freq);
 			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_3) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_1)) {
 				big_freq = FREQ_STEP_CL1_2;
 				gpu_freq = FREQ_STEP_0;
+				platform->gpu_vk_boost_mif_min_clk_lock = 845000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
 					big_freq, gpu_freq);
