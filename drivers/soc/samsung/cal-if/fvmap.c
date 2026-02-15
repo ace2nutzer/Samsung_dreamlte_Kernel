@@ -326,7 +326,10 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 
 			/* hardcoded g3d voltages */
 			if (strcmp(vclk->name, "dvfs_g3d") == 0) {
-				if (raw_rvh->table[j].rate == 683000)
+				/* for 572 MHz step, use voltage from 546 MHz step */
+				if (raw_rvh->table[j].rate == 572000)
+					raw_rvh->table[j].volt = raw_rvh->table[j+1].volt;
+				else if (raw_rvh->table[j].rate == 683000)
 					raw_rvh->table[j].volt = 750000;
 				else if (raw_rvh->table[j].rate == 764000)
 					raw_rvh->table[j].volt = 800000;
