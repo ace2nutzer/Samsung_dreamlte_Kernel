@@ -4884,10 +4884,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4903,10 +4903,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4922,10 +4922,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4941,10 +4941,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4960,10 +4960,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4979,10 +4979,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -4998,10 +4998,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -5017,10 +5017,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -5036,10 +5036,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
@@ -5055,10 +5055,10 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <962000 0>;
-			input_booster,hmp_boost = <1 1>;
+			input_booster,cpu_freqs = <1261000 0>;
+			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
-			input_booster,mif_freqs = <1352000 0>;
+			input_booster,mif_freqs = <0 0>;
 			input_booster,int_freqs = <0 0>;
 
 			/* Time table */
