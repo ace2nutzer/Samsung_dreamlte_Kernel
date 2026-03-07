@@ -112,8 +112,8 @@ static bool led_ongoing = false;
 static bool led_charging = false;
 
 /* blink delays in ms */
-static unsigned int blink_on_delay = 500;
-static unsigned int blink_off_delay = 5000;
+static unsigned int blink_on_delay = 300;
+static unsigned int blink_off_delay = 1500;
 
 /* allow to force normal current */
 static bool force_normal_current = false;
@@ -675,14 +675,21 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 		blink_red_led = true;
 		break;
 	case MISSED_NOTI:
+		max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
 		if (!blink_red_led) {
-			max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
 			if (force_normal_current)
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_BLINK);
 			else if (force_low_current)
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_BLINK);
 			else
 				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_BLINK);
+		} else {
+			if (force_normal_current)
+				max77865_rgb_set_state(&max77865_rgb->led[RED], normal_powermode_current, LED_BLINK);
+			else if (force_low_current)
+				max77865_rgb_set_state(&max77865_rgb->led[RED], low_powermode_current, LED_BLINK);
+			else
+				max77865_rgb_set_state(&max77865_rgb->led[RED], led_dynamic_current, LED_BLINK);
 		}
 		break;
 	case LOW_BATTERY:
@@ -704,23 +711,21 @@ static ssize_t store_max77865_rgb_pattern(struct device *dev,
 			max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_ALWAYS_ON);
 		break;
 	case POWERING:
-		if (!blink_red_led) {
-			max77865_rgb_ramp(dev, 800, 800);
-			max77865_rgb_blink(dev, 200, 200);
-			if (force_normal_current)
-				max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
-			else if (force_low_current)
-				max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
-			else
-				max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
+		max77865_rgb_ramp(dev, 800, 800);
+		max77865_rgb_blink(dev, 200, 200);
+		if (force_normal_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], normal_powermode_current, LED_ALWAYS_ON);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], low_powermode_current, LED_ALWAYS_ON);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_dynamic_current, LED_ALWAYS_ON);
 
-			if (force_normal_current)
-				max77865_rgb_set_state(&max77865_rgb->led[GREEN], normal_powermode_current, LED_BLINK);
-			else if (force_low_current)
-				max77865_rgb_set_state(&max77865_rgb->led[GREEN], low_powermode_current, LED_BLINK);
-			else
-				max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_BLINK);
-		}
+		if (force_normal_current)
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], normal_powermode_current, LED_BLINK);
+		else if (force_low_current)
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], low_powermode_current, LED_BLINK);
+		else
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_dynamic_current, LED_BLINK);
 		break;
 	default:
 		break;
@@ -756,6 +761,9 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 		led_dynamic_current = low_powermode_current;
 	else
 		led_dynamic_current = normal_powermode_current;
+
+	/*Reset led*/
+	max77865_rgb_reset(dev);
 
 	led_r_brightness = (led_brightness & LED_R_MASK) >> 16;
 	led_g_brightness = (led_brightness & LED_G_MASK) >> 8;
@@ -827,30 +835,29 @@ static ssize_t store_max77865_rgb_blink(struct device *dev,
 		}
 	}
 
-	if (blink_red_led) {
-		if ((led_r_brightness && !led_g_brightness && !led_b_brightness) ||
-				(!led_r_brightness && (led_g_brightness || led_b_brightness)))
-			return count;
-	}
-
-	/*Reset led*/
-	max77865_rgb_reset(dev);
-
-	if (led_r_brightness) {
-		led_brightness = led_r_brightness;
-		max77865_rgb_set_state(&max77865_rgb->led[RED], led_r_brightness, LED_BLINK);
-	}
-	if (led_g_brightness) {
-		led_brightness = led_g_brightness;
-		max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_g_brightness, LED_BLINK);
-	}
-	if (led_b_brightness) {
-		led_brightness = led_b_brightness;
-		max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_b_brightness, LED_BLINK);
-	}
-
 	/*Set LED blink mode*/
 	max77865_rgb_blink(dev, blink_on_delay, blink_off_delay);
+
+	if (!blink_red_led) {
+		if (led_r_brightness)
+			max77865_rgb_set_state(&max77865_rgb->led[RED], led_r_brightness, LED_BLINK);
+
+		if (led_g_brightness)
+			max77865_rgb_set_state(&max77865_rgb->led[GREEN], led_g_brightness, LED_BLINK);
+
+		if (led_b_brightness)
+			max77865_rgb_set_state(&max77865_rgb->led[BLUE], led_b_brightness, LED_BLINK);
+	} else {
+		if (!led_r_brightness) {
+			if (led_g_brightness)
+				led_r_brightness = led_g_brightness;
+			else
+				led_r_brightness = led_b_brightness;
+		}
+		max77865_rgb_set_state(&max77865_rgb->led[RED], led_r_brightness, LED_BLINK);
+		led_g_brightness = 0;
+		led_b_brightness = 0;
+	}
 
 	if (led_r_brightness && !led_g_brightness && !led_b_brightness)
 		blink_red_led = true;
