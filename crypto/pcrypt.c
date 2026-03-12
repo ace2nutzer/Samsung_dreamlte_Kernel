@@ -226,13 +226,26 @@ static int pcrypt_aead_init_tfm(struct crypto_aead *tfm)
 	struct pcrypt_instance_ctx *ictx = aead_instance_ctx(inst);
 	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(tfm);
 	struct crypto_aead *cipher;
+	const struct cpumask *mask;
+
+#ifndef CONFIG_SCHED_HMP_CUSTOM
+	mask = cpu_online_mask;
+#else
+	struct cpumask target_mask;
+	if (!cpumask_and(&target_mask, cpu_online_mask, &hmp_slow_cpu_mask)) {
+		/* Fallback */
+		mask = cpu_online_mask;
+	} else {
+		mask = &target_mask;
+	}
+#endif
 
 	cpu_index = (unsigned int)atomic_inc_return(&ictx->tfm_count) %
-		    cpumask_weight(cpu_online_mask);
+		    cpumask_weight(mask);
 
-	ctx->cb_cpu = cpumask_first(cpu_online_mask);
+	ctx->cb_cpu = cpumask_first(mask);
 	for (cpu = 0; cpu < cpu_index; cpu++)
-		ctx->cb_cpu = cpumask_next(ctx->cb_cpu, cpu_online_mask);
+		ctx->cb_cpu = cpumask_next(ctx->cb_cpu, mask);
 
 	cipher = crypto_spawn_aead(&ictx->spawn);
 
@@ -425,8 +438,11 @@ static int pcrypt_init_padata(struct padata_pcrypt *pcrypt,
 		kfree(mask);
 		goto err_free_padata;
 	}
-
+#ifndef CONFIG_SCHED_HMP_CUSTOM
 	cpumask_and(mask->mask, cpu_possible_mask, cpu_online_mask);
+#else
+	cpumask_and(mask->mask, &hmp_slow_cpu_mask, cpu_online_mask);
+#endif
 	rcu_assign_pointer(pcrypt->cb_cpumask, mask);
 
 	pcrypt->nblock.notifier_call = pcrypt_cpumask_change_notify;
