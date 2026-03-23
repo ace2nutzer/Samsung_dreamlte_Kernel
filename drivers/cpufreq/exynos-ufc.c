@@ -46,7 +46,7 @@ unsigned int gpu_dvfs_limit_freq_vol = 0;
 void sanitize_cpu_gpu_dvfs_vol(void);
 int dvfs_dev_low_vol_peak = 4400;
 static int vol = 0;
-#define SANITIZE_VOL_SLEEP_MS		(2000)
+#define SANITIZE_VOL_SLEEP_MS		(3000)
 #define VOL_DVFS_DEBUG			(0)
 
 

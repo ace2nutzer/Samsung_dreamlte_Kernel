@@ -20,12 +20,13 @@
 
 
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(75)
+#define DEF_FREQUENCY_UP_THRESHOLD		(85)
 #define DOWN_THRESHOLD_MARGIN			(25)
 #define DEF_SAMPLING_DOWN_FACTOR		(10)
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(85)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
+#define MICRO_FREQUENCY_SAMPLE_RATE		(20000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(40)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 #define DEF_BOOST				(1)
@@ -608,7 +609,8 @@ static int od_init(struct dbs_data *dbs_data, bool notify)
 	tuners->sampling_rate_suspend = 40000;
 	tuners->boost_resume = tuners->boost;
 	tuners->up_threshold_resume = tuners->up_threshold;
-	tuners->sampling_rate_resume = dbs_data->min_sampling_rate;
+	tuners->sampling_rate = MICRO_FREQUENCY_SAMPLE_RATE;
+	tuners->sampling_rate_resume = tuners->sampling_rate;
 #endif
 
 	dbs_data->tuners = tuners;

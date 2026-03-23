@@ -75,7 +75,7 @@ static struct task_struct *gpu_dvfs_thread = NULL;
 
 
 /* for ondemand gov */
-unsigned int gpu_up_threshold = 75;
+unsigned int gpu_up_threshold = 85;
 bool gpu_boost = true;
 unsigned int gpu_down_threshold = 0;
 #define DOWN_THRESHOLD_MARGIN		(25)
