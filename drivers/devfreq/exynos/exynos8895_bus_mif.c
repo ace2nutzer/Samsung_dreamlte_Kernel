@@ -145,20 +145,26 @@ static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
 					ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
 
 			/* optimize MIF/INT constraint */
-			if (data->opp_list[i].freq >= 1794000)
+			if (data->opp_list[i].freq >= 2002000)
 				const_table[use_level].constraint_freq = 667000;
+			else if (data->opp_list[i].freq == 1794000)
+				const_table[use_level].constraint_freq = 533000;
 			else if (data->opp_list[i].freq == 1540000)
-				const_table[use_level].constraint_freq = 400000;
+				const_table[use_level].constraint_freq = 533000;
 			else if (data->opp_list[i].freq == 1352000)
-				const_table[use_level].constraint_freq = 333000;
+				const_table[use_level].constraint_freq = 400000;
 			else if (data->opp_list[i].freq == 1014000)
-				const_table[use_level].constraint_freq = 267000;
+				const_table[use_level].constraint_freq = 333000;
 			else if (data->opp_list[i].freq == 845000)
 				const_table[use_level].constraint_freq = 267000;
 			else if (data->opp_list[i].freq == 676000)
-				const_table[use_level].constraint_freq = 178000;
+				const_table[use_level].constraint_freq = 267000;
 			else if (data->opp_list[i].freq == 546000)
 				const_table[use_level].constraint_freq = 178000;
+			else if (data->opp_list[i].freq == 421000)
+				const_table[use_level].constraint_freq = 178000;
+			else if (data->opp_list[i].freq <= 286000)
+				const_table[use_level].constraint_freq = 107000;
 
 			config.cmd[3] = const_table[use_level].constraint_freq;
 

@@ -371,13 +371,16 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 					mif_max_freq = raw_rvh->table[j].rate;
 					vclk->max_freq = mif_max_freq;
 					vclk->boot_freq = mif_max_freq;
-					vclk->resume_freq = vclk->min_freq;
 				}
 				/* hardcoded mif voltages */
 				if ((raw_rvh->table[j].rate == 2002000) && (!raw_rvh->table[j].volt))
 					raw_rvh->table[j].volt = 800000;
 				else if ((raw_rvh->table[j].rate == 2093000) && (!raw_rvh->table[j].volt))
 					raw_rvh->table[j].volt = 850000;
+
+				/* fix min_freq */
+				vclk->min_freq = raw_rvh->table[j].rate;
+				vclk->resume_freq = vclk->min_freq;
 			}
 
 			/* patch int for devfreq */
@@ -395,6 +398,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 					disp_max_freq = raw_rvh->table[j].rate;
 					vclk->max_freq = disp_max_freq;
 				}
+				/* fix min_freq */
 				vclk->min_freq = raw_rvh->table[j].rate;
 			}
 
