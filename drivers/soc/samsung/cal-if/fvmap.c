@@ -339,18 +339,18 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 
 			/* hardcoded cpucl1 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl1") == 0) {
-				vclk->boot_freq = vclk->max_freq;
 				if (raw_rvh->table[j].rate == 1794000)
 					raw_rvh->table[j].volt = 1150000;
 				else if (raw_rvh->table[j].rate == 1898000)
 					raw_rvh->table[j].volt = 1200000;
 				else if (raw_rvh->table[j].rate == 2002000)
 					raw_rvh->table[j].volt = 1300000;
+
+				vclk->boot_freq = vclk->max_freq;
 			}
 
 			/* hardcoded cpucl0 voltages */
 			if (strcmp(vclk->name, "dvfs_cpucl0") == 0) {
-				vclk->boot_freq = vclk->max_freq;
 				if (raw_rvh->table[j].rate == 2496000)
 					raw_rvh->table[j].volt = 1050000;
 				else if (raw_rvh->table[j].rate == 2574000)
@@ -361,6 +361,8 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 					raw_rvh->table[j].volt = 1200000;
 				else if (raw_rvh->table[j].rate == 2808000)
 					raw_rvh->table[j].volt = 1300000;
+
+				vclk->boot_freq = vclk->max_freq;
 			}
 
 			/* patch mif for devfreq */
@@ -368,12 +370,14 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 				if ((raw_rvh->table[j].volt) && (!mif_max_freq)) {
 					mif_max_freq = raw_rvh->table[j].rate;
 					vclk->max_freq = mif_max_freq;
+					vclk->boot_freq = mif_max_freq;
+					vclk->resume_freq = vclk->min_freq;
 				}
 				/* hardcoded mif voltages */
 				if ((raw_rvh->table[j].rate == 2002000) && (!raw_rvh->table[j].volt))
 					raw_rvh->table[j].volt = 800000;
 				else if ((raw_rvh->table[j].rate == 2093000) && (!raw_rvh->table[j].volt))
-					raw_rvh->table[j].volt = 825000;
+					raw_rvh->table[j].volt = 850000;
 			}
 
 			/* patch int for devfreq */
@@ -392,7 +396,6 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 					vclk->max_freq = disp_max_freq;
 				}
 				vclk->min_freq = raw_rvh->table[j].rate;
-				vclk->boot_freq = raw_rvh->table[j].rate;
 			}
 
 			/* copy to fvmap */
