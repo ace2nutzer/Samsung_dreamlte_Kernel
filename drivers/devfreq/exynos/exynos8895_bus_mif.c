@@ -41,11 +41,10 @@
 extern bool is_suspend;
 
 #define INT	0
-#define USE_INT 0
 
 static struct exynos_devfreq_data *_data = NULL;
 
-#if USE_INT
+#ifdef CONFIG_EXYNOS_DVFS_MANAGER
 static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_domain,
 					unsigned int freq)
 {
@@ -141,14 +140,29 @@ static int exynos8895_mif_constraint_parse(struct exynos_devfreq_data *data,
 #ifdef CONFIG_EXYNOS_DVFS_MANAGER
 		if (const_flag) {
 			const_table[use_level].master_freq = data->opp_list[i].freq;
-#if USE_INT
-			const_table[use_level].constraint_freq
-				= ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
-#else
-			const_table[use_level].constraint_freq = 0;
-#endif
+
+			const_table[use_level].constraint_freq =
+					ect_find_constraint_freq(ect_domain, data->opp_list[i].freq);
+
+			/* optimize MIF/INT constraint */
+			if (data->opp_list[i].freq >= 1794000)
+				const_table[use_level].constraint_freq = 667000;
+			else if (data->opp_list[i].freq == 1540000)
+				const_table[use_level].constraint_freq = 400000;
+			else if (data->opp_list[i].freq == 1352000)
+				const_table[use_level].constraint_freq = 333000;
+			else if (data->opp_list[i].freq == 1014000)
+				const_table[use_level].constraint_freq = 267000;
+			else if (data->opp_list[i].freq == 845000)
+				const_table[use_level].constraint_freq = 267000;
+			else if (data->opp_list[i].freq == 676000)
+				const_table[use_level].constraint_freq = 178000;
+			else if (data->opp_list[i].freq == 546000)
+				const_table[use_level].constraint_freq = 178000;
+
 			config.cmd[3] = const_table[use_level].constraint_freq;
-			pr_info("%s: mif freq: %u - int constraint_freq: %u\n", __func__, data->opp_list[i].freq, 
+
+			pr_info("%s: mif_freq: %u - int_constraint_freq: %u\n", __func__, data->opp_list[i].freq, 
 					config.cmd[3]);
 		}
 #endif
@@ -271,20 +285,8 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	dev_info(data->dev, "max_freq: %u Khz, get_max_freq: %u Khz\n",
 			data->max_freq, max_freq);
 
-	if (max_freq < data->max_freq) {
-		rcu_read_lock();
-		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_max = max_freq;
-		target_opp = devfreq_recommended_opp(data->dev, &tmp_max, flags);
-		if (IS_ERR(target_opp)) {
-			rcu_read_unlock();
-			dev_err(data->dev, "not found valid OPP for max_freq\n");
-			return PTR_ERR(target_opp);
-		}
-
-		data->max_freq = dev_pm_opp_get_freq(target_opp);
-		rcu_read_unlock();
-	}
+	if (max_freq < data->max_freq)
+		data->max_freq = max_freq;
 
 	/* min ferquency must be equal or under max frequency */
 	if (data->min_freq > data->max_freq)
@@ -299,20 +301,8 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	dev_info(data->dev, "min_freq: %u Khz, get_min_freq: %u Khz\n",
 			data->min_freq, min_freq);
 
-	if (min_freq > data->min_freq) {
-		rcu_read_lock();
-		flags &= ~DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_min = min_freq;
-		target_opp = devfreq_recommended_opp(data->dev, &tmp_min, flags);
-		if (IS_ERR(target_opp)) {
-			rcu_read_unlock();
-			dev_err(data->dev, "not found valid OPP for min_freq\n");
-			return PTR_ERR(target_opp);
-		}
-
-		data->min_freq = dev_pm_opp_get_freq(target_opp);
-		rcu_read_unlock();
-	}
+	if (min_freq > data->min_freq)
+		data->min_freq = min_freq;
 
 	dev_info(data->dev, "min_freq: %u Khz, max_freq: %u Khz\n",
 			data->min_freq, data->max_freq);
@@ -323,10 +313,11 @@ static int exynos8895_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 			dev_pm_opp_disable(data->dev, data->opp_list[i].freq);
 	}
 
-	if (data->max_freq < data->boot_freq) {
+	if (data->max_freq < data->boot_freq)
 		data->boot_freq = data->max_freq;
+
+	if (data->max_freq < data->devfreq_profile.initial_freq)
 		data->devfreq_profile.initial_freq = data->max_freq;
-	}
 
 	ret = exynos8895_mif_constraint_parse(data, data->min_freq, data->max_freq);
 	if (ret) {

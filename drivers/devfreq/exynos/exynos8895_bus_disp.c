@@ -128,20 +128,8 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	dev_info(data->dev, "max_freq: %uKhz, get_max_freq: %uKhz\n",
 			data->max_freq, max_freq);
 
-	if (max_freq < data->max_freq) {
-		rcu_read_lock();
-		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_max = max_freq;
-		target_opp = devfreq_recommended_opp(data->dev, &tmp_max, flags);
-		if (IS_ERR(target_opp)) {
-			rcu_read_unlock();
-			dev_err(data->dev, "not found valid OPP for max_freq\n");
-			return PTR_ERR(target_opp);
-		}
-
-		data->max_freq = dev_pm_opp_get_freq(target_opp);
-		rcu_read_unlock();
-	}
+	if (max_freq < data->max_freq)
+		data->max_freq = max_freq;
 
 	/* min ferquency must be equal or under max frequency */
 	if (data->min_freq > data->max_freq)
@@ -156,20 +144,8 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 	dev_info(data->dev, "min_freq: %uKhz, get_min_freq: %uKhz\n",
 			data->min_freq, min_freq);
 
-	if (min_freq > data->min_freq) {
-		rcu_read_lock();
-		flags &= ~DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_min = min_freq;
-		target_opp = devfreq_recommended_opp(data->dev, &tmp_min, flags);
-		if (IS_ERR(target_opp)) {
-			rcu_read_unlock();
-			dev_err(data->dev, "not found valid OPP for min_freq\n");
-			return PTR_ERR(target_opp);
-		}
-
-		data->min_freq = dev_pm_opp_get_freq(target_opp);
-		rcu_read_unlock();
-	}
+	if (min_freq > data->min_freq)
+		data->min_freq = min_freq;
 
 	dev_info(data->dev, "min_freq: %uKhz, max_freq: %uKhz\n",
 			data->min_freq, data->max_freq);
@@ -180,10 +156,11 @@ static int exynos8895_devfreq_disp_init_freq_table(struct exynos_devfreq_data *d
 			dev_pm_opp_disable(data->dev, data->opp_list[i].freq);
 	}
 
-	if (data->max_freq < data->boot_freq) {
+	if (data->max_freq < data->boot_freq)
 		data->boot_freq = data->max_freq;
+
+	if (data->max_freq < data->devfreq_profile.initial_freq)
 		data->devfreq_profile.initial_freq = data->max_freq;
-	}
 
 	ret = cal_dfs_set_rate(data->dfs_id, data->boot_freq);
 	if (ret)
