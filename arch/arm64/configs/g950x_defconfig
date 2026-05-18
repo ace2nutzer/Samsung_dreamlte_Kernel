@@ -4568,9 +4568,7 @@ CONFIG_SDFAT_VIRTUAL_XATTR=y
 CONFIG_SDFAT_VIRTUAL_XATTR_SELINUX_LABEL="u:object_r:sdcard_external:s0"
 # CONFIG_SDFAT_DEBUG is not set
 # CONFIG_SDFAT_STATISTICS is not set
-CONFIG_NTFS_FS=m
-# CONFIG_NTFS_DEBUG is not set
-CONFIG_NTFS_RW=y
+# CONFIG_NTFS_FS is not set
 
 #
 # Pseudo filesystems
