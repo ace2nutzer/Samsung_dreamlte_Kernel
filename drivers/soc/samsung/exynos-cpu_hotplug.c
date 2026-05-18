@@ -15,13 +15,8 @@
 #include <linux/kthread.h>
 #include <linux/pm_qos.h>
 #include <linux/suspend.h>
-#include <linux/cpufreq.h>
 
 #include <soc/samsung/exynos-cpu_hotplug.h>
-
-bool is_big_cpu_online = true;
-bool big_cpu_offline_suspend = false;
-static bool user_big_cpu_online = true;
 
 static int cpu_hotplug_in(const struct cpumask *mask)
 {
@@ -383,7 +378,6 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 		return -EINVAL;
 
 	control_cpu_hotplug(!!input);
-	user_big_cpu_online = !!input;
 
 	return count;
 }
@@ -391,70 +385,16 @@ static ssize_t store_cpu_hotplug_enable(struct kobject *kobj,
 static struct kobj_attribute cpu_hotplug_enabled =
 __ATTR(enabled, 0644, show_cpu_hotplug_enable, store_cpu_hotplug_enable);
 
-static ssize_t show_big_cpu_offline_suspend(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	sprintf(buf, "%s[enable]\t[%s]\n", buf, big_cpu_offline_suspend ? "*" : " ");
-	return strlen(buf);
-}
-
-static ssize_t store_big_cpu_offline_suspend(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf,
-		size_t count)
-{
-	int input;
-
-	if (!sscanf(buf, "%d", &input))
-		return -EINVAL;
-
-	big_cpu_offline_suspend = !!input;
-	return count;
-}
-
-static struct kobj_attribute user_big_cpu_offline_suspend =
-__ATTR(big_cpu_offline_suspend, 0644, show_big_cpu_offline_suspend, store_big_cpu_offline_suspend);
-
 static struct attribute *cpu_hotplug_attrs[] = {
 	&min_online_cpu.attr,
 	&max_online_cpu.attr,
 	&cpu_hotplug_enabled.attr,
-	&user_big_cpu_offline_suspend.attr,
 	NULL,
 };
 
 static const struct attribute_group cpu_hotplug_group = {
 	.attrs = cpu_hotplug_attrs,
 };
-
-#ifdef CONFIG_HOTPLUG_CPU
-void big_cpu_online(bool online)
-{
-	int cpu = 0;
-
-	if (!user_big_cpu_online)
-		return;
-
-	if (!online)
-		control_cpu_hotplug(false);
-	else
-		control_cpu_hotplug(true);
-
-	for_each_cpu(cpu, &hmp_fast_cpu_mask) {
-		if (!online) {
-			if (cpu_online(cpu))
-				device_offline(get_cpu_device(cpu));
-		} else {
-			if (!cpu_online(cpu))
-				device_online(get_cpu_device(cpu));
-		}
-	}
-
-	if (online)
-		is_big_cpu_online = true;
-	else
-		is_big_cpu_online = false;
-}
-#endif
 
 static void __init cpu_hotplug_dt_init(void)
 {

@@ -1175,11 +1175,6 @@ static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 		return;
 	}
 
-#ifdef CONFIG_HOTPLUG_CPU
-	if (!is_big_cpu_online)
-		big_cpu_online(true);
-#endif
-
 	dvfs_dev_low_vol_peak = 4400;
 
 	pm_qos_update_request(&cpu_maxlock_cl1, cpu4_max_freq);
@@ -1321,12 +1316,6 @@ static int vol_dvfs_kthread(void *nothing)
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
 					big_freq);
-#ifdef CONFIG_HOTPLUG_CPU
-			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_0) && (is_big_cpu_online)) {
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"trying to offline BIG-CPU.\n",__func__);
-				big_cpu_online(false);
-#endif
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_8) {
 				lit_freq = FREQ_STEP_CL0_7;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
