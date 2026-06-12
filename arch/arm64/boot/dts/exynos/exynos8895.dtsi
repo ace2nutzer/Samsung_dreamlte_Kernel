@@ -186,9 +186,9 @@
 
 		hmp {
 			up_threshold = <64>;
-			down_threshold = <21>;
-			semiboost_up_threshold = <32>;
-			semiboost_down_threshold = <11>;
+			down_threshold = <16>;
+			semiboost_up_threshold = <64>;
+			semiboost_down_threshold = <16>;
 			bootboost-duration-us = <40000000>;
 			down_compensation_timeout = <40>;               /* ms */
 			down_compensation_high_freq = <0>;        /* min qos lock for little cpu */
