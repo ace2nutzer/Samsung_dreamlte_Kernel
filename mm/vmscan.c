@@ -1608,6 +1608,8 @@ static int current_may_throttle(void)
 		bdi_write_congested(current->backing_dev_info);
 }
 
+static inline bool need_memory_boosting(struct zone *zone);
+
 /*
  * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
  * of reclaimed pages
@@ -1629,6 +1631,8 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 	int file = is_file_lru(lru);
 	struct zone *zone = lruvec_zone(lruvec);
 	struct zone_reclaim_stat *reclaim_stat = &lruvec->reclaim_stat;
+	bool force_reclaim = false;
+	enum ttu_flags ttu = TTU_UNMAP;
 
 	while (unlikely(too_many_isolated(zone, file, sc))) {
 		congestion_wait(BLK_RW_ASYNC, HZ/10);
@@ -1665,10 +1669,15 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 	if (nr_taken == 0)
 		return 0;
 
-	nr_reclaimed = shrink_page_list(&page_list, zone, sc, TTU_UNMAP,
+	if (need_memory_boosting(zone)) {
+		force_reclaim = true;
+		ttu |= TTU_IGNORE_ACCESS;
+	}
+
+	nr_reclaimed = shrink_page_list(&page_list, zone, sc, ttu,
 				&nr_dirty, &nr_unqueued_dirty, &nr_congested,
 				&nr_writeback, &nr_immediate,
-				false);
+				force_reclaim);
 
 	spin_lock_irq(&zone->lru_lock);
 
@@ -2010,10 +2019,12 @@ enum scan_balance {
 /* mem_boost throttles only kswapd's behavior */
 enum mem_boost {
 	NO_BOOST,
-	BOOST = 2,
+	BOOST_MID = 1,
+	BOOST_HIGH = 2,
 };
 static int mem_boost_mode = NO_BOOST;
 static unsigned long last_mode_change;
+static bool memory_boosting_disabled = false;
 
 #define MEM_BOOST_MAX_TIME (5 * HZ) /* 5 sec */
 
@@ -2032,6 +2043,7 @@ static void set_rbin_alloc_policy(enum rbin_alloc_policy val)
 	if (val == RBIN_ALLOW)
 		wake_ion_rbin_heap_shrink();
 #endif
+
 	for_each_populated_zone(zone) {
 		atomic_set(&zone->rbin_alloc, val);
 		if (val)
@@ -2066,13 +2078,13 @@ static ssize_t mem_boost_mode_store(struct kobject *kobj,
 	int err;
 
 	err = kstrtoint(buf, 10, &mode);
-	if (err || mode > BOOST || mode < NO_BOOST)
+	if (err || mode > BOOST_HIGH || mode < NO_BOOST)
 		return -EINVAL;
 
 	mem_boost_mode = mode;
 	trace_printk("memboost start\n");
 	last_mode_change = jiffies;
-	if (mem_boost_mode > NO_BOOST) {
+	if (mem_boost_mode == BOOST_HIGH) {
 #ifdef CONFIG_ION_RBIN_HEAP
 		wake_ion_rbin_heap_prereclaim();
 #endif
@@ -2082,13 +2094,40 @@ static ssize_t mem_boost_mode_store(struct kobject *kobj,
 	return count;
 }
 
+static ssize_t disable_mem_boost_show(struct kobject *kobj,
+				    struct kobj_attribute *attr, char *buf)
+{
+	int ret;
+
+	ret = memory_boosting_disabled ? 1 : 0;
+	return sprintf(buf, "%d\n", ret);
+}
+
+static ssize_t disable_mem_boost_store(struct kobject *kobj,
+				     struct kobj_attribute *attr,
+				     const char *buf, size_t count)
+{
+	int mode;
+	int err;
+
+	err = kstrtoint(buf, 10, &mode);
+	if (err || (mode != 0 && mode != 1))
+		return -EINVAL;
+
+	memory_boosting_disabled = mode ? true : false;
+
+	return count;
+}
+
 #define MEM_BOOST_ATTR(_name) \
 	static struct kobj_attribute _name##_attr = \
 		__ATTR(_name, 0644, _name##_show, _name##_store)
 MEM_BOOST_ATTR(mem_boost_mode);
+MEM_BOOST_ATTR(disable_mem_boost);
 
 static struct attribute *mem_boost_attrs[] = {
 	&mem_boost_mode_attr.attr,
+	&disable_mem_boost_attr.attr,
 	NULL,
 };
 
@@ -2097,6 +2136,35 @@ static struct attribute_group mem_boost_attr_group = {
 	.name = "vmscan",
 };
 #endif
+
+static inline bool mem_boost_pgdat_wmark(struct zone *zone)
+{
+	return zone_watermark_ok_safe(zone, 0, low_wmark_pages(zone), 0); //TODO: low, high, or (low + high)/2
+}
+
+static inline bool need_memory_boosting(struct zone *zone)
+{
+	bool ret;
+
+	test_and_set_mem_boost_timeout();
+
+	if (memory_boosting_disabled)
+		return false;
+
+	switch (mem_boost_mode) {
+	case BOOST_HIGH:
+		ret = true;
+		break;
+	case BOOST_MID:
+		ret = mem_boost_pgdat_wmark(zone) ? false : true;
+		break;
+	case NO_BOOST:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
 
 /*
  * Determine how aggressively the anon and file LRU lists should be
@@ -2192,6 +2260,11 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
 			scan_balance = SCAN_ANON;
 			goto out;
 		}
+	}
+
+	if (current_is_kswapd() && need_memory_boosting(zone)) {
+		scan_balance = SCAN_FILE;
+		goto out;
 	}
 
 	/*
@@ -3099,18 +3172,27 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc)
 	} while (memcg);
 }
 
-static bool zone_balanced(struct zone *zone, int order,
-			  unsigned long balance_gap, int classzone_idx)
+#define MEM_BOOST_WMARK_SCALE_FACTOR 1
+static bool zone_balanced(struct zone *zone, int order, bool highorder,
+			unsigned long balance_gap, int classzone_idx)
 {
-	if (!zone_watermark_ok_safe(zone, order, high_wmark_pages(zone) +
-				    balance_gap, classzone_idx))
-		return false;
+	unsigned long mark = high_wmark_pages(zone);
 
-	if (IS_ENABLED(CONFIG_COMPACTION) && order && compaction_suitable(zone,
-				order, 0, classzone_idx) == COMPACT_SKIPPED)
-		return false;
+	if (current_is_kswapd() && need_memory_boosting(zone))
+		mark *= MEM_BOOST_WMARK_SCALE_FACTOR;
 
-	return true;
+	/*
+	 * When checking from pgdat_balanced(), kswapd should stop and sleep
+	 * when it reaches the high order-0 watermark and let kcompactd take
+	 * over. Other callers such as wakeup_kswapd() want to determine the
+	 * true high-order watermark.
+	 */
+	if (IS_ENABLED(CONFIG_COMPACTION) && !highorder) {
+		mark += (1UL << order);
+		order = 0;
+	}
+
+	return zone_watermark_ok_safe(zone, order, mark + balance_gap, classzone_idx);
 }
 
 /*
@@ -3160,7 +3242,7 @@ static bool pgdat_balanced(pg_data_t *pgdat, int order, int classzone_idx)
 			continue;
 		}
 
-		if (zone_balanced(zone, order, 0, i))
+		if (zone_balanced(zone, order, false, 0, i))
 			balanced_pages += zone->managed_pages;
 		else if (!order)
 			return false;
@@ -3240,7 +3322,7 @@ static bool kswapd_shrink_zone(struct zone *zone,
 	 * reclaim is necessary
 	 */
 	lowmem_pressure = (buffer_heads_over_limit && is_highmem(zone));
-	if (!lowmem_pressure && zone_balanced(zone, sc->order,
+	if (!lowmem_pressure && zone_balanced(zone, sc->order, false,
 						balance_gap, classzone_idx))
 		return true;
 
@@ -3255,7 +3337,7 @@ static bool kswapd_shrink_zone(struct zone *zone,
 	 * waits.
 	 */
 	if (zone_reclaimable(zone) &&
-	    zone_balanced(zone, sc->order, 0, classzone_idx)) {
+	    zone_balanced(zone, sc->order, false, 0, classzone_idx)) {
 		clear_bit(ZONE_CONGESTED, &zone->flags);
 		clear_bit(ZONE_DIRTY, &zone->flags);
 	}
@@ -3337,7 +3419,7 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
 				break;
 			}
 
-			if (!zone_balanced(zone, order, 0, 0)) {
+			if (!zone_balanced(zone, order, false, 0, 0)) {
 				end_zone = i;
 				break;
 			} else {
@@ -3518,17 +3600,12 @@ static int kswapd(void *p)
 	struct reclaim_state reclaim_state = {
 		.reclaimed_slab = 0,
 	};
-
-#ifndef CONFIG_SCHED_HMP_CUSTOM
 	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
-#endif
+
 	lockdep_set_current_reclaim_state(GFP_KERNEL);
-#ifndef CONFIG_SCHED_HMP_CUSTOM
+
 	if (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
-#else
-	set_cpus_allowed_ptr(tsk, &hmp_slow_cpu_mask);
-#endif
 	current->reclaim_state = &reclaim_state;
 
 	/*
@@ -3621,9 +3698,13 @@ void wakeup_kswapd(struct zone *zone, int order, enum zone_type classzone_idx)
 	if (!waitqueue_active(&pgdat->kswapd_wait))
 		return;
 
-	if (zone_balanced(zone, order, 0, 0))
+	if (need_memory_boosting(zone))
+		goto wakeup;
+
+	if (zone_balanced(zone, order, true, 0, 0))
 		return;
 
+wakeup:
 	trace_mm_vmscan_wakeup_kswapd(pgdat->node_id, zone_idx(zone), order);
 	wake_up_interruptible(&pgdat->kswapd_wait);
 }
@@ -3682,11 +3763,9 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 		for_each_node_state(nid, N_MEMORY) {
 			pg_data_t *pgdat = NODE_DATA(nid);
 			const struct cpumask *mask;
-#ifndef CONFIG_SCHED_HMP_CUSTOM
+
 			mask = cpumask_of_node(pgdat->node_id);
-#else
-			mask = &hmp_slow_cpu_mask;
-#endif
+
 			if (cpumask_any_and(cpu_online_mask, mask) < nr_cpu_ids)
 				/* One of our CPUs online: restore mask */
 				set_cpus_allowed_ptr(pgdat->kswapd, mask);
@@ -3739,14 +3818,11 @@ static int __init kswapd_init(void)
 	swap_setup();
 	for_each_node_state(nid, N_MEMORY)
  		kswapd_run(nid);
-
 	hotcpu_notifier(cpu_callback, 0);
-
 #ifdef CONFIG_SYSFS
 	if (sysfs_create_group(mm_kobj, &mem_boost_attr_group))
 		pr_err("vmscan: register mem boost sysfs failed\n");
 #endif
-
 	return 0;
 }
 
