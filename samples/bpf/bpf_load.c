@@ -113,10 +113,7 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
 		}
 	}
 
-	strcpy(buf, DEBUGFS);
-	strcat(buf, "events/kprobes/");
-	strcat(buf, event);
-	strcat(buf, "/id");
+	snprintf(buf, sizeof(buf), "%sevents/kprobes/%s/id", DEBUGFS, event);
 
 	efd = open(buf, O_RDONLY, 0);
 	if (efd < 0) {
