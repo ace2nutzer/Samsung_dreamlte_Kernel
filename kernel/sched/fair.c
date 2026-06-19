@@ -5645,7 +5645,9 @@ static int hmp_semiboost_val = 0;
 static int hmp_boostpulse = 0;
 static int hmp_active_down_migration = 0;
 static int hmp_aggressive_up_migration = 0;
+#ifdef CONFIG_SCHED_HMP
 static int hmp_aggressive_yield = 0;
+#endif
 static int hmp_wakeup_to_idle_cpu = 0;
 static DEFINE_RAW_SPINLOCK(hmp_boost_lock);
 static DEFINE_RAW_SPINLOCK(hmp_family_boost_lock);
@@ -6100,6 +6102,7 @@ static int hmp_aggressive_up_migration_from_sysfs(int value)
 	return ret;
 }
 
+#ifdef CONFIG_SCHED_HMP
 static int hmp_aggressive_yield_from_sysfs(int value)
 {
 	unsigned long flags;
@@ -6119,6 +6122,7 @@ static int hmp_aggressive_yield_from_sysfs(int value)
 
 	return ret;
 }
+#endif
 
 static int hmp_wakeup_to_idle_cpu_from_sysfs(int value)
 {
@@ -6281,7 +6285,11 @@ int set_hmp_aggressive_up_migration(int enable)
 
 int set_hmp_aggressive_yield(int enable)
 {
+#ifdef CONFIG_SCHED_HMP
 	return hmp_aggressive_yield_from_sysfs(enable);
+#else
+	return 0;
+#endif
 }
 
 int set_hmp_wakeup_to_idle_cpu(int enable)
@@ -6403,10 +6411,12 @@ static int hmp_attr_init(void)
 		NULL,
 		hmp_aggressive_up_migration_from_sysfs);
 
+#ifdef CONFIG_SCHED_HMP
 	hmp_attr_add("aggressive_yield",
 		&hmp_aggressive_yield,
 		NULL,
 		hmp_aggressive_yield_from_sysfs);
+#endif
 
 	hmp_attr_add("wakeup_to_idle_cpu",
 		&hmp_wakeup_to_idle_cpu,
@@ -7254,7 +7264,7 @@ static void yield_task_fair(struct rq *rq)
 	if (curr->policy != SCHED_BATCH) {
 		update_rq_clock(rq);
 
-#if defined(CONFIG_SCHED_HMP) || defined(CONFIG_SCHED_HMP_CUSTOM)
+#if defined(CONFIG_SCHED_HMP)
 		if (hmp_aggressive_yield && cfs_rq->curr)
 			cfs_rq->curr->exec_start -= YIELD_CORRECTION_TIME;
 #endif

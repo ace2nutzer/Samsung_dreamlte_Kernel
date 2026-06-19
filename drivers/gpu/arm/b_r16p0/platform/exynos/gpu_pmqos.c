@@ -74,7 +74,9 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			set_hmp_boost(1);
 			set_hmp_aggressive_up_migration(true);
+#ifdef CONFIG_SCHED_HMP
 			set_hmp_aggressive_yield(true);
+#endif
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			if (platform->cl_boost) {
 				pm_qos_update_request(&exynos5_g3d_mif_min_qos, platform->gpu_vk_boost_mif_min_clk_lock);
@@ -105,7 +107,9 @@ int gpu_pm_qos_command(struct exynos_context *platform, gpu_pmqos_state state)
 			mutex_lock(&platform->gpu_sched_hmp_lock);
 			set_hmp_boost(0);
 			set_hmp_aggressive_up_migration(false);
+#ifdef CONFIG_SCHED_HMP
 			set_hmp_aggressive_yield(false);
+#endif
 			mutex_unlock(&platform->gpu_sched_hmp_lock);
 			gpu_pmqos_ongoing = false;
 		}
