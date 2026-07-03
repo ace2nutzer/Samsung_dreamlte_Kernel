@@ -209,9 +209,9 @@
 		battery,wc_cv_tx_current = <0>;
 		battery,wc_cv_pack_current = <0>;
 
-		battery,mix_high_temp = <510>;
+		battery,mix_high_temp = <910>;
 		battery,mix_high_chg_temp = <910>;
-		battery,mix_high_temp_recovery = <460>;
+		battery,mix_high_temp_recovery = <900>;
 
 		/* SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
 		   SEC_BATTERY_FULL_CONDITION_VCELL */

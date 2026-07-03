@@ -1640,40 +1640,40 @@ void update_batt_max_temp(unsigned int temp)
 {
 	temp *= 10;
 
-	_battery->pdata->temp_highlimit_threshold_normal = temp + 1;
-	_battery->pdata->temp_highlimit_recovery_normal = temp;
+	_battery->pdata->temp_highlimit_threshold_normal = temp;
+	_battery->pdata->temp_highlimit_recovery_normal = temp - 2;
 
-	_battery->pdata->temp_high_threshold_normal = temp + 1;
-	_battery->pdata->temp_high_recovery_normal = temp;
+	_battery->pdata->temp_high_threshold_normal = temp;
+	_battery->pdata->temp_high_recovery_normal = temp - 2;
 
-	_battery->pdata->temp_highlimit_threshold_lpm = temp + 1;
-	_battery->pdata->temp_highlimit_recovery_lpm = temp;
+	_battery->pdata->temp_highlimit_threshold_lpm = temp;
+	_battery->pdata->temp_highlimit_recovery_lpm = temp - 2;
 
-	_battery->pdata->temp_high_threshold_lpm = temp + 1;
-	_battery->pdata->temp_high_recovery_lpm = temp;
+	_battery->pdata->temp_high_threshold_lpm = temp;
+	_battery->pdata->temp_high_recovery_lpm = temp - 2;
+/*
+	_battery->pdata->wpc_high_threshold_normal = temp;
+	_battery->pdata->wpc_high_recovery_normal = temp - 2;
 
-	_battery->pdata->wpc_high_threshold_normal = temp + 1;
-	_battery->pdata->wpc_high_recovery_normal = temp;
+	_battery->pdata->wpc_high_temp = temp;
+	_battery->pdata->wpc_high_temp_recovery = temp - 2;
 
-	_battery->pdata->wpc_high_temp = temp + 1;
-	_battery->pdata->wpc_high_temp_recovery = temp;
+	_battery->pdata->wpc_lcd_on_high_temp = temp;
+	_battery->pdata->wpc_lcd_on_high_temp_rec = temp - 2;
 
-	_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
-	_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
+	_battery->pdata->wpc_high_temp = temp;
+	_battery->pdata->wpc_high_temp_recovery = temp - 2;
 
-	_battery->pdata->wpc_high_temp = temp + 1;
-	_battery->pdata->wpc_high_temp_recovery = temp;
+	_battery->pdata->wpc_lcd_on_high_temp = temp;
+	_battery->pdata->wpc_lcd_on_high_temp_rec = temp - 2;
 
-	_battery->pdata->wpc_lcd_on_high_temp = temp + 1;
-	_battery->pdata->wpc_lcd_on_high_temp_rec = temp;
+	_battery->pdata->swelling_wc_high_temp_recov = temp - 2;
 
-	_battery->pdata->mix_high_temp = temp + 1;
-	_battery->pdata->mix_high_temp_recovery = temp;
-
-	_battery->pdata->swelling_high_temp_block = temp + 1;
-	_battery->pdata->swelling_high_temp_recov = temp;
-
-	_battery->pdata->swelling_wc_high_temp_recov = temp;
+	_battery->pdata->mix_high_temp = temp;
+	_battery->pdata->mix_high_temp_recovery = temp - 2;
+*/
+	_battery->pdata->swelling_high_temp_block = temp;
+	_battery->pdata->swelling_high_temp_recov = temp - 2;
 }
 
 static ssize_t batt_max_temp_show(struct kobject *kobj,
