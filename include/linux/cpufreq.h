@@ -731,4 +731,9 @@ extern bool is_suspend;
 extern struct pm_qos_request cpu_dvfs_minlock_cl1;
 extern struct pm_qos_request cpu_dvfs_minlock_cl0;
 
+extern int gpu_dvfs_max_temp_cal;
+extern int cpu_dvfs_max_temp_cal;
+extern int cpu_dvfs_peak_temp;
+extern int gpu_dvfs_peak_temp;
+
 #endif /* _LINUX_CPUFREQ_H */

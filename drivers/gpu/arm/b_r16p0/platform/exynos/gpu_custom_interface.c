@@ -23,6 +23,7 @@
 #include <linux/syscalls.h>
 #include <linux/kthread.h>
 #include <linux/cpufreq.h>
+#include <linux/freezer.h>
 
 #if defined(CONFIG_MALI_DVFS) && defined(CONFIG_EXYNOS_THERMAL)
 #include "exynos_tmu.h"
@@ -52,7 +53,7 @@ struct exynos_context *platform = NULL;
 #define GPU_DVFS_TJMAX			(EXYNOS_MAX_TEMP - 5) /* shutdown temp */
 #define GPU_DVFS_AVOID_SHUTDOWN_TEMP	(GPU_DVFS_TJMAX - 5)
 #define GPU_DVFS_RANGE_MAX_TEMP		(GPU_DVFS_AVOID_SHUTDOWN_TEMP - 5)
-#define GPU_DVFS_MARGIN_TEMP		(15)
+#define GPU_DVFS_MARGIN_TEMP		(10)
 #define GPU_DVFS_STEP_DOWN_TEMP		(5)
 #define GPU_DVFS_DEBUG			(0)
 
@@ -66,8 +67,8 @@ struct exynos_context *platform = NULL;
 #define FREQ_STEP_7	839000
 
 static int gpu_dvfs_max_temp_user = 70;
-static int gpu_dvfs_max_temp_cal = 0;
-static int gpu_dvfs_peak_temp = 0;
+int gpu_dvfs_max_temp_cal = 0;
+int gpu_dvfs_peak_temp = 0;
 static int gpu_temp = 0;
 static unsigned int gpu_dvfs_limit_freq = 0;
 static int gpu_dvfs_min_temp = 0;
@@ -2106,7 +2107,7 @@ static ssize_t show_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct 
 	sprintf(buf, "%s[dvfs_dev_low_vol_trig]\t%d mV\n",buf, dvfs_dev_low_vol_trig);
 	sprintf(buf, "%s[dvfs_dev_low_vol_peak]\t%d mV\n",buf, dvfs_dev_low_vol_peak);
 	sprintf(buf, "%s[gpu_dvfs_limit_freq_vol]\t%u KHz\n",buf, gpu_dvfs_limit_freq_vol);
-	sprintf(buf, "%s[dvfs_sleep_time_ms]\t\t%u ms\n",buf, dvfs_sleep_time_us / 1000);
+	sprintf(buf, "%s[dvfs_sleep_time]\t\t%u ms\n",buf, dvfs_sleep_time_ms);
 
 	return strlen(buf);
 }
@@ -2193,13 +2194,13 @@ static int gpu_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!platform->gpu_max_clock) {
-			pr_warn("%s: GPU DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: GPU DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!gpu_tmu_data) {
-			pr_warn("%s: GPU DVFS: gpu_tmu_data is not ready! - Waiting ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: GPU DVFS: gpu_tmu_data is not ready! - Waiting ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		break;
@@ -2213,7 +2214,7 @@ static int gpu_dvfs_kthread(void *nothing)
 		gpu_temp = gpu_tmu_data->tmu_read(gpu_tmu_data);
 
 		if (gpu_temp == prev_temp) {
-			usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
+			schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 			continue;
 		}
 
@@ -2280,11 +2281,8 @@ static int gpu_dvfs_kthread(void *nothing)
 		prev_temp = gpu_temp;
 		if (freq)
 			set_gpu_dvfs_limit(freq);
-		usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
-		continue;
-
+		schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 	}
-
 	return 0;
 }
 
@@ -2629,8 +2627,6 @@ void gpu_remove_sysfs_file(struct device *dev)
 
 static int __init gpu_dvfs_init(void)
 {
-	struct sched_param gpu_param = { .sched_priority = 96 }; // RT priority 1 (low) to 99 (high)
-
 	if (!platform)
 		platform = (struct exynos_context *)pkbdev->platform_context;
 
@@ -2638,16 +2634,11 @@ static int __init gpu_dvfs_init(void)
 	gpu_dvfs_thread = kthread_run(gpu_dvfs_kthread, NULL, "gpu_dvfs");
 	if (IS_ERR(gpu_dvfs_thread)) {
 		pr_err("%s: GPU DVFS: failed to create and start kthread.\n", __func__);
-		goto exit;
+		return -ENOMEM;
 	}
-
 	set_cpus_allowed_ptr(gpu_dvfs_thread, &hmp_slow_cpu_mask);
-	if (sched_setscheduler(gpu_dvfs_thread, SCHED_FIFO, &gpu_param) < 0)
-		pr_err("%s: GPU DVFS: Failed to set RT priority.\n", __func__);
+	set_user_nice(gpu_dvfs_thread, -19);
 
 	return 0;
-
-exit:
-	return -EINVAL;
 }
 late_initcall(gpu_dvfs_init);

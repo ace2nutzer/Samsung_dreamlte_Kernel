@@ -15,6 +15,8 @@
 #include <linux/sec_ext.h>
 #include <linux/sec_debug.h>
 #include <linux/cpufreq.h>
+#include <linux/kthread.h>
+#include <linux/freezer.h>
 
 #if defined(CONFIG_SEC_ABC)
 #include <linux/sti/abc_common.h>
@@ -87,6 +89,7 @@ static bool battery_idle = false;
 static unsigned int batt_level = 0;
 static unsigned int batt_max_temp = 40; /* °C */
 static unsigned int lpm_batt_max_temp = 45; /* LPM */
+static struct task_struct *batt_temp_dvfs_thread = NULL;
 
 static struct sec_battery_info *_battery;
 
@@ -377,6 +380,53 @@ char *sec_bat_charge_mode_str[] = {
 	"Charging-Off",
 	"Buck-Off",
 };
+
+/* DVFS kthread for checking batt temp and to reduce CPU/GPU heat */
+static int batt_temp_dvfs_kthread(void *nothing)
+{
+	static bool cpu_cool_down = false;
+	static bool gpu_cool_down = false;
+	int cpu_peak_temp = 0;
+	int gpu_peak_temp = 0;
+
+	pr_info("%s: BATT TEMP DVFS: kthread started successfully.\n", __func__);
+
+	while (!kthread_should_stop()) {
+		if (batt_temp > batt_max_temp) {
+			if ((cpu_dvfs_max_temp_cal > gpu_dvfs_max_temp_cal) || (cpu_dvfs_max_temp_cal == gpu_dvfs_max_temp_cal)) {
+				if (cpu_dvfs_max_temp_cal >= 50) {
+					sanitize_cpu_dvfs(true);
+					cpu_cool_down = true;
+					pr_info("BATT TEMP DVFS: %s: reduced cpu_dvfs_max_temp_cal to %d.\n", __func__, cpu_dvfs_max_temp_cal);
+				}
+			} else {
+				if (gpu_dvfs_max_temp_cal >= 50) {
+					sanitize_gpu_dvfs(true);
+					gpu_cool_down = true;
+					pr_info("BATT TEMP DVFS: %s: reduced gpu_dvfs_max_temp_cal to %d.\n", __func__, gpu_dvfs_max_temp_cal);
+				}
+			}
+		} else if ((batt_temp <= (batt_max_temp - 1)) && (cpu_cool_down || gpu_cool_down)) {
+			if (cpu_cool_down) {
+				pr_info("BATT TEMP DVFS: %s: releasing reduced cpu_dvfs_max_temp_cal to user value ...\n", __func__);
+				cpu_peak_temp = cpu_dvfs_peak_temp;
+				sanitize_cpu_dvfs(false);
+				cpu_dvfs_peak_temp = cpu_peak_temp;
+				cpu_cool_down = false;
+			}
+			if (gpu_cool_down) {
+				pr_info("BATT TEMP DVFS: %s: releasing reduced gpu_dvfs_max_temp_cal to user value ...\n", __func__);
+				gpu_peak_temp = gpu_dvfs_peak_temp;
+				sanitize_gpu_dvfs(false);
+				gpu_dvfs_peak_temp = gpu_peak_temp;
+				gpu_cool_down = false;
+			}
+		}
+		/* sleep for 2 min */
+		schedule_timeout_interruptible(msecs_to_jiffies(120000));
+	}
+	return 0;
+}
 
 int dvfs_get_dev_vol(void)
 {
@@ -4678,6 +4728,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 
 			/* Set charging current for LPM */
 			update_batt_max_temp(lpm_batt_max_temp);
+			batt_max_temp = lpm_batt_max_temp;
 			ac_chg_curr = lpm_ac_chg_curr;
 			usbpd_chg_curr = lpm_usbpd_chg_curr;
 			usbcd_chg_curr = lpm_usbcd_chg_curr;
@@ -10390,6 +10441,20 @@ static int sec_battery_probe(struct platform_device *pdev)
 
 	/* Charger Control: calculate initial input current for voltage >5V */
 	calc_input_curr();
+
+	/* start DVFS kthread for checking batt temp */
+	batt_temp_dvfs_thread = kthread_run(batt_temp_dvfs_kthread, NULL, "batt_temp_dvfs");
+	if (IS_ERR(batt_temp_dvfs_thread)) {
+		ret = ENOMEM;
+		pr_err("%s: BATT TEMP DVFS: failed to create and start kthread.", __func__);
+		goto err_bat_free;
+	}
+#ifdef CONFIG_SCHED_HMP_CUSTOM
+	set_cpus_allowed_ptr(batt_temp_dvfs_thread, &hmp_slow_cpu_mask);
+	set_user_nice(batt_temp_dvfs_thread, MAX_NICE);
+#else
+	set_cpus_allowed_ptr(batt_temp_dvfs_thread, cpu_all_mask);
+#endif
 
 	dev_info(battery->dev,
 		"%s: SEC Battery Driver Loaded\n", __func__);

@@ -922,7 +922,7 @@ err:
 	return ret;
 }
 
-static void suspend_resume_handler_thread(struct work_struct *suspend_resume_handler_work)
+static void set_devfreq_pm_qos(void)
 {
 #ifdef CONFIG_PM_DEVFREQ
 	set_devfreq_disp_pm_qos();
@@ -934,7 +934,6 @@ static void suspend_resume_handler_thread(struct work_struct *suspend_resume_han
 #endif
 	update_gov_tunables();
 }
-static DECLARE_WORK(suspend_resume_handler_work, suspend_resume_handler_thread);
 
 static int decon_blank(int blank_mode, struct fb_info *info)
 {
@@ -987,7 +986,7 @@ blank_exit:
 	else
 		is_suspend = true;
 
-	schedule_work(&suspend_resume_handler_work);
+	set_devfreq_pm_qos();
 
 	return ret;
 }

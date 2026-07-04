@@ -23,6 +23,8 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/module.h>
+#include <linux/freezer.h>
+#include <linux/wakelock.h>
 
 #include "exynos-acme.h"
 
@@ -46,6 +48,7 @@ unsigned int gpu_dvfs_limit_freq_vol = 0;
 void sanitize_cpu_gpu_dvfs_vol(void);
 int dvfs_dev_low_vol_peak = 4400;
 static int vol = 0;
+static struct wake_lock dvfs_wakelock;
 #define SANITIZE_VOL_SLEEP_MS		(3000)
 #define VOL_DVFS_DEBUG			(0)
 
@@ -65,7 +68,7 @@ static int vol = 0;
 #define CPU_DVFS_TJMAX			(EXYNOS_MAX_TEMP) /* shutdown temp */
 #define CPU_DVFS_AVOID_SHUTDOWN_TEMP	(CPU_DVFS_TJMAX - 5)
 #define CPU_DVFS_RANGE_MAX_TEMP		(CPU_DVFS_AVOID_SHUTDOWN_TEMP - 5)
-#define CPU_DVFS_MARGIN_TEMP		(15)
+#define CPU_DVFS_MARGIN_TEMP		(10)
 #define CPU_DVFS_STEP_DOWN_TEMP		(5)
 #define CPU_DVFS_DEBUG			(0)
 
@@ -104,9 +107,9 @@ static int vol = 0;
 #define FREQ_STEP_CL0_11              (2002000)
 
 static int cpu_dvfs_max_temp_user = 70;
-unsigned int dvfs_sleep_time_us = 10 * 1000; /* 10 ms */
-static int cpu_dvfs_max_temp_cal = 0;
-static int cpu_dvfs_peak_temp = 0;
+unsigned int dvfs_sleep_time_ms = 6;
+int cpu_dvfs_max_temp_cal = 0;
+int cpu_dvfs_peak_temp = 0;
 static int cpu_temp = 0;
 static unsigned int cpu4_dvfs_limit_freq = 0;
 static unsigned int cpu0_dvfs_limit_freq = 0;
@@ -708,7 +711,7 @@ static ssize_t show_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *at
 	sprintf(buf, "%s[dvfs_dev_low_vol_peak]\t%d mV\n",buf, dvfs_dev_low_vol_peak);
 	sprintf(buf, "%s[cpu4_dvfs_limit_freq_vol]\t%u KHz\n",buf, cpu4_dvfs_limit_freq_vol);
 	sprintf(buf, "%s[cpu0_dvfs_limit_freq_vol]\t%u KHz\n",buf, cpu0_dvfs_limit_freq_vol);
-	sprintf(buf, "%s[dvfs_sleep_time_ms]\t\t%u ms\n",buf, dvfs_sleep_time_us / 1000);
+	sprintf(buf, "%s[dvfs_sleep_time]\t\t%u ms\n",buf, dvfs_sleep_time_ms);
 
 	return strlen(buf);
 }
@@ -771,7 +774,7 @@ err:
 
 static ssize_t show_dvfs_sleep_time_ms(struct kobject *kobj, struct attribute *attr, char *buf)
 {
-	return sprintf(buf, "%u ms\n", dvfs_sleep_time_us / 1000);
+	return sprintf(buf, "%u ms\n", dvfs_sleep_time_ms);
 }
 
 static ssize_t store_dvfs_sleep_time_ms(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)
@@ -781,7 +784,7 @@ static ssize_t store_dvfs_sleep_time_ms(struct kobject *kobj, struct attribute *
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 1)
 			goto err;
-		dvfs_sleep_time_us = tmp * 1000;
+		dvfs_sleep_time_ms = tmp;
 		sanitize_cpu_dvfs(false);
 		sanitize_gpu_dvfs(false);
 		return count;
@@ -948,13 +951,13 @@ static int cpu_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!cpu4_min_freq || !cpu0_min_freq) {
-			pr_warn("%s: CPU DVFS: waiting for cpufreq driver ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: CPU DVFS: waiting for cpufreq driver ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!cpu_tmu_data) {
-			pr_warn("%s: CPU DVFS: cpu_tmu_data is not ready! - Waiting ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: CPU DVFS: cpu_tmu_data is not ready! - Waiting ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		break;
@@ -968,7 +971,7 @@ static int cpu_dvfs_kthread(void *nothing)
 		cpu_temp = cpu_tmu_data->tmu_read(cpu_tmu_data);
 
 		if (cpu_temp == prev_temp) {
-			usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
+			schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 			continue;
 		}
 
@@ -1115,11 +1118,8 @@ static int cpu_dvfs_kthread(void *nothing)
 			set_cpu_dvfs_limit(4, big_freq);
 		if (lit_freq)
 			set_cpu_dvfs_limit(0, lit_freq);
-		usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
-		continue;
-
+		schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 	}
-
 	return 0;
 }
 
@@ -1190,12 +1190,15 @@ static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 	pr_info("%s: VOL DVFS: vol: %d mV - gpu_dvfs_limit_freq_vol: %u KHz\n", __func__, vol, gpu_dvfs_limit_freq_vol);
 
 	/* from gpu_pmqos */
-	platform->gpu_vk_boost_mif_min_clk_lock = 2093000;
+	platform->gpu_vk_boost_mif_min_clk_lock = 1794000;
+
+	wake_unlock(&dvfs_wakelock);
 }
 static DECLARE_DELAYED_WORK(sanitize_cpu_gpu_dvfs_vol_work, sanitize_cpu_gpu_dvfs_vol_thread);
 
 void sanitize_cpu_gpu_dvfs_vol(void)
 {
+	wake_lock(&dvfs_wakelock);
 	schedule_delayed_work(&sanitize_cpu_gpu_dvfs_vol_work, msecs_to_jiffies(SANITIZE_VOL_SLEEP_MS));
 }
 
@@ -1208,13 +1211,13 @@ static int vol_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!cpu4_min_freq || !cpu0_min_freq) {
-			pr_warn("%s: VOL DVFS: waiting for cpufreq driver ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: VOL DVFS: waiting for cpufreq driver ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!platform->gpu_max_clock) {
-			pr_warn("%s: VOL DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
-			msleep(500);
+			pr_warn_ratelimited("%s: VOL DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
+			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		break;
@@ -1228,7 +1231,7 @@ static int vol_dvfs_kthread(void *nothing)
 		vol = dvfs_get_dev_vol();
 
 		if (vol == prev_vol) {
-			usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
+			schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 			continue;
 		}
 
@@ -1244,7 +1247,6 @@ static int vol_dvfs_kthread(void *nothing)
 				big_freq = FREQ_STEP_CL1_12;
 				gpu_freq = FREQ_STEP_4;
 				lit_freq = FREQ_STEP_CL0_8;
-				platform->gpu_vk_boost_mif_min_clk_lock = 1794000;
 				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
 					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz - CPU-LIT: %u KHz\n" ,__func__,
 					big_freq, gpu_freq, lit_freq);
@@ -1367,18 +1369,14 @@ static int vol_dvfs_kthread(void *nothing)
 
 			if ((big_freq) || (gpu_freq) || (lit_freq)) {
 				prev_vol = vol;
-				msleep(1000);
+				schedule_timeout_interruptible(msecs_to_jiffies(1000));
 				continue;
 			}
-
 		}
 
 		prev_vol = vol;
-		usleep_range(dvfs_sleep_time_us, dvfs_sleep_time_us);
-		continue;
-
+		schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 	}
-
 	return 0;
 }
 
@@ -1604,8 +1602,6 @@ static int __init exynos_ufc_init(void)
 {
 	struct device_node *dn = NULL;
 	struct exynos_cpufreq_domain *domain;
-	struct sched_param cpu_param = { .sched_priority = 98 }; // RT priority 1 (low) to 99 (high)
-	struct sched_param vol_param = { .sched_priority = 97 };
 	const char *buf;
 	int ret = 0;
 
@@ -1658,28 +1654,27 @@ static int __init exynos_ufc_init(void)
 
 	init_sysfs();
 
+	wake_lock_init(&dvfs_wakelock, WAKE_LOCK_SUSPEND, "dvfs_pm_lock");
+
 	/* VOL DVFS KTHREAD */
 	vol_dvfs_thread = kthread_run(vol_dvfs_kthread, NULL, "vol_dvfs");
 	if (IS_ERR(vol_dvfs_thread)) {
 		pr_err("%s: VOL DVFS: failed to create and start kthread.\n", __func__);
+		ret = -ENOMEM;
 		goto exit;
 	}
-
 	set_cpus_allowed_ptr(vol_dvfs_thread, &hmp_slow_cpu_mask);
-	if (sched_setscheduler(vol_dvfs_thread, SCHED_FIFO, &vol_param) < 0)
-		pr_err("%s: VOL DVFS: Failed to set RT priority.\n", __func__);
+	set_user_nice(vol_dvfs_thread, -18);
 
 	/* CPU DVFS KTHREAD */
 	cpu_dvfs_thread = kthread_run(cpu_dvfs_kthread, NULL, "cpu_dvfs");
 	if (IS_ERR(cpu_dvfs_thread)) {
 		pr_err("%s: CPU DVFS: failed to create and start kthread.\n", __func__);
-		ret = -EINVAL;
+		ret = -ENOMEM;
 		goto exit;
 	}
-
 	set_cpus_allowed_ptr(cpu_dvfs_thread, &hmp_slow_cpu_mask);
-	if (sched_setscheduler(cpu_dvfs_thread, SCHED_FIFO, &cpu_param) < 0)
-		pr_err("%s: CPU DVFS: Failed to set RT priority.\n", __func__);
+	set_user_nice(cpu_dvfs_thread, MIN_NICE);
 
 	pr_info("Initialized Exynos UFC(User-Frequency-Ctrl) driver\n");
 

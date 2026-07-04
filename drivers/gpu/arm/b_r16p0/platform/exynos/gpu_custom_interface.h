@@ -29,7 +29,7 @@ extern void kbasep_trace_format_msg(struct kbase_trace *trace_msg, char *buffer,
 extern void update_fvmap(int id, int rate, int volt);
 extern struct kbase_device *pkbdev;
 extern bool is_suspend;
-extern unsigned int dvfs_sleep_time_us;
+extern unsigned int dvfs_sleep_time_ms;
 
 /* DVFS device low voltage handler */
 extern int dvfs_dev_low_vol_peak;
