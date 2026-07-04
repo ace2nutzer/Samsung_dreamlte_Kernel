@@ -4884,7 +4884,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4903,7 +4903,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4922,7 +4922,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4941,7 +4941,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4960,7 +4960,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4979,7 +4979,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -4998,7 +4998,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -5017,7 +5017,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -5036,7 +5036,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
@@ -5055,7 +5055,7 @@
 
 			/* Frequency table */
 			/* for level	:	1_Head, 2_Head, 2_Tail */
-			input_booster,cpu_freqs = <1703000 0>;
+			input_booster,cpu_freqs = <1807000 0>;
 			input_booster,hmp_boost = <1 0>;
 			input_booster,kfc_freqs = <0 0>;
 			input_booster,mif_freqs = <0 0>;
