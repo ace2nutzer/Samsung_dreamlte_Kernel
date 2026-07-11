@@ -7,7 +7,7 @@
  *            (C)  2009 Alexander Clouter <alex@digriz.org.uk>
  *
  *  Device specific logic for Exynos 8895:
- *            (C) 2020 Silvestro Sanfilippo (ace2nutzer@xda-developers.com) <ace2nutzer@gmail.com>
+ *            (C) 2020 <ace2nutzer @ xda>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as

@@ -5,7 +5,7 @@
  *  Copyright (C) 2012 Samsung Electronics
  *
  * Charger Control:
- *         Silvestro Sanfilippo (ace2nutzer@xda-developers.com) <ace2nutzer@gmail.com>
+ *         <ace2nutzer @ xda>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -1356,10 +1356,8 @@ static ssize_t charger_current_store(struct kobject *kobj,
 	unsigned int val, max_curr;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	max_curr = _battery->pdata->max_charging_current;
@@ -1376,7 +1374,7 @@ static ssize_t charger_current_store(struct kobject *kobj,
 	if (sscanf(buf, "ac=%u", &val)) {
 		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			goto err;
+			return -EINVAL;
 		}
 		ac_chg_curr = val;
 		goto out;
@@ -1385,7 +1383,7 @@ static ssize_t charger_current_store(struct kobject *kobj,
 	if (sscanf(buf, "usbpd=%u", &val)) {
 		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			goto err;
+			return -EINVAL;
 		}
 		usbpd_chg_curr = val;
 		goto out;
@@ -1394,7 +1392,7 @@ static ssize_t charger_current_store(struct kobject *kobj,
 	if (sscanf(buf, "usbcd=%u", &val)) {
 		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			goto err;
+			return -EINVAL;
 		}
 		usbcd_chg_curr = val;
 		goto out;
@@ -1403,7 +1401,7 @@ static ssize_t charger_current_store(struct kobject *kobj,
 	if (sscanf(buf, "wc=%u", &val)) {
 		if (val < 200 || val > max_curr) {
 			pr_err("[sec_batt] Out of valid range 200 - %u mA\n", max_curr);
-			goto err;
+			return -EINVAL;
 		}
 		wc_chg_curr = val;
 
@@ -1413,8 +1411,6 @@ static ssize_t charger_current_store(struct kobject *kobj,
 		goto out;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
 
 out:
@@ -1446,7 +1442,7 @@ static ssize_t s8_plus_mode_show(struct kobject *kobj,
 
 	sprintf(buf,  "%s[Variant: S8+]\n\n", buf);
 	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer @ xda]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1461,7 +1457,7 @@ static ssize_t note8_mode_show(struct kobject *kobj,
 
 	sprintf(buf,  "%s[Variant: Note8]\n\n", buf);
 	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer @ xda]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1476,7 +1472,7 @@ static ssize_t s8_mode_show(struct kobject *kobj,
 
 	sprintf(buf,  "%s[Variant: S8]\n\n", buf);
 	sprintf(buf,  "%s[Max charging current: %u mA (1C)]\n\n", buf, max_curr);
-	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer@xda]\n", buf, CHARGER_CONTROL_VERSION);
+	sprintf(buf,   "%s[Charger Control V. %s - ace2nutzer @ xda]\n", buf, CHARGER_CONTROL_VERSION);
 
 	return strlen(buf);
 }
@@ -1508,28 +1504,21 @@ static ssize_t water_detection_store(struct kobject *kobj,
 	unsigned int val;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
 		water_detect = true;
-		goto out;
+		return count;
 	}
 
 	if (sysfs_streq(buf, "false") || sysfs_streq(buf, "0")) {
 		water_detect = false;
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 SEC_BAT_ATTR_RW(water_detection);
 #endif
@@ -1549,10 +1538,8 @@ static ssize_t batt_idle_store(struct kobject *kobj,
 	unsigned int val;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sysfs_streq(buf, "true") || sysfs_streq(buf, "1")) {
@@ -1565,8 +1552,6 @@ static ssize_t batt_idle_store(struct kobject *kobj,
 		goto out;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
 
 out:
@@ -1608,16 +1593,14 @@ static ssize_t batt_care_store(struct kobject *kobj,
 	unsigned int tmp;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 50 || tmp > 100) {
 			pr_err("[sec_batt] Invaild cmd\n");
-			goto err;
+			return -EINVAL;
 		}
 		batt_care = tmp;
 
@@ -1636,15 +1619,10 @@ static ssize_t batt_care_store(struct kobject *kobj,
 		if (is_charger)
 			sec_bat_set_charging_current(_battery);
 
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 SEC_BAT_ATTR_RW(batt_care);
 
@@ -1743,30 +1721,23 @@ static ssize_t batt_max_temp_store(struct kobject *kobj,
 	unsigned int tmp;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 30 || tmp > 45) {
 			pr_err("[sec_batt] Invaild cmd\n");
-			goto err;
+			return -EINVAL;
 		}
 		batt_max_temp = tmp;
 
 		/* update */
 		update_batt_max_temp(tmp);	
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 SEC_BAT_ATTR_RW(batt_max_temp);
 

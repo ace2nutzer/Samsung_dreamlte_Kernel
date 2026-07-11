@@ -1665,10 +1665,8 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%d", &val);
-		if (val > 572000) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		if (val > 572000)
 			return -EINVAL;
-		}
 	}
 #endif
 
@@ -1681,7 +1679,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			if (val < platform->gpu_min_clock) {
 				pr_warn("[%s] max_freq can't be lower than min_freq!\n",__func__);
-				goto err;
+				return -EINVAL;
 			}
 			platform->gpu_max_clock = val;
 			gpu_max_freq = val;
@@ -1691,8 +1689,7 @@ static ssize_t set_kernel_sysfs_user_max_clock(struct kobject *kobj, struct kobj
 			return count;
 		}
 	}
-err:
-	pr_err("[%s] invalid cmd\n", __func__);
+
 	return -EINVAL;
 }
 
@@ -1774,10 +1771,8 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%d", &val);
-		if (val > 572000) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+		if (val > 572000)
 			return -EINVAL;
-		}
 	}
 #endif
 
@@ -1790,7 +1785,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 		if (val == 260000 || val == 338000 || val == 385000 || val == 455000 || val == 572000 || val == 683000 || val == 764000 || val == 839000) {
 			if (val > platform->gpu_max_clock) {
 				pr_warn("[%s] min_freq can't be higher than max_freq!\n",__func__);
-				goto err;
+				return -EINVAL;
 			}
 			platform->gpu_min_clock = val;
 			gpu_min_freq = val;
@@ -1798,8 +1793,7 @@ static ssize_t set_kernel_sysfs_user_min_clock(struct kobject *kobj, struct kobj
 			return count;
 		}
 	}
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
+
 	return -EINVAL;
 }
 
@@ -1829,22 +1823,19 @@ static ssize_t set_kernel_sysfs_gpu_volt(struct kobject *kobj, struct kobj_attri
 	unsigned int rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
 		if ((volt < 450000) || (volt > 1000000))
-			goto err;
+			return -EINVAL;
 		update_fvmap(id, rate, volt);
 		gpu_dvfs_update_asv_table(pkbdev);
 		pr_info("%s: GPU DVFS: update dvfs_g3d - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
 		return count;
 	}
 
-err:
 	return -EINVAL;
 }
 
@@ -2120,23 +2111,20 @@ static ssize_t set_kernel_sysfs_gpu_dvfs_max_temp(struct kobject *kobj, struct k
 		return -ENODEV;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp > GPU_DVFS_RANGE_MAX_TEMP) {
 			pr_err("%s: GPU DVFS: out of max range: %d C\n", __func__, (int)GPU_DVFS_RANGE_MAX_TEMP);
-			goto err;
+			return -EINVAL;
 		}
 		gpu_dvfs_max_temp_user = tmp;
 		sanitize_gpu_dvfs(false);
 		return count;
 	}
-err:
-	pr_err("%s: GPU DVFS: invalid cmd\n", __func__);
+
 	return -EINVAL;
 }
 

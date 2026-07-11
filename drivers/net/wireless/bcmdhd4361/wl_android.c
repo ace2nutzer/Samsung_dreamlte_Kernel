@@ -1338,16 +1338,14 @@ static ssize_t wifi_band_store(struct kobject *kobj,
 	unsigned int tmp = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 0 || tmp > 2) {
 			pr_err("[wl_android] invalid input\n");
-			goto err;
+			return -EINVAL;
 		}
 		wifi_band = tmp;
 		if (wifi_band == 0) {
@@ -1361,15 +1359,10 @@ static ssize_t wifi_band_store(struct kobject *kobj,
 			wlc_band_2g = 0;
 		}
 
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 WL_ANDROID_ATTR_RW(wifi_band);
 

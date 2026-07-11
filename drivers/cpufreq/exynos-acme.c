@@ -494,27 +494,19 @@ static int set_cpu0_suspend_max_freq(const char *buf, struct kernel_param *kp)
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &tmp);
-		if ((tmp != 0) && (tmp > 1690000)) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		if ((tmp != 0) && (tmp > 1690000))
+			return -EINVAL;
 	}
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp > 2002000) {
-			goto err;
-		}
+		if (tmp > 2002000)
+			return -EINVAL;
 		cpu0_suspend_max_freq = tmp;
-		goto out;
+			return 0;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return 0;
 }
 module_param_call(cpu0_suspend_max_freq, set_cpu0_suspend_max_freq, param_get_int, &cpu0_suspend_max_freq, 0664);
 
@@ -525,27 +517,20 @@ static int set_cpu4_suspend_max_freq(const char *buf, struct kernel_param *kp)
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &tmp);
-		if ((tmp != 0) && (tmp > 2314000)) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		if ((tmp != 0) && (tmp > 2314000))
+			return -EINVAL;
 	}
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp > 2808000) {
-			goto err;
-		}
+		if (tmp > 2808000)
+			return -EINVAL;
+
 		cpu4_suspend_max_freq = tmp;
-		goto out;
+		return 0;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return 0;
 }
 module_param_call(cpu4_suspend_max_freq, set_cpu4_suspend_max_freq, param_get_int, &cpu4_suspend_max_freq, 0664);
 
@@ -556,27 +541,20 @@ static int set_gpu_suspend_max_freq(const char *buf, struct kernel_param *kp)
 #if IS_ENABLED(CONFIG_A2N)
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &tmp);
-		if ((tmp != 0) && (tmp > 572000)) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
-			goto err;
-		}
+		if ((tmp != 0) && (tmp > 572000))
+			return -EINVAL;
 	}
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
-		if (tmp > 839000) {
-			goto err;
-		}
+		if (tmp > 839000)
+			return -EINVAL;
+
 		gpu_suspend_max_freq = tmp;
-		goto out;
+		return 0;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return 0;
 }
 module_param_call(gpu_suspend_max_freq, set_gpu_suspend_max_freq, param_get_int, &gpu_suspend_max_freq, 0664);
 

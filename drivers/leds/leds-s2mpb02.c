@@ -441,27 +441,20 @@ ssize_t torch_max_brightness_store(struct device *dev,
 	unsigned int tmp;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u", &tmp)) {
 		if (tmp < 1 || tmp > 17) {
 			pr_err("[LED] %s, out of range 1 - 17.\n", __func__);
-			goto err;
+			return -EINVAL;
 		}
 		torch_max_brightness = tmp;
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 
 ssize_t torch_max_brightness_show(struct device *dev,

@@ -721,23 +721,20 @@ static ssize_t store_cpu_dvfs_max_temp(struct kobject *kobj, struct attribute *a
 	int tmp = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%d", &tmp)) {
 		if (tmp > CPU_DVFS_RANGE_MAX_TEMP) {
 			pr_err("%s: CPU DVFS: out of max range: %d C\n", __func__, (int)CPU_DVFS_RANGE_MAX_TEMP);
-			goto err;
+			return -EINVAL;
 		}
 		cpu_dvfs_max_temp_user = tmp;
 		sanitize_cpu_dvfs(false);
 		return count;
 	}
-err:
-	pr_err("%s: CPU DVFS: invalid cmd\n", __func__);
+
 	return -EINVAL;
 }
 
@@ -752,23 +749,20 @@ static ssize_t store_dvfs_dev_low_vol_trig(struct kobject *kobj, struct attribut
 	int tmp = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%d", &tmp)) {
 		if (tmp < DVFS_DEV_LOW_VOL_TRIG_MIN || tmp > DVFS_DEV_LOW_VOL_TRIG_MAX) {
 			pr_err("%s: CPU DVFS: out of range %d - %d mV.\n", __func__, (int)DVFS_DEV_LOW_VOL_TRIG_MIN, (int)DVFS_DEV_LOW_VOL_TRIG_MAX);
-			goto err;
+			return -EINVAL;
 		}
 		dvfs_dev_low_vol_trig = tmp;
 		sanitize_cpu_gpu_dvfs_vol();
 		return count;
 	}
-err:
-	pr_err("%s: CPU DVFS: invalid cmd\n", __func__);
+
 	return -EINVAL;
 }
 
@@ -812,21 +806,18 @@ static ssize_t store_cpu_lit_volt(struct kobject *kobj, struct attribute *attr, 
 	unsigned int rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
 		if ((volt < 450000) || (volt > 1400000))
-			goto err;
+			return -EINVAL;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl1 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
 		return count;
 	}
 
-err:
 	return -EINVAL;
 }
 
@@ -836,21 +827,18 @@ static ssize_t store_cpu_big_volt(struct kobject *kobj, struct attribute *attr, 
 	unsigned int rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u %u", &rate, &volt) == 2) {
 		if ((volt < 450000) || (volt > 1400000))
-			goto err;
+			return -EINVAL;
 		update_fvmap(id, rate, volt);
 		pr_info("%s: CPU DVFS: update dvfs_cpucl0 - rate: %u kHz - volt: %u uV\n", __func__, rate, volt);
 		return count;
 	}
 
-err:
 	return -EINVAL;
 }
 
@@ -859,10 +847,8 @@ static ssize_t store_update_dvfs_table(struct kobject *kobj, struct attribute *a
 	unsigned int id = 0, rate = 0, volt = 0;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "%u %u %u", &id, &rate, &volt) == 3) {
@@ -871,7 +857,6 @@ static ssize_t store_update_dvfs_table(struct kobject *kobj, struct attribute *a
 		return count;
 	}
 
-err:
 	return -EINVAL;
 }
 

@@ -728,10 +728,8 @@ static ssize_t store_user_scaling_max_freq
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
 		if (((policy->cpu == 0) && (temp > 1690000)) ||
-				((policy->cpu == 4) && (temp > 2314000))) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+				((policy->cpu == 4) && (temp > 2314000)))
 			return -EINVAL;
-		}
 	}
 #endif
 
@@ -739,12 +737,12 @@ static ssize_t store_user_scaling_max_freq
 
 	ret = sscanf(buf, "%u", &new_policy.max);
 	if (ret != 1)
-		goto err;
+		return -EINVAL;
 
 	temp = new_policy.max;
 	ret = cpufreq_set_policy(policy, &new_policy);
 	if (ret)
-		goto err;
+		return -EINVAL;
 
 	policy->user_policy.max = temp;
 	if (policy->cpu == 0)
@@ -755,9 +753,6 @@ static ssize_t store_user_scaling_max_freq
 	sanitize_cpu_dvfs(false);
 	sanitize_cpu_gpu_dvfs_vol();
 	return count;
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
-	return -EINVAL;
 }
 
 static ssize_t store_user_scaling_min_freq
@@ -770,10 +765,8 @@ static ssize_t store_user_scaling_min_freq
 	if (!a2n_allow) {
 		sscanf(buf, "%u", &temp);
 		if (((policy->cpu == 0) && (temp > 1690000)) ||
-				((policy->cpu == 4) && (temp > 2314000))) {
-			pr_err("[%s] a2n: unprivileged access !\n",__func__);
+				((policy->cpu == 4) && (temp > 2314000)))
 			return -EINVAL;
-		}
 	}
 #endif
 
@@ -781,12 +774,12 @@ static ssize_t store_user_scaling_min_freq
 
 	ret = sscanf(buf, "%u", &new_policy.min);
 	if (ret != 1)
-		goto err;
+		return -EINVAL;
 
 	temp = new_policy.min;
 	ret = cpufreq_set_policy(policy, &new_policy);
 	if (ret)
-		goto err;
+		return -EINVAL;
 
 	policy->user_policy.min = temp;
 	if (policy->cpu == 0)
@@ -797,9 +790,6 @@ static ssize_t store_user_scaling_min_freq
 	sanitize_cpu_dvfs(false);
 	sanitize_cpu_gpu_dvfs_vol();
 	return count;
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
-	return -EINVAL;
 }
 
 /**

@@ -1026,36 +1026,29 @@ static ssize_t blink_delays_store(struct kobject *kobj,
 	unsigned int tmp;
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sscanf(buf, "blink_on_delay=%u", &tmp)) {
 		if (tmp < 200 || tmp > 10000) {
 			pr_err("[led_rgb] Invaild input\n");
-			goto err;
+			return -EINVAL;
 		}
 		blink_on_delay = tmp;
-		goto out;
+		return count;
 	}
 
 	if (sscanf(buf, "blink_off_delay=%u", &tmp)) {
 		if (tmp < 200 || tmp > 10000) {
 			pr_err("[led_rgb] Invaild input\n");
-			goto err;
+			return -EINVAL;
 		}
 		blink_off_delay = tmp;
-		goto out;
+		return count;
 	}
 
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
 	return -EINVAL;
-
-out:
-	return count;
 }
 LED_RGB_ATTR_RW(blink_delays);
 
@@ -1079,10 +1072,8 @@ static ssize_t force_curr_mode_store(struct kobject *kobj,
 	struct max77865_rgb *max77865_rgb = dev_get_drvdata(led_dev);
 
 #if IS_ENABLED(CONFIG_A2N)
-	if (!a2n_allow) {
-		pr_err("[%s] a2n: unprivileged access !\n",__func__);
-		goto err;
-	}
+	if (!a2n_allow)
+		return -EINVAL;
 #endif
 
 	if (sysfs_streq(buf, "normal")) {
@@ -1095,7 +1086,7 @@ static ssize_t force_curr_mode_store(struct kobject *kobj,
 		force_normal_current = false;
 		force_low_current = false;
 	} else {
-		goto err;
+		return -EINVAL;
 	}
 
 	if (batt_idle && led_charging && led_ongoing) {
@@ -1109,9 +1100,6 @@ static ssize_t force_curr_mode_store(struct kobject *kobj,
 	}
 
 	return count;
-err:
-	pr_err("[%s] invalid cmd\n",__func__);
-	return -EINVAL;
 }
 LED_RGB_ATTR_RW(force_curr_mode);
 
