@@ -2157,6 +2157,8 @@ static int is_hv_cable(muic_data_t *pmuic)
 		case ATTACHED_DEV_AFC_CHARGER_5V_DUPLI_MUIC:
 		case ATTACHED_DEV_AFC_CHARGER_9V_MUIC:
 		case ATTACHED_DEV_AFC_CHARGER_9V_DUPLI_MUIC:
+		case ATTACHED_DEV_AFC_CHARGER_12V_MUIC:
+		case ATTACHED_DEV_AFC_CHARGER_12V_DUPLI_MUIC:
 		case ATTACHED_DEV_AFC_CHARGER_ERR_V_MUIC:
 		case ATTACHED_DEV_AFC_CHARGER_ERR_V_DUPLI_MUIC:
 		case ATTACHED_DEV_QC_CHARGER_5V_MUIC:
@@ -2196,6 +2198,11 @@ void hv_muic_change_afc_voltage(muic_data_t *pmuic, int tx_data)
 				max77865_hv_muic_write_reg(i2c, MAX77865_MUIC_REG_HVCONTROL1, 0x01);
 				max77865_hv_muic_write_reg(i2c, MAX77865_MUIC_REG_CONTROL2_BC, 0x19);
 				break;
+			case MUIC_HV_12V:
+//				set_adc_scan_mode(phv->pmuic,ADC_SCANMODE_CONTINUOUS);
+				max77865_hv_muic_write_reg(i2c, MAX77865_MUIC_REG_HVCONTROL1, 0x01);
+				max77865_hv_muic_write_reg(i2c, MAX77865_MUIC_REG_CONTROL2_BC, 0x15);
+				break;
 			default:
 				break;
 		}
@@ -2214,7 +2221,7 @@ int muic_afc_set_voltage(int vol)
 
 	if (is_hv_cable(pmuic)) {
 		if (vol == 0) {
-			pr_info("%s: TSUB too hot. Chgdet Re-run.\n", __func__);
+			pr_info("%s: TBAT too hot. Chgdet Re-run.\n", __func__);
 			hv_muic_chgdet_ready(pmuic->phv);
 			if (pvendor && pvendor->run_chgdet)
 				pvendor->run_chgdet(pmuic->regmapdesc, 1);
@@ -2551,7 +2558,11 @@ void hv_set_afc_by_user(struct hv_data *phv, bool onoff)
 	}
 
 	if (onoff)
+#if defined(CONFIG_MUIC_HV_12V)
+		hv_muic_change_afc_voltage(phv->pmuic, MUIC_HV_12V);
+#else
 		hv_muic_change_afc_voltage(phv->pmuic, MUIC_HV_9V);
+#endif
 	else
 		hv_muic_change_afc_voltage(phv->pmuic, MUIC_HV_5V);
 }

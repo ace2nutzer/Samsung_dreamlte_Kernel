@@ -699,7 +699,7 @@ static int max77865_set_otg(struct max77865_charger_data *charger, int enable)
 static void max77865_check_slow_charging(struct max77865_charger_data *charger,
 	int input_current)
 {
-	/* under 400mA considered as slow charging concept for VZW */
+	/* <= 400mA considered as slow charging concept for VZW */
 	if (input_current <= SLOW_CHARGING_CURRENT_STANDARD &&
 		charger->cable_type != SEC_BATTERY_CABLE_NONE) {
 		union power_supply_propval value;

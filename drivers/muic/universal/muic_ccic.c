@@ -489,8 +489,13 @@ static int muic_handle_ccic_ATTACH(muic_data_t *pmuic, CC_NOTI_ATTACH_TYPEDEF *p
 			if (!pmuic->is_ccic_rp56_enable) {
 				switch (pmuic->attached_dev) {
 				case ATTACHED_DEV_AFC_CHARGER_5V_MUIC:
+#ifdef CONFIG_MUIC_HV_12V
+					pr_info("%s: 12V HV Charging Start!\n", __func__);
+					pmuic->phv->tx_data = MUIC_HV_12V;
+#else
 					pr_info("%s: 9V HV Charging Start!\n", __func__);
 					pmuic->phv->tx_data = MUIC_HV_9V;
+#endif
 					max77865_hv_muic_connect_start(pmuic->phv);
 					break;
 				default:
@@ -504,6 +509,7 @@ static int muic_handle_ccic_ATTACH(muic_data_t *pmuic, CC_NOTI_ATTACH_TYPEDEF *p
 			switch (pmuic->attached_dev) {
 			case ATTACHED_DEV_AFC_CHARGER_5V_MUIC:
 			case ATTACHED_DEV_AFC_CHARGER_9V_MUIC:
+			case ATTACHED_DEV_AFC_CHARGER_12V_MUIC:
 			case ATTACHED_DEV_QC_CHARGER_5V_MUIC:
 			case ATTACHED_DEV_QC_CHARGER_9V_MUIC:
 				pr_info("%s: CC or SBU short. Chgdet Re-run.\n", __func__);
