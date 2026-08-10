@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+trap 'echo; echo FAILED; echo' ERR
+
 # By default compile kernel for S8 European model (g950x).
 # If you need to build for S8+, just uncomment model "g955x" and comment model "g950x".
 
@@ -27,36 +30,21 @@ SOURCE_PATH=$HOME/Samsung_dreamlte_Kernel
 N=$(nproc)
 OUTPUT=$HOME/a2n_kernel_$MODEL_9.x
 AIK=$HOME/AIK-Linux
+DTB=arch/arm64/boot/dts/exynos/*dtb*
 
 	cd $SOURCE_PATH
-	rm arch/arm64/boot/dts/exynos/*dtb*
+
+	if [ -f $DTB ] ; then
+		rm $DTB
+	fi
+
 	ARCH=arm64 scripts/kconfig/merge_config.sh arch/arm64/configs/g950x_defconfig arch/arm64/configs/$MODEL_defconfig
 	make -j$N $@
 
 	# copy modules
-	cp fs/cifs/cifs.ko $OUTPUT/system/lib/modules
-	cp crypto/md4.ko $OUTPUT/system/lib/modules
-	cp fs/fscache/fscache.ko $OUTPUT/system/lib/modules
-	cp net/dns_resolver/dns_resolver.ko $OUTPUT/system/lib/modules
 	cp drivers/usb/gadget/function/usb_f_mtp_samsung.ko $OUTPUT/system/lib/modules
-	cp drivers/usb/gadget/function/usb_f_ptp.ko $OUTPUT/system/lib/modules
-	cp fs/ntfs/ntfs.ko $OUTPUT/system/lib/modules
-
-	cp fs/nfs_common/grace.ko $OUTPUT/system/lib/modules
-	cp fs/nfs/nfs.ko $OUTPUT/system/lib/modules
-	cp fs/nfs/nfsv2.ko $OUTPUT/system/lib/modules
-	cp fs/nfs/nfsv3.ko $OUTPUT/system/lib/modules
-	cp fs/nfs/nfsv4.ko $OUTPUT/system/lib/modules
-	cp fs/lockd/lockd.ko $OUTPUT/system/lib/modules
-	cp net/sunrpc/sunrpc.ko $OUTPUT/system/lib/modules
-	cp net/sunrpc/auth_gss/auth_rpcgss.ko $OUTPUT/system/lib/modules
-	cp lib/oid_registry.ko $OUTPUT/system/lib/modules
-
-	cp net/ipv4/fou.ko $OUTPUT/system/lib/modules
-	cp net/ipv4/udp_tunnel.ko $OUTPUT/system/lib/modules
-	cp net/ipv6/ip6_udp_tunnel.ko $OUTPUT/system/lib/modules
+	cp drivers/usb/gadget/function/usb_f_ptp_samsung.ko $OUTPUT/system/lib/modules
 	cp net/wireguard/wireguard.ko $OUTPUT/system/lib/modules
-	cp net/l2tp/l2tp_core.ko $OUTPUT/system/lib/modules
 
 	cp arch/arm64/boot/Image $AIK/split_img/boot.img-kernel
 
@@ -70,9 +58,16 @@ AIK=$HOME/AIK-Linux
 
 	cd $OUTPUT/
 
-	rm *.zip
+	if [ -f *.zip ] ; then
+		rm *.zip
+	fi
 
-	zip -r a2n_kernel_$MODEL_9.x_user_build.zip META-INF system boot.img
+	if [ -f *.md5 ] ; then
+		rm *.md5
+	fi
 
-	md5sum *.zip > *.md5
+	zip -r a2n_kernel_$MODEL_9.x_user_build.zip META-INF system dex2oat_patch boot.img
 
+echo
+echo DONE
+echo
