@@ -1,11 +1,12 @@
 This how-to is tested to work on Lubuntu 24.04 64-bit.
-Other Ubuntu / Ubuntu-based-distros should work as well.
+Other Ubuntu / Ubuntu-based-distros may work as well.
 
 Required GNU Make version: 4.2.1 or older.
 
 Download required tools:
 1. Download tool for unpack/repack ramdisk "AIK-Linux" from https://forum.xda-developers.com/t/tool-android-image-kitchen-unpack-repack-kernel-ramdisk-win-android-linux-mac.2073775/
-2. Downlaod toolchain "gcc-arm-8.3-2019.03-x86_64-aarch64-linux-gnu" from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-a/downloads/8-3-2019-03
+2. Downlaod toolchain "gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu" from https://developer.arm.com/Downloads/-/Legacy%20Linaro%20GNU%20Toolchains
+(https://developer.arm.com/-/cdn-downloads/permalink/legacy-linaro-gnu-toolchains/7.5-2019.12/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz)
 
 3. Unpack a2n_kernel_g950x_9.x.zip to your HOME folder and don't change the structure of the files.
 4. Put the unpacked toolchain and AIK-Linux to your HOME folder.
@@ -39,6 +40,7 @@ If the compilation will run without any errors, it'll give you a "a2n_kernel_g95
 ### HOW TO FIX BUILD ERRORS ###
 e.g. if you get error: "git: command not found" or similar, then simply install the missing packages like this:
 open a new terminal emulator and install missing "git" tool:
+sudo apt-get update
 sudo apt-get install git
 
 ### NOTE ###
