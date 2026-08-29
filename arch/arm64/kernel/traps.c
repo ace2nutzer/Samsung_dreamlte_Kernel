@@ -594,6 +594,10 @@ asmlinkage long do_ni_syscall(struct pt_regs *regs)
 	}
 #endif
 
+	/* suppress magiskd ni syscall 434 reg dump in dmesg */
+	if (regs->syscallno == 434)
+		return sys_ni_syscall();
+
 	if (show_unhandled_signals_ratelimited()) {
 		pr_info("%s[%d]: syscall %d\n", current->comm,
 			task_pid_nr(current), (int)regs->syscallno);
