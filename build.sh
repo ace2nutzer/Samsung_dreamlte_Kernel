@@ -43,7 +43,7 @@ DTB=arch/arm64/boot/dts/exynos/*dtb*
 
 	# copy modules
 	cp drivers/usb/gadget/function/usb_f_mtp_samsung.ko $OUTPUT/system/lib/modules
-	cp drivers/usb/gadget/function/usb_f_ptp_samsung.ko $OUTPUT/system/lib/modules
+	cp drivers/usb/gadget/function/usb_f_ptp.ko $OUTPUT/system/lib/modules
 	cp net/wireguard/wireguard.ko $OUTPUT/system/lib/modules
 
 	cp arch/arm64/boot/Image $AIK/split_img/boot.img-kernel
