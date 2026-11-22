@@ -49,6 +49,7 @@ void sanitize_cpu_gpu_dvfs_vol(void);
 int dvfs_dev_low_vol_peak = 4400;
 static int vol = 0;
 static struct wake_lock dvfs_wakelock;
+DEFINE_MUTEX(dvfs_vol_lock);
 #define SANITIZE_VOL_SLEEP_MS		(3000)
 #define VOL_DVFS_DEBUG			(0)
 
@@ -936,12 +937,12 @@ static int cpu_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!cpu4_min_freq || !cpu0_min_freq) {
-			pr_warn_ratelimited("%s: CPU DVFS: waiting for cpufreq driver ...\n", __func__);
+			pr_warn("%s: CPU DVFS: waiting for cpufreq driver ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!cpu_tmu_data) {
-			pr_warn_ratelimited("%s: CPU DVFS: cpu_tmu_data is not ready! - Waiting ...\n", __func__);
+			pr_warn("%s: CPU DVFS: cpu_tmu_data is not ready! - Waiting ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
@@ -1156,9 +1157,10 @@ static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 {
 	if (unlikely(!platform->gpu_max_clock)) {
 		pr_warn("%s: VOL DVFS: platform->gpu_max_clock is NULL! printing stack ...\n", __func__);
-		dump_stack();
 		return;
 	}
+
+	mutex_lock(&dvfs_vol_lock);
 
 	dvfs_dev_low_vol_peak = 4400;
 
@@ -1177,14 +1179,15 @@ static void sanitize_cpu_gpu_dvfs_vol_thread(struct work_struct *nothing)
 	/* from gpu_pmqos */
 	platform->gpu_vk_boost_mif_min_clk_lock = 1794000;
 
+	mutex_unlock(&dvfs_vol_lock);
 	wake_unlock(&dvfs_wakelock);
 }
 static DECLARE_DELAYED_WORK(sanitize_cpu_gpu_dvfs_vol_work, sanitize_cpu_gpu_dvfs_vol_thread);
 
 void sanitize_cpu_gpu_dvfs_vol(void)
 {
-	wake_lock(&dvfs_wakelock);
-	schedule_delayed_work(&sanitize_cpu_gpu_dvfs_vol_work, msecs_to_jiffies(SANITIZE_VOL_SLEEP_MS));
+	if (schedule_delayed_work(&sanitize_cpu_gpu_dvfs_vol_work, msecs_to_jiffies(SANITIZE_VOL_SLEEP_MS)))
+		wake_lock(&dvfs_wakelock);
 }
 
 static int vol_dvfs_kthread(void *nothing)
@@ -1196,12 +1199,12 @@ static int vol_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!cpu4_min_freq || !cpu0_min_freq) {
-			pr_warn_ratelimited("%s: VOL DVFS: waiting for cpufreq driver ...\n", __func__);
+			pr_warn("%s: VOL DVFS: waiting for cpufreq driver ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!platform->gpu_max_clock) {
-			pr_warn_ratelimited("%s: VOL DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
+			pr_warn("%s: VOL DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
@@ -1213,9 +1216,12 @@ static int vol_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 
+		mutex_lock(&dvfs_vol_lock);
+
 		vol = dvfs_get_dev_vol();
 
 		if (vol == prev_vol) {
+			mutex_unlock(&dvfs_vol_lock);
 			schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 			continue;
 		}
@@ -1228,121 +1234,93 @@ static int vol_dvfs_kthread(void *nothing)
 		}
 
 		if (vol <= dvfs_dev_low_vol_trig) {
-			if ((cpu4_dvfs_limit_freq_vol >= FREQ_STEP_CL1_13) || (gpu_dvfs_limit_freq_vol >= FREQ_STEP_5)) {
-				big_freq = FREQ_STEP_CL1_12;
+			/* set stock freq */
+			if ((cpu4_dvfs_limit_freq_vol > FREQ_STEP_CL1_12) || (gpu_dvfs_limit_freq_vol > FREQ_STEP_4) ||
+					(cpu0_dvfs_limit_freq_vol > FREQ_STEP_CL0_8)) {
 				gpu_freq = FREQ_STEP_4;
+				platform->gpu_vk_boost_mif_min_clk_lock = 1794000;
 				lit_freq = FREQ_STEP_CL0_8;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz - CPU-LIT: %u KHz\n" ,__func__,
-					big_freq, gpu_freq, lit_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_12) {
-				big_freq = FREQ_STEP_CL1_11;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_11) {
-				big_freq = FREQ_STEP_CL1_10;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_10) {
-				big_freq = FREQ_STEP_CL1_9;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_9) {
-				big_freq = FREQ_STEP_CL1_8;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_8) {
-				big_freq = FREQ_STEP_CL1_7;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_7) {
-				big_freq = FREQ_STEP_CL1_6;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_6) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_4)) {
-				big_freq = FREQ_STEP_CL1_5;
+				big_freq = FREQ_STEP_CL1_12;
+
+			/* GPU */
+			} else if (gpu_dvfs_limit_freq_vol == FREQ_STEP_4) {
 				gpu_freq = FREQ_STEP_3;
 				platform->gpu_vk_boost_mif_min_clk_lock = 1540000;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
-					big_freq, gpu_freq);
-			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_5) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_3)) {
-				big_freq = FREQ_STEP_CL1_4;
+
+			} else if (gpu_dvfs_limit_freq_vol == FREQ_STEP_3) {
 				gpu_freq = FREQ_STEP_2;
 				platform->gpu_vk_boost_mif_min_clk_lock = 1352000;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
-					big_freq, gpu_freq);
-			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_4) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_2)) {
-				big_freq = FREQ_STEP_CL1_3;
+
+			} else if (gpu_dvfs_limit_freq_vol == FREQ_STEP_2) {
 				gpu_freq = FREQ_STEP_1;
 				platform->gpu_vk_boost_mif_min_clk_lock = 1014000;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
-					big_freq, gpu_freq);
-			} else if ((cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_3) || (gpu_dvfs_limit_freq_vol == FREQ_STEP_1)) {
-				big_freq = FREQ_STEP_CL1_2;
+
+			} else if (gpu_dvfs_limit_freq_vol == FREQ_STEP_1) {
 				gpu_freq = FREQ_STEP_0;
 				platform->gpu_vk_boost_mif_min_clk_lock = 845000;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU/GPU Freq to: CPU-BIG: %u KHz - GPU: %u KHz\n" ,__func__,
-					big_freq, gpu_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_2) {
-				big_freq = FREQ_STEP_CL1_1;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
-			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_1) {
-				big_freq = FREQ_STEP_CL1_0;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-BIG: %u KHz\n" ,__func__,
-					big_freq);
+
+			/* LIT-CPU */
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_8) {
 				lit_freq = FREQ_STEP_CL0_7;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_7) {
 				lit_freq = FREQ_STEP_CL0_6;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_6) {
 				lit_freq = FREQ_STEP_CL0_5;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_5) {
 				lit_freq = FREQ_STEP_CL0_4;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_4) {
 				lit_freq = FREQ_STEP_CL0_3;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_3) {
 				lit_freq = FREQ_STEP_CL0_2;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_2) {
 				lit_freq = FREQ_STEP_CL0_1;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
 			} else if (cpu0_dvfs_limit_freq_vol == FREQ_STEP_CL0_1) {
 				lit_freq = FREQ_STEP_CL0_0;
-				pr_warn("%s: VOL DVFS: Device low voltage triggered! "
-					"reducing CPU Freq to: CPU-LIT: %u KHz\n" ,__func__,
-					lit_freq);
+
+			/* BIG-CPU */
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_12) {
+				big_freq = FREQ_STEP_CL1_11;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_11) {
+				big_freq = FREQ_STEP_CL1_10;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_10) {
+				big_freq = FREQ_STEP_CL1_9;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_9) {
+				big_freq = FREQ_STEP_CL1_8;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_8) {
+				big_freq = FREQ_STEP_CL1_7;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_7) {
+				big_freq = FREQ_STEP_CL1_6;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_6) {
+				big_freq = FREQ_STEP_CL1_5;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_5) {
+				big_freq = FREQ_STEP_CL1_4;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_4) {
+				big_freq = FREQ_STEP_CL1_3;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_3) {
+				big_freq = FREQ_STEP_CL1_2;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_2) {
+				big_freq = FREQ_STEP_CL1_1;
+
+			} else if (cpu4_dvfs_limit_freq_vol == FREQ_STEP_CL1_1) {
+				big_freq = FREQ_STEP_CL1_0;
+
 			}
 
 			if (big_freq)
@@ -1354,12 +1332,14 @@ static int vol_dvfs_kthread(void *nothing)
 
 			if ((big_freq) || (gpu_freq) || (lit_freq)) {
 				prev_vol = vol;
+				mutex_unlock(&dvfs_vol_lock);
 				schedule_timeout_interruptible(msecs_to_jiffies(1000));
 				continue;
 			}
 		}
 
 		prev_vol = vol;
+		mutex_unlock(&dvfs_vol_lock);
 		schedule_timeout_interruptible(msecs_to_jiffies(dvfs_sleep_time_ms));
 	}
 	return 0;

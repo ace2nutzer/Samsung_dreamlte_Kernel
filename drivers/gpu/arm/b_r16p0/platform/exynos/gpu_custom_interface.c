@@ -2157,7 +2157,6 @@ void sanitize_gpu_dvfs(bool sanitize)
 {
 	if (unlikely(!platform->gpu_max_clock)) {
 		pr_warn("%s: GPU DVFS: platform->gpu_max_clock is NULL! printing stack ...\n", __func__);
-		dump_stack();
 		return;
 	}
 
@@ -2182,12 +2181,12 @@ static int gpu_dvfs_kthread(void *nothing)
 
 	while (!kthread_should_stop()) {
 		if (!platform->gpu_max_clock) {
-			pr_warn_ratelimited("%s: GPU DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
+			pr_warn("%s: GPU DVFS: platform->gpu_max_clock is NULL! - Waiting ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
 		if (!gpu_tmu_data) {
-			pr_warn_ratelimited("%s: GPU DVFS: gpu_tmu_data is not ready! - Waiting ...\n", __func__);
+			pr_warn("%s: GPU DVFS: gpu_tmu_data is not ready! - Waiting ...\n", __func__);
 			schedule_timeout_interruptible(msecs_to_jiffies(500));
 			continue;
 		}
